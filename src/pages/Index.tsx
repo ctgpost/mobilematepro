@@ -258,7 +258,7 @@ export default function Index({ user }: IndexProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Desktop Sidebar - Apple Velvet Style */}
+      {/* Desktop Sidebar - MOBILE MATE PRO Style */}
       <aside className="hidden lg:block fixed left-0 top-0 h-screen w-72 glass-sidebar border-r border-sidebar-border z-40">
         <div className="flex flex-col h-full p-5">
           {/* Logo Section */}

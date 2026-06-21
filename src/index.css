@@ -45,7 +45,7 @@
     --sidebar-border: 222 30% 16%;
     --sidebar-ring: 38 92% 50%;
 
-    /* Apple Velvet Custom Tokens */
+    /* MOBILE MATE PRO Custom Tokens */
     --velvet-glow: 38 92% 50%;
     --velvet-surface: 220 20% 97%;
     --velvet-glass: 220 20% 98% / 0.8;
@@ -129,7 +129,7 @@
   }
 }
 
-/* Apple Velvet Glassmorphism */
+/* MOBILE MATE PRO Glassmorphism */
 .glass-card {
   background: hsl(var(--velvet-glass));
   backdrop-filter: blur(24px) saturate(180%);
@@ -209,7 +209,7 @@
   animation: shimmer 3s linear infinite;
 }
 
-/* Apple-style card hover */
+/* Card hover */
 .card-hover {
   transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
   will-change: transform, box-shadow;

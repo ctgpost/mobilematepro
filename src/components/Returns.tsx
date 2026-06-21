@@ -469,7 +469,7 @@ export function Returns() {
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Returns');
-    XLSX.writeFile(wb, `Apple_Store_Returns_${new Date().toISOString().split('T')[0]}.xlsx`);
+    XLSX.writeFile(wb, `MobileMatePro_Returns_${new Date().toISOString().split('T')[0]}.xlsx`);
     toast.success("Excel ডাউনলোড হয়েছে");
   };
 
@@ -533,7 +533,7 @@ export function Returns() {
                         <Input
                           value={searchSaleId}
                           onChange={(e) => setSearchSaleId(e.target.value)}
-                          placeholder="যেমন: 8a3f, 35XXXXXXX, iPhone, Apple, 01XXXXXXXXX..."
+                          placeholder="যেমন: 8a3f, 35XXXXXXX, iPhone, Samsung, 01XXXXXXXXX..."
                           className="pl-9"
                           onKeyDown={(e) => e.key === "Enter" && searchSale()}
                         />

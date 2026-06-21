@@ -266,7 +266,7 @@ export function Settings() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `applestore-backup-${new Date().toISOString().split("T")[0]}.json`;
+      link.download = `mobilematepro-backup-${new Date().toISOString().split("T")[0]}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
