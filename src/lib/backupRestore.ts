@@ -225,11 +225,38 @@ export interface JsonGroup {
   table: TableKey;
   rows: any[];
   confidence: "filename" | "explicit" | "fingerprint" | "manual";
+  sourceFiles?: string[];
+  sampleRow?: any;
 }
 
 export interface JsonAnalysis {
   groups: JsonGroup[];
   unknown: { rows: any[] }; // rows we couldn't classify
+  warnings: string[];
+}
+
+export interface PerFileAnalysis {
+  file: string;
+  size: number;
+  analysis: JsonAnalysis;
+  error?: string;
+}
+
+export interface MergedGroupPreview {
+  table: TableKey;
+  rows: any[];
+  sources: string[]; // filenames contributing rows
+  confidences: JsonGroup["confidence"][];
+  sampleRow: any;
+  willInsert: number;
+  willUpdate: number;
+  duplicateIds: number; // ids that appeared more than once across files
+}
+
+export interface MultiFileAnalysis {
+  perFile: PerFileAnalysis[];
+  merged: MergedGroupPreview[];
+  unknown: { file: string; rows: any[] }[];
   warnings: string[];
 }
 
@@ -389,4 +416,114 @@ export async function analyzeJsonFile(file: File): Promise<JsonAnalysis & { raw:
   }
   const a = analyzeJsonPayload(parsed, file.name);
   return { ...a, raw: parsed };
+}
+
+/**
+ * Parse many JSON files in parallel, classify rows per file, then merge groups
+ * across files (same target table = one merged group). Finally, query the DB
+ * to estimate how many rows will be inserted vs updated.
+ */
+export async function analyzeJsonFiles(files: File[]): Promise<MultiFileAnalysis> {
+  const perFile: PerFileAnalysis[] = await Promise.all(
+    files.map(async (f) => {
+      try {
+        const txt = await f.text();
+        const parsed = JSON.parse(txt);
+        return {
+          file: f.name,
+          size: f.size,
+          analysis: analyzeJsonPayload(parsed, f.name),
+        };
+      } catch (e: any) {
+        return {
+          file: f.name,
+          size: f.size,
+          analysis: { groups: [], unknown: { rows: [] }, warnings: [] },
+          error: e?.message || "পার্স ব্যর্থ",
+        };
+      }
+    }),
+  );
+
+  // Merge per-table across files
+  const mergedMap = new Map<TableKey, MergedGroupPreview>();
+  const unknown: { file: string; rows: any[] }[] = [];
+  const warnings: string[] = [];
+
+  for (const pf of perFile) {
+    if (pf.error) warnings.push(`${pf.file}: ${pf.error}`);
+    for (const g of pf.analysis.groups) {
+      const existing = mergedMap.get(g.table);
+      if (existing) {
+        // Detect duplicate ids being introduced by this file
+        const existingIds = new Set(existing.rows.map((r) => r?.id).filter(Boolean));
+        for (const r of g.rows) {
+          if (r?.id && existingIds.has(r.id)) existing.duplicateIds += 1;
+        }
+        // last-file-wins: replace prior rows that share id with new ones
+        if (g.rows.some((r) => r?.id)) {
+          const incomingIds = new Set(g.rows.map((r) => r?.id).filter(Boolean));
+          existing.rows = existing.rows.filter((r) => !(r?.id && incomingIds.has(r.id)));
+        }
+        existing.rows.push(...g.rows);
+        if (!existing.sources.includes(pf.file)) existing.sources.push(pf.file);
+        existing.confidences.push(g.confidence);
+      } else {
+        mergedMap.set(g.table, {
+          table: g.table,
+          rows: [...g.rows],
+          sources: [pf.file],
+          confidences: [g.confidence],
+          sampleRow: g.rows.find((r) => r && typeof r === "object") || g.rows[0],
+          willInsert: 0,
+          willUpdate: 0,
+          duplicateIds: 0,
+        });
+      }
+    }
+    if (pf.analysis.unknown.rows.length) {
+      unknown.push({ file: pf.file, rows: pf.analysis.unknown.rows });
+    }
+    for (const w of pf.analysis.warnings) {
+      // de-dupe identical warnings across files
+      const tagged = `${pf.file}: ${w}`;
+      if (!warnings.includes(tagged)) warnings.push(tagged);
+    }
+  }
+
+  const merged = Array.from(mergedMap.values());
+
+  // DB lookup: existing ids per table → compute willInsert/willUpdate
+  for (const m of merged) {
+    const ids = m.rows.map((r) => r?.id).filter(Boolean);
+    if (!ids.length) {
+      m.willInsert = m.rows.length;
+      m.willUpdate = 0;
+      continue;
+    }
+    const existing = new Set<string>();
+    const chunk = 500;
+    for (let i = 0; i < ids.length; i += chunk) {
+      const slice = ids.slice(i, i + chunk);
+      const { data, error } = await supabase
+        .from(m.table as any)
+        .select("id")
+        .in("id", slice);
+      if (error) {
+        warnings.push(`${m.table}: পূর্ববর্তী id চেক ব্যর্থ — ${error.message}`);
+        continue;
+      }
+      for (const r of (data as any[]) || []) existing.add(r.id);
+    }
+    m.willUpdate = m.rows.filter((r) => r?.id && existing.has(r.id)).length;
+    m.willInsert = m.rows.length - m.willUpdate;
+
+    if (m.duplicateIds > 0) {
+      warnings.push(
+        `${m.table}: ${m.duplicateIds} টি একই id একাধিক ফাইলে — শেষ ফাইলেরটি প্রাধান্য পাবে`,
+      );
+    }
+  }
+
+  return { perFile, merged, unknown, warnings };
 }
