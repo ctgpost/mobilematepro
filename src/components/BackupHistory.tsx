@@ -41,9 +41,10 @@ import {
   restoreFromZip,
   logRestoreRun,
   BackupAnalysis,
-  analyzeJsonFile,
+  analyzeJsonFiles,
   restoreFromJsonGroups,
   JsonGroup,
+  MultiFileAnalysis,
 } from "@/lib/backupRestore";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -59,6 +60,8 @@ import {
   ChevronDown,
   Upload,
   FileJson,
+  X,
+  ChevronRight,
 } from "lucide-react";
 
 interface CloudResource {
@@ -135,15 +138,16 @@ export function BackupHistory() {
   const [restoring, setRestoring] = useState(false);
   const [preBackup, setPreBackup] = useState(true);
 
-  // JSON restore state
+  // JSON restore state (multi-file)
   const [jsonDialog, setJsonDialog] = useState(false);
-  const [jsonFile, setJsonFile] = useState<File | null>(null);
-  const [jsonGroups, setJsonGroups] = useState<JsonGroup[]>([]);
-  const [jsonWarnings, setJsonWarnings] = useState<string[]>([]);
-  const [jsonUnknownCount, setJsonUnknownCount] = useState(0);
+  const [jsonFiles, setJsonFiles] = useState<File[]>([]);
+  const [jsonMulti, setJsonMulti] = useState<MultiFileAnalysis | null>(null);
+  const [jsonAnalysing, setJsonAnalysing] = useState(false);
   const [jsonSelected, setJsonSelected] = useState<Set<TableKey>>(new Set());
   const [jsonBusy, setJsonBusy] = useState(false);
   const [jsonPreBackup, setJsonPreBackup] = useState(true);
+  const [jsonExpanded, setJsonExpanded] = useState<Set<string>>(new Set());
+  const [jsonManualMap, setJsonManualMap] = useState<Record<string, TableKey>>({});
 
   const loadHistory = async () => {
     setLoadingHistory(true);
