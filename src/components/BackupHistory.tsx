@@ -311,26 +311,56 @@ export function BackupHistory() {
       s.includes(k) ? s.filter((x) => x !== k) : [...s, k],
     );
 
-  // ---------- JSON upload restore ----------
-  const handleJsonPick = async (file: File | null) => {
-    if (!file) return;
-    setJsonFile(file);
-    setJsonGroups([]);
-    setJsonWarnings([]);
-    setJsonUnknownCount(0);
+  // ---------- JSON upload restore (multi-file) ----------
+  const resetJsonState = () => {
+    setJsonFiles([]);
+    setJsonMulti(null);
     setJsonSelected(new Set());
+    setJsonExpanded(new Set());
+    setJsonManualMap({});
+  };
+
+  const runJsonAnalysis = async (files: File[]) => {
+    if (!files.length) {
+      setJsonMulti(null);
+      setJsonSelected(new Set());
+      return;
+    }
+    setJsonAnalysing(true);
     try {
-      const a = await analyzeJsonFile(file);
-      setJsonGroups(a.groups);
-      setJsonWarnings(a.warnings);
-      setJsonUnknownCount(a.unknown.rows.length);
-      setJsonSelected(new Set(a.groups.map((g) => g.table)));
-      if (a.groups.length === 0) {
+      const m = await analyzeJsonFiles(files);
+      setJsonMulti(m);
+      setJsonSelected(new Set(m.merged.map((g) => g.table)));
+      if (!m.merged.length && !m.unknown.length) {
         toast.warning("কোন পরিচিত টেবিল ম্যাচ হয়নি");
       }
     } catch (e: any) {
-      toast.error(e?.message || "JSON পড়া ব্যর্থ");
+      toast.error(e?.message || "JSON বিশ্লেষণ ব্যর্থ");
+    } finally {
+      setJsonAnalysing(false);
     }
+  };
+
+  const handleJsonPick = async (files: FileList | File[] | null) => {
+    if (!files) return;
+    const arr = Array.from(files).filter((f) => /\.json$/i.test(f.name));
+    if (!arr.length) {
+      toast.error("শুধু .json ফাইল অনুমোদিত");
+      return;
+    }
+    // Append (avoid duplicates by name+size)
+    const merged = [...jsonFiles];
+    for (const f of arr) {
+      if (!merged.some((x) => x.name === f.name && x.size === f.size)) merged.push(f);
+    }
+    setJsonFiles(merged);
+    await runJsonAnalysis(merged);
+  };
+
+  const removeJsonFile = async (name: string, size: number) => {
+    const next = jsonFiles.filter((f) => !(f.name === name && f.size === size));
+    setJsonFiles(next);
+    await runJsonAnalysis(next);
   };
 
   const toggleJsonTable = (k: TableKey) =>
@@ -341,14 +371,53 @@ export function BackupHistory() {
       return n;
     });
 
+  const toggleJsonExpand = (key: string) =>
+    setJsonExpanded((s) => {
+      const n = new Set(s);
+      if (n.has(key)) n.delete(key);
+      else n.add(key);
+      return n;
+    });
+
   const performJsonRestore = async () => {
-    const chosen = jsonGroups.filter((g) => jsonSelected.has(g.table));
-    if (!chosen.length) return;
+    if (!jsonMulti) return;
+    // Merged groups selected by user
+    const chosen: JsonGroup[] = jsonMulti.merged
+      .filter((m) => jsonSelected.has(m.table))
+      .map((m) => ({
+        table: m.table,
+        rows: m.rows,
+        confidence: m.confidences[0] || "fingerprint",
+        sourceFiles: m.sources,
+      }));
+
+    // Add manually-mapped unknown rows
+    for (const u of jsonMulti.unknown) {
+      const target = jsonManualMap[u.file];
+      if (target) {
+        const existing = chosen.find((c) => c.table === target);
+        if (existing) existing.rows.push(...u.rows);
+        else
+          chosen.push({
+            table: target,
+            rows: [...u.rows],
+            confidence: "manual",
+            sourceFiles: [u.file],
+          });
+      }
+    }
+
+    if (!chosen.length) {
+      toast.error("পুনরুদ্ধারের জন্য কোন টেবিল নির্বাচিত হয়নি");
+      return;
+    }
+
     setJsonBusy(true);
     const t = toast.loading("JSON পুনরুদ্ধার চলছে...");
     let preBackupUrl: string | null = null;
     let runErr: string | null = null;
     let results: Awaited<ReturnType<typeof restoreFromJsonGroups>> = [];
+    const fileNames = jsonFiles.map((f) => f.name).join(", ");
     try {
       if (jsonPreBackup) {
         toast.loading("পুনরুদ্ধারের আগে ব্যাকআপ তৈরি হচ্ছে...", { id: t });
@@ -379,7 +448,7 @@ export function BackupHistory() {
           { id: t, duration: 8000 },
         );
         setJsonDialog(false);
-        setJsonFile(null);
+        resetJsonState();
       } else {
         runErr = `Failed: ${failed.map((f) => f.table).join(", ")}`;
         toast.error(
@@ -392,8 +461,8 @@ export function BackupHistory() {
       toast.error(runErr, { id: t });
     } finally {
       await logRestoreRun({
-        source_url: "json-upload://" + (jsonFile?.name || "unknown.json"),
-        source_filename: jsonFile?.name || "unknown.json",
+        source_url: "json-upload://" + fileNames,
+        source_filename: fileNames || "unknown.json",
         tables: chosen.map((g) => g.table),
         results,
         pre_backup_url: preBackupUrl,
@@ -419,10 +488,7 @@ export function BackupHistory() {
             size="sm"
             variant="default"
             onClick={() => {
-              setJsonFile(null);
-              setJsonGroups([]);
-              setJsonWarnings([]);
-              setJsonSelected(new Set());
+              resetJsonState();
               setJsonDialog(true);
             }}
           >
