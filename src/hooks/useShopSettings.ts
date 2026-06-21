@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import defaultLogo from "@/assets/3926e988-d85b-4bf1-8f3e-71bdbe4a2e70.png";
+import defaultLogo from "@/assets/mobile-mate-pro-logo.png";
 
 export type PaperSize = "a4" | "80mm" | "58mm";
 
