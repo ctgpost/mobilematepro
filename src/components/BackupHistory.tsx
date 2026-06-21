@@ -41,6 +41,9 @@ import {
   restoreFromZip,
   logRestoreRun,
   BackupAnalysis,
+  analyzeJsonFile,
+  restoreFromJsonGroups,
+  JsonGroup,
 } from "@/lib/backupRestore";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -54,6 +57,8 @@ import {
   XCircle,
   AlertTriangle,
   ChevronDown,
+  Upload,
+  FileJson,
 } from "lucide-react";
 
 interface CloudResource {
@@ -129,6 +134,16 @@ export function BackupHistory() {
   const [analysing, setAnalysing] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [preBackup, setPreBackup] = useState(true);
+
+  // JSON restore state
+  const [jsonDialog, setJsonDialog] = useState(false);
+  const [jsonFile, setJsonFile] = useState<File | null>(null);
+  const [jsonGroups, setJsonGroups] = useState<JsonGroup[]>([]);
+  const [jsonWarnings, setJsonWarnings] = useState<string[]>([]);
+  const [jsonUnknownCount, setJsonUnknownCount] = useState(0);
+  const [jsonSelected, setJsonSelected] = useState<Set<TableKey>>(new Set());
+  const [jsonBusy, setJsonBusy] = useState(false);
+  const [jsonPreBackup, setJsonPreBackup] = useState(true);
 
   const loadHistory = async () => {
     setLoadingHistory(true);
@@ -292,6 +307,99 @@ export function BackupHistory() {
       s.includes(k) ? s.filter((x) => x !== k) : [...s, k],
     );
 
+  // ---------- JSON upload restore ----------
+  const handleJsonPick = async (file: File | null) => {
+    if (!file) return;
+    setJsonFile(file);
+    setJsonGroups([]);
+    setJsonWarnings([]);
+    setJsonUnknownCount(0);
+    setJsonSelected(new Set());
+    try {
+      const a = await analyzeJsonFile(file);
+      setJsonGroups(a.groups);
+      setJsonWarnings(a.warnings);
+      setJsonUnknownCount(a.unknown.rows.length);
+      setJsonSelected(new Set(a.groups.map((g) => g.table)));
+      if (a.groups.length === 0) {
+        toast.warning("কোন পরিচিত টেবিল ম্যাচ হয়নি");
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "JSON পড়া ব্যর্থ");
+    }
+  };
+
+  const toggleJsonTable = (k: TableKey) =>
+    setJsonSelected((s) => {
+      const n = new Set(s);
+      if (n.has(k)) n.delete(k);
+      else n.add(k);
+      return n;
+    });
+
+  const performJsonRestore = async () => {
+    const chosen = jsonGroups.filter((g) => jsonSelected.has(g.table));
+    if (!chosen.length) return;
+    setJsonBusy(true);
+    const t = toast.loading("JSON পুনরুদ্ধার চলছে...");
+    let preBackupUrl: string | null = null;
+    let runErr: string | null = null;
+    let results: Awaited<ReturnType<typeof restoreFromJsonGroups>> = [];
+    try {
+      if (jsonPreBackup) {
+        toast.loading("পুনরুদ্ধারের আগে ব্যাকআপ তৈরি হচ্ছে...", { id: t });
+        try {
+          const r = await generateFullBackup({
+            tables: chosen.map((g) => g.table),
+          });
+          downloadBlob(r.zipBlob, `pre-json-restore-${r.timestamp}.zip`);
+          preBackupUrl = await uploadBackupToCloudinary(
+            r.zipBlob,
+            `pre-json-restore-${r.timestamp}.zip`,
+          );
+        } catch (e) {
+          console.warn("pre-restore backup failed", e);
+          toast.warning("আগের ব্যাকআপ তৈরি ব্যর্থ — পুনরুদ্ধার চলবে");
+        }
+      }
+
+      results = await restoreFromJsonGroups(chosen, {
+        onProgress: (msg) => toast.loading(msg, { id: t }),
+      });
+      const ins = results.reduce((s, r) => s + r.inserted, 0);
+      const upd = results.reduce((s, r) => s + r.updated, 0);
+      const failed = results.filter((r) => r.error);
+      if (failed.length === 0) {
+        toast.success(
+          `✅ JSON পুনরুদ্ধার: ${results.length} টেবিল • নতুন: ${ins} • আপডেট: ${upd}`,
+          { id: t, duration: 8000 },
+        );
+        setJsonDialog(false);
+        setJsonFile(null);
+      } else {
+        runErr = `Failed: ${failed.map((f) => f.table).join(", ")}`;
+        toast.error(
+          `আংশিক: ব্যর্থ ${failed.map((f) => f.table).join(", ")}`,
+          { id: t, duration: 10000 },
+        );
+      }
+    } catch (e: any) {
+      runErr = e?.message || "JSON পুনরুদ্ধার ব্যর্থ";
+      toast.error(runErr, { id: t });
+    } finally {
+      await logRestoreRun({
+        source_url: "json-upload://" + (jsonFile?.name || "unknown.json"),
+        source_filename: jsonFile?.name || "unknown.json",
+        tables: chosen.map((g) => g.table),
+        results,
+        pre_backup_url: preBackupUrl,
+        error: runErr,
+      });
+      setJsonBusy(false);
+      loadRestoreLog();
+    }
+  };
+
   return (
     <CollapsibleCard
       className="mt-4"
@@ -302,17 +410,32 @@ export function BackupHistory() {
         </h2>
       }
       actions={
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => {
-            loadHistory();
-            if (tab === "cloud") loadCloud(false, null);
-            if (tab === "restore") loadRestoreLog();
-          }}
-        >
-          <RefreshCw className="h-4 w-4 mr-1" /> রিফ্রেশ
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="default"
+            onClick={() => {
+              setJsonFile(null);
+              setJsonGroups([]);
+              setJsonWarnings([]);
+              setJsonSelected(new Set());
+              setJsonDialog(true);
+            }}
+          >
+            <FileJson className="h-4 w-4 mr-1" /> JSON থেকে পুনরুদ্ধার
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              loadHistory();
+              if (tab === "cloud") loadCloud(false, null);
+              if (tab === "restore") loadRestoreLog();
+            }}
+          >
+            <RefreshCw className="h-4 w-4 mr-1" /> রিফ্রেশ
+          </Button>
+        </div>
       }
     >
 
