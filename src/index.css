@@ -1,0 +1,264 @@
+@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 20% 97%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 222 47% 11%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 14% 93%;
+    --secondary-foreground: 222 47% 15%;
+
+    --muted: 220 14% 95%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 38 92% 50%;
+    --accent-foreground: 222 47% 8%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 90%;
+    --input: 220 13% 90%;
+    --ring: 38 92% 50%;
+
+    --radius: 1rem;
+
+    --sidebar-background: 222 47% 8%;
+    --sidebar-foreground: 210 20% 92%;
+    --sidebar-primary: 38 92% 50%;
+    --sidebar-primary-foreground: 222 47% 8%;
+    --sidebar-accent: 222 47% 14%;
+    --sidebar-accent-foreground: 210 20% 92%;
+    --sidebar-border: 222 30% 16%;
+    --sidebar-ring: 38 92% 50%;
+
+    /* Apple Velvet Custom Tokens */
+    --velvet-glow: 38 92% 50%;
+    --velvet-surface: 220 20% 97%;
+    --velvet-glass: 220 20% 98% / 0.8;
+    --velvet-shimmer: linear-gradient(135deg, hsl(38 92% 50%), hsl(24 95% 53%), hsl(350 80% 55%));
+    --shadow-velvet: 0 8px 32px -8px hsl(222 30% 10% / 0.12);
+    --shadow-velvet-lg: 0 20px 60px -15px hsl(222 30% 10% / 0.18);
+  }
+
+  .dark {
+    --background: 222 47% 5%;
+    --foreground: 210 20% 95%;
+
+    --card: 222 47% 9%;
+    --card-foreground: 210 20% 95%;
+
+    --popover: 222 47% 9%;
+    --popover-foreground: 210 20% 95%;
+
+    --primary: 0 0% 100%;
+    --primary-foreground: 222 47% 6%;
+
+    --secondary: 222 30% 16%;
+    --secondary-foreground: 210 20% 95%;
+
+    --muted: 222 30% 14%;
+    --muted-foreground: 220 9% 56%;
+
+    --accent: 38 92% 50%;
+    --accent-foreground: 222 47% 8%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 222 30% 18%;
+    --input: 222 30% 18%;
+    --ring: 38 92% 50%;
+
+    --sidebar-background: 222 47% 4%;
+    --sidebar-foreground: 210 20% 95%;
+    --sidebar-primary: 38 92% 50%;
+    --sidebar-primary-foreground: 222 47% 8%;
+    --sidebar-accent: 222 40% 12%;
+    --sidebar-accent-foreground: 210 20% 95%;
+    --sidebar-border: 222 30% 14%;
+    --sidebar-ring: 38 92% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground min-h-screen antialiased;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'cv11', 'ss01';
+    overflow-x: hidden;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+  }
+
+  /* Mobile safety: prevent rogue elements from pushing horizontal overflow */
+  @media (max-width: 640px) {
+    img, video, canvas, svg, table { max-width: 100%; }
+    .glass-card, .card { word-break: break-word; }
+  }
+}
+
+@layer utilities {
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+/* Apple Velvet Glassmorphism */
+.glass-card {
+  background: hsl(var(--velvet-glass));
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid hsl(var(--border) / 0.5);
+  box-shadow: var(--shadow-velvet);
+}
+
+.glass-sidebar {
+  background: linear-gradient(180deg, hsl(var(--sidebar-background)), hsl(222 47% 6%));
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+}
+
+/* Velvet Gradient Text */
+.velvet-text {
+  background: var(--velvet-shimmer);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Enhanced animations */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes velvet-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 hsl(38 92% 50% / 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 12px hsl(38 92% 50% / 0);
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.animate-scale-in {
+  animation: scale-in 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.animate-pulse-glow {
+  animation: velvet-pulse 2.5s infinite;
+}
+
+.animate-shimmer {
+  background-size: 200% auto;
+  animation: shimmer 3s linear infinite;
+}
+
+/* Apple-style card hover */
+.card-hover {
+  transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, box-shadow;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px) scale(1.005);
+  box-shadow: var(--shadow-velvet-lg);
+}
+
+/* Velvet Button Effect */
+.velvet-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.velvet-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 40%, hsl(0 0% 100% / 0.15) 50%, transparent 60%);
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Minimal scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.2);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.35);
+}
+
+/* Active sidebar item glow */
+.sidebar-active {
+  background: linear-gradient(135deg, hsl(38 92% 50% / 0.15), hsl(24 95% 53% / 0.1));
+  border-left: 3px solid hsl(38 92% 50%);
+  box-shadow: inset 0 0 20px hsl(38 92% 50% / 0.05);
+}
