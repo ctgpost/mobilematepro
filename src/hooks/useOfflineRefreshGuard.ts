@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { toast } from "sonner";
 
-const RELOAD_FLAG = "apple-store-pending-online-reload";
+const RELOAD_FLAG = "mobile-mate-pro-pending-online-reload";
 
 /**
  * Blocks page refresh while offline and triggers a single auto-reload

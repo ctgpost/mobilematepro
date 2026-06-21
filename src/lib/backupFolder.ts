@@ -4,7 +4,7 @@
  */
 import { saveAs } from "file-saver";
 
-const DB_NAME = "apple-store-backup";
+const DB_NAME = "mobile-mate-pro-backup";
 const STORE = "handles";
 const KEY = "download-dir";
 
@@ -54,7 +54,7 @@ export async function pickDownloadFolder(): Promise<string | null> {
   if (!isFolderPickerSupported()) return null;
   const handle = await (window as any).showDirectoryPicker({
     mode: "readwrite",
-    id: "apple-store-backups",
+    id: "mobile-mate-pro-backups",
     startIn: "documents",
   });
   await idbSet(KEY, handle);

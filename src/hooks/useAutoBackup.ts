@@ -36,10 +36,10 @@ async function runScheduledBackup() {
       dateTo: s.dateTo,
     });
     counts = result.counts;
-    filename = `apple-store-auto-${result.timestamp}.zip`;
+    filename = `mobile-mate-pro-auto-${result.timestamp}.zip`;
 
     // Save locally — to chosen folder if set, else default downloads
-    await saveBlobToFolder(result.xlsxBlob, `apple-store-auto-${result.timestamp}.xlsx`);
+    await saveBlobToFolder(result.xlsxBlob, `mobile-mate-pro-auto-${result.timestamp}.xlsx`);
     await saveBlobToFolder(result.zipBlob, filename);
     downloadOk = true;
 

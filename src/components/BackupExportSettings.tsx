@@ -115,12 +115,12 @@ export function BackupExportSettings() {
         dateTo: settings.dateTo,
       });
       counts = result.counts;
-      filename = `apple-store-backup-${result.timestamp}.zip`;
+      filename = `mobile-mate-pro-backup-${result.timestamp}.zip`;
 
       // Save both files (folder if chosen, else browser download)
       const where1 = await saveBlobToFolder(
         result.xlsxBlob,
-        `apple-store-backup-${result.timestamp}.xlsx`,
+        `mobile-mate-pro-backup-${result.timestamp}.xlsx`,
       );
       const where2 = await saveBlobToFolder(result.zipBlob, filename);
       downloadOk = true;

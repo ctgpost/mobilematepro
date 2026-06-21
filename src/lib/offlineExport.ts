@@ -11,7 +11,7 @@ interface OfflineSnapshot {
 
 export async function exportOfflineData() {
   const outbox = await listOutbox();
-  const cache = (await kvGet("apple-store-rq-cache")) as string | null;
+  const cache = (await kvGet("mobile-mate-pro-rq-cache")) as string | null;
   const snapshot: OfflineSnapshot = {
     version: 1,
     exportedAt: new Date().toISOString(),
@@ -21,7 +21,7 @@ export async function exportOfflineData() {
   const blob = new Blob([JSON.stringify(snapshot, null, 2)], {
     type: "application/json",
   });
-  saveAs(blob, `apple-store-offline-${Date.now()}.json`);
+  saveAs(blob, `mobile-mate-pro-offline-${Date.now()}.json`);
 }
 
 export async function importOfflineData(file: File): Promise<{
@@ -39,7 +39,7 @@ export async function importOfflineData(file: File): Promise<{
     await db.add("outbox", rest as any);
   }
   if (parsed.reactQueryCache) {
-    await kvSet("apple-store-rq-cache", parsed.reactQueryCache);
+    await kvSet("mobile-mate-pro-rq-cache", parsed.reactQueryCache);
   }
   return {
     outboxCount: parsed.outbox?.length || 0,

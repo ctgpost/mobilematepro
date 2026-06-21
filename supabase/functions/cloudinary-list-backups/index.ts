@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
     if (!cloudName) throw new Error("Cloudinary cloud_name not configured");
 
     const body = await req.json().catch(() => ({}));
-    const prefix: string = body.prefix || "apple-store-backups";
+    const prefix: string = body.prefix || "mobile-mate-pro-backups";
     const max: number = Math.min(Number(body.max_results) || 100, 500);
     const nextCursor: string | undefined = body.next_cursor;
 
