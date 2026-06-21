@@ -47,7 +47,7 @@ const idbStorage = {
 
 const persister = createAsyncStoragePersister({
   storage: idbStorage,
-  key: "apple-store-rq-cache",
+  key: "mobile-mate-pro-rq-cache",
   throttleTime: 1000,
 });
 

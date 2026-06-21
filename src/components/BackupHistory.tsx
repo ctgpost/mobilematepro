@@ -168,7 +168,7 @@ export function BackupHistory() {
         "cloudinary-list-backups",
         {
           body: {
-            prefix: "apple-store-backups",
+            prefix: "mobile-mate-pro-backups",
             max_results: 100,
             next_cursor: cursor || undefined,
           },

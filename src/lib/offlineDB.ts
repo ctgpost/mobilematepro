@@ -18,7 +18,7 @@ let dbPromise: Promise<IDBPDatabase> | null = null;
 
 export function getOfflineDB() {
   if (!dbPromise) {
-    dbPromise = openDB("apple-store-offline", 1, {
+    dbPromise = openDB("mobile-mate-pro-offline", 1, {
       upgrade(db) {
         if (!db.objectStoreNames.contains("outbox")) {
           db.createObjectStore("outbox", {

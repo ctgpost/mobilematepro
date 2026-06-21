@@ -249,7 +249,7 @@ export async function generateFullBackup(opts: BackupOptions) {
   // 2) ZIP package: Excel + JSON-per-table + manifest
   const zip = new JSZip();
   const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-  zip.file(`apple-store-backup-${stamp}.xlsx`, xlsxBuffer);
+  zip.file(`mobile-mate-pro-backup-${stamp}.xlsx`, xlsxBuffer);
   const jsonDir = zip.folder("json")!;
   for (const t of ALL_TABLES) {
     if (!data[t.key]) continue;
@@ -309,7 +309,7 @@ export async function uploadBackupToCloudinary(
     }
 
     // Ask the edge function to sign the upload
-    const folder = "apple-store-backups";
+    const folder = "mobile-mate-pro-backups";
     const publicId = filename.replace(/\.(zip|xlsx)$/i, "");
     const { data: signed, error } = await supabase.functions.invoke(
       "cloudinary-sign-upload",

@@ -118,7 +118,7 @@ export function InvoiceModal({ isOpen, sale, onClose }: InvoiceModalProps) {
   );
 }
 
-const INVOICE_BRAND = "Apple Store";
+const INVOICE_BRAND = "MOBILE MATE PRO";
 
 function A4Invoice({ sale, settings, invoiceNo, formatDate, getPaymentMethodBn }: any) {
   return (
