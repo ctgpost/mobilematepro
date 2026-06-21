@@ -1,43 +1,75 @@
 ## Goal
+Make Sales Return and Supplier Return fully auditable, searchable, previewable, and accurately reflected in every report (daily, weekly, monthly, profit/loss). Add an offline POS test checklist.
 
-Import the uploaded `astorekh.zip` project (a Vite + React + Supabase shop‑management app currently branded as "Mobile Mate") into this Lovable workspace and rebrand it everywhere to **MOBILE MATE PRO**, including logos, app titles, PWA metadata, in‑app text, and printed reports.
+## 1. Database — Return Audit Log (migration)
 
-## Approach
+New table `return_audit_logs`:
+- `id`, `return_type` ('sales' | 'supplier'), `return_id` (uuid)
+- `action` ('created' | 'approved' | 'rejected' | 'completed' | 'deleted' | 'updated')
+- `user_id`, `user_email`, `created_at`
+- `stock_delta` (int), `amount_delta` (numeric), `previous_status`, `new_status`
+- `product_id`, `quantity`, `notes` (jsonb for extra context)
+- RLS: authenticated can insert/select; admins can delete
+- Indexes on `return_type`, `return_id`, `created_at`
 
-The current workspace only contains the empty TanStack Start starter template. The uploaded project is a full Vite/React app with its own router, Supabase integration, and ~50 components. Rather than porting it to TanStack Start (which would be a multi‑day rewrite), I will replace the starter with the uploaded project as‑is, then apply the rebrand on top.
+## 2. Returns module overhaul (`src/components/Returns.tsx`)
 
-### Step 1 – Bring the uploaded project into the workspace
-- Extract `astorekh.zip` to a temp folder (already done).
-- Verify no `.git` is copied; copy everything except `.git`, `node_modules`, `bun.lock`, `package-lock.json` into the project root, overwriting the TanStack starter files (`src/routes`, `src/router.tsx`, `src/start.ts`, `src/server.ts`, `src/styles.css`, `vite.config.ts`, `tsconfig.json`, `package.json`, etc.).
-- Remove now‑obsolete TanStack files (`src/routeTree.gen.ts`, `src/routes/`, `src/start.ts`, `src/server.ts`, `src/lib/lovable-error-reporting.ts` if unused).
-- Install dependencies (`bun install`) so the dev server boots on the imported Vite config.
+Convert into a unified dashboard with tabs:
+- **Overview** — KPI cards: pending sales returns, pending supplier returns, total refund (today/week/month), stock restored count. Real-time via existing `useRealtimeSync`.
+- **Sales Returns** — current list + filters (status, date, IMEI, invoice, return ID, customer).
+- **Supplier Returns** — list with same filter style.
+- **Reconciliation Report** — compares `sales` total vs `returns.refund_amount` per invoice; flags mismatches in product stock vs (sold − returned). Date range filter. Export Excel/PDF.
 
-### Step 2 – Replace logo assets
-- Generate a new "MOBILE MATE PRO" logo (premium tier, transparent PNG) and save it as `src/assets/mobile-mate-pro-logo.png`.
-- Generate a matching favicon / app icon set (192, 512, maskable, apple‑touch, favicon.ico/png) under `public/`.
-- Delete the old brand assets: `apple-point-logo.png`, `apple-point-logo.svg`, `big-boss-logo.png`, and the unused UUID‑named PNGs that were used as default logos (`3926e988-…png` etc. — only the ones referenced as logos).
+### Search
+- Already supports IMEI / invoice / customer. Add explicit "Return Number" search (return id prefix) and live debounced search that updates results as user types (no need for Enter).
 
-### Step 3 – Replace branding strings → "MOBILE MATE PRO"
-Update every occurrence found in the project:
-- `index.html` – `<title>`, `meta[name=author]`, `meta[name=apple-mobile-web-app-title]`, all `og:title` / `twitter:title`.
-- `src/App.tsx` – splash screen `<img alt>` and `<h2>` text + swap `defaultLogo` import to the new logo.
-- `src/components/BrandingSettings.tsx` – default `shop_name` and input placeholder.
-- `src/hooks/useShopSettings.ts` – default `shop_name`.
-- `src/components/Investments.tsx`, `Products.tsx`, `Returns.tsx`, `returns/ReconciliationReport.tsx`, `StaffPerformanceReport.tsx` – every print‑report title, heading, footer string; update the `big-boss-logo` import in `StaffPerformanceReport.tsx` to the new logo.
-- `src/lib/backupExport.ts` – backup header label and `app` field in the export payload.
-- `public/manifest.webmanifest` (create if missing, since `index.html` references it) – `name`, `short_name`, `theme_color`, icon paths pointing at the new icon set.
-- Any remaining `"Mobile Mate"` / `"Apple Point"` / `"Big Boss"` / `astorekh` references surfaced by a final `rg` sweep across `src/`, `public/`, and `supabase/` config files.
+### Stock Impact Preview
+Before approving any return, show modal:
+- Product, current stock → new stock after approval
+- Refund amount → ledger/cash impact
+- Customer due balance change (if applicable)
+- Effect on profit (cost basis × qty restored)
+- Confirm/Cancel buttons
 
-### Step 4 – Verify
-- Confirm the dev server builds and the splash screen, header, settings page, and a print report all read "MOBILE MATE PRO" with the new logo.
-- Confirm no broken image imports remain (removed asset filenames).
+### Audit logging hooks
+Wrap `createReturnMutation`, `processReturnMutation`, `deleteReturnMutation`, and supplier-return counterparts to insert into `return_audit_logs` with before/after stock and amount deltas.
+
+## 3. Supplier Returns parity
+
+Apply matching audit logging + stock preview to `supplier_returns` flows wherever they're created/approved/deleted (likely in `Suppliers.tsx` or dedicated supplier returns UI — locate and update).
+
+## 4. Reports impact (`src/components/Reports.tsx`, `Dashboard.tsx`, `StaffPerformanceReport.tsx`)
+
+Verify and update profit/loss + sales totals to subtract completed returns:
+- **Net Sales** = sales total − completed sales returns refund
+- **Net Profit** = (sale_price − cost) summed, minus profit on returned items + supplier return recoveries
+- Apply to daily / weekly / monthly aggregations
+- Dashboard widgets show "Returns Today/Week/Month" with refund amount
+
+## 5. Offline POS test checklist (`src/components/POS.tsx` or new `POSOfflineChecklist.tsx`)
+
+Add a collapsible checklist panel (toggle from POS header) that runs end-to-end self-tests:
+1. Detect offline status
+2. Add a test product offline → verify it appears in product cache
+3. Create a test sale offline → verify outbox contains compound_sale entry + invoice opens
+4. Confirm stock decremented optimistically
+5. Show outbox queue size and pending sync items
+6. When online: drain outbox + verify success
+Each step shows pass/fail/pending state with timestamps.
+
+## 6. Audit log viewer
+
+Small new component `ReturnAuditLog.tsx` shown inside the Returns dashboard (drawer / dialog per return) listing all audit events with user, time, deltas, status transitions.
 
 ## Technical notes
 
-- The imported project uses `react-router-dom`, `@tanstack/react-query` (not TanStack Router/Start), Supabase client, and `vite`. The Lovable Cloud (Supabase) connection from the original project will not carry over — the user will need to reconnect Lovable Cloud if they want the backend to work, but that is outside this rebranding task.
-- `.git` from the zip will be excluded from the copy to protect the workspace repo.
-- No business logic, schema, or feature behavior will change — only branding strings, logo assets, and metadata.
+- All audit writes happen inside the same mutation function before/after the data mutation; failures in audit are logged but don't roll back the primary action.
+- Real-time: add `return_audit_logs` to `useRealtimeSync` TABLE_TO_KEYS map.
+- Net profit/loss formulas adjusted in Reports queries — keep using `products.condition` per existing memory rule.
+- Reconciliation uses client-side aggregation from already-fetched data; no new SQL views needed.
 
-## Open question
+## Files
 
-Do you have a specific logo design or color preference for "MOBILE MATE PRO" (e.g. keep the current teal `#1B5F74` accent, or pick a new palette)? If you don't specify, I'll generate a clean, modern mark in the existing teal so it matches the current theme.
+- migration: create `return_audit_logs` + RLS
+- new: `src/components/returns/ReturnsDashboard.tsx`, `src/components/returns/StockImpactPreview.tsx`, `src/components/returns/ReconciliationReport.tsx`, `src/components/returns/ReturnAuditLog.tsx`, `src/components/POSOfflineChecklist.tsx`
+- edit: `src/components/Returns.tsx`, `src/components/Suppliers.tsx` (supplier returns flow), `src/components/Reports.tsx`, `src/components/Dashboard.tsx`, `src/components/StaffPerformanceReport.tsx`, `src/components/POS.tsx`, `src/hooks/useRealtimeSync.ts`, `src/hooks/useActivityLog.ts`
