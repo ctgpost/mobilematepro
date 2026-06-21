@@ -875,6 +875,9 @@ export type Database = {
           id: string
           logo_url: string | null
           print_item_barcodes: boolean
+          pwa_background_color: string
+          pwa_short_name: string
+          pwa_theme_color: string
           shop_address: string | null
           shop_name: string
           shop_phone: string | null
@@ -891,6 +894,9 @@ export type Database = {
           id?: string
           logo_url?: string | null
           print_item_barcodes?: boolean
+          pwa_background_color?: string
+          pwa_short_name?: string
+          pwa_theme_color?: string
           shop_address?: string | null
           shop_name?: string
           shop_phone?: string | null
@@ -907,6 +913,9 @@ export type Database = {
           id?: string
           logo_url?: string | null
           print_item_barcodes?: boolean
+          pwa_background_color?: string
+          pwa_short_name?: string
+          pwa_theme_color?: string
           shop_address?: string | null
           shop_name?: string
           shop_phone?: string | null
