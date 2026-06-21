@@ -1146,6 +1146,9 @@ export function Settings() {
 
       {/* Branding Settings - visible for admin users */}
       {isAdmin && <BrandingSettings />}
+
+      {/* PWA Settings - visible for admin users */}
+      {isAdmin && <PWASettings />}
       </div>
     </div>
   );
