@@ -230,7 +230,7 @@ export function Investments() {
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Investments');
-    XLSX.writeFile(wb, `Apple_Store_Investments_${new Date().toISOString().split('T')[0]}.xlsx`);
+    XLSX.writeFile(wb, `MobileMatePro_Investments_${new Date().toISOString().split('T')[0]}.xlsx`);
     toast.success("Excel ডাউনলোড");
   };
 

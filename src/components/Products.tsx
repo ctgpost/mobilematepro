@@ -422,7 +422,7 @@ export function Products() {
     const colWidths = Object.keys(excelData[0] || {}).map(key => ({ wch: Math.max(key.length + 2, 15) }));
     worksheet['!cols'] = colWidths;
 
-    const fileName = `Apple_Point_Products_${new Date().toISOString().split('T')[0]}.xlsx`;
+    const fileName = `MobileMatePro_Products_${new Date().toISOString().split('T')[0]}.xlsx`;
     XLSX.writeFile(workbook, fileName);
     toast.success(`${products.length}টি প্রোডাক্ট Excel এ ডাউনলোড হয়েছে`);
   };
