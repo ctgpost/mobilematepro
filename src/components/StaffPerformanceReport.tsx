@@ -47,7 +47,7 @@ import {
 } from "lucide-react";
 import { useReactToPrint } from "react-to-print";
 import { toast } from "sonner";
-import shopLogo from "@/assets/big-boss-logo.png";
+import shopLogo from "@/assets/mobile-mate-pro-logo.png";
 
 interface StaffPerformance {
   email: string;

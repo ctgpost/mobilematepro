@@ -14,7 +14,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { useOfflineRefreshGuard } from "@/hooks/useOfflineRefreshGuard";
-import defaultLogo from "@/assets/3926e988-d85b-4bf1-8f3e-71bdbe4a2e70.png";
+import defaultLogo from "@/assets/mobile-mate-pro-logo.png";
 
 const queryClient = new QueryClient({
   defaultOptions: {
