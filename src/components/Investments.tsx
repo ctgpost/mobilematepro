@@ -237,7 +237,7 @@ export function Investments() {
   const exportPDF = () => {
     const w = window.open('', '_blank');
     if (!w) { toast.error("পপআপ ব্লক"); return; }
-    w.document.write(`<html><head><title>Mobile Mate - Investments Report</title><style>
+    w.document.write(`<html><head><title>MOBILE MATE PRO - Investments Report</title><style>
       body{font-family:Arial;padding:20px;font-size:12px}h1{text-align:center;color:#0066cc}
       .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:15px 0}
       .stat{background:#f5f5f5;padding:10px;border-radius:6px;text-align:center}
@@ -246,7 +246,7 @@ export function Investments() {
       th,td{border:1px solid #ddd;padding:6px;text-align:left;font-size:11px}
       th{background:#0066cc;color:white}h2{margin-top:20px;border-bottom:2px solid #0066cc;padding-bottom:5px}
     </style></head><body>
-      <h1>Mobile Mate - ইনভেস্টমেন্ট রিপোর্ট</h1>
+      <h1>MOBILE MATE PRO - ইনভেস্টমেন্ট রিপোর্ট</h1>
       <p style="text-align:center">তারিখ: ${new Date().toLocaleDateString('bn-BD')}</p>
       <div class="grid">
         <div class="stat"><div>মোট বিনিয়োগ</div><div class="v">৳${grandInvestment.toLocaleString('bn-BD')}</div></div>

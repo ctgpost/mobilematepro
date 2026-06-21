@@ -89,7 +89,7 @@ export function ReconciliationReport() {
       <style>body{font-family:Arial;padding:18px;font-size:12px}h1{color:#0066cc}
       table{width:100%;border-collapse:collapse;margin-top:10px}
       th,td{border:1px solid #ddd;padding:6px;text-align:left}th{background:#0066cc;color:#fff}</style></head><body>
-      <h1>Mobile Mate — রিকনসিলিয়েশন রিপোর্ট</h1>
+      <h1>MOBILE MATE PRO — রিকনসিলিয়েশন রিপোর্ট</h1>
       <p>মোট বিক্রয়: ৳${totals.total.toLocaleString("bn-BD")} | রিফান্ড: ৳${totals.refunded.toLocaleString("bn-BD")} | নেট: ৳${totals.net.toLocaleString("bn-BD")} | সাপ্লায়ার রিকভারি: ৳${totals.supplierRecovery.toLocaleString("bn-BD")} | অসামঞ্জস্য: ${totals.mismatches}</p>
       <table><thead><tr><th>ইনভয়েস</th><th>মোট</th><th>রিফান্ড</th><th>নেট</th><th>আইটেম</th><th>রিটার্ন</th><th>পরিশোধিত</th><th>বকেয়া</th><th>অবস্থা</th></tr></thead><tbody>
       ${rows.map((r) => `<tr><td>${r.id.slice(0, 8)}</td><td>৳${r.total.toLocaleString("bn-BD")}</td><td>৳${r.refunded.toLocaleString("bn-BD")}</td><td>৳${r.netAmount.toLocaleString("bn-BD")}</td><td>${r.itemsQty}</td><td>${r.returnedQty}</td><td>৳${r.paid.toLocaleString("bn-BD")}</td><td>৳${r.due.toLocaleString("bn-BD")}</td><td>${r.balanceMismatch ? "❌ অসামঞ্জস্য" : "✅ ঠিক"}</td></tr>`).join("")}

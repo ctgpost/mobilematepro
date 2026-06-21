@@ -75,7 +75,7 @@ async function fetchTable(
 
 function buildSummarySheet(data: Record<TableKey, any[]>) {
   const rows: any[] = [];
-  rows.push({ Section: "📊 Mobile Mate — সম্পূর্ণ ব্যাকআপ", Value: "" });
+  rows.push({ Section: "📊 MOBILE MATE PRO — সম্পূর্ণ ব্যাকআপ", Value: "" });
   rows.push({ Section: "তৈরির সময়", Value: new Date().toLocaleString("bn-BD") });
   rows.push({ Section: "", Value: "" });
   rows.push({ Section: "টেবিল", Value: "মোট রেকর্ড" });
@@ -261,7 +261,7 @@ export async function generateFullBackup(opts: BackupOptions) {
       {
         generated_at: new Date().toISOString(),
         version: 1,
-        app: "Mobile Mate",
+        app: "MOBILE MATE PRO",
         tables: Object.fromEntries(
           Object.entries(data).map(([k, v]) => [k, v.length]),
         ),

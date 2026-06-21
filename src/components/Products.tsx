@@ -443,7 +443,7 @@ export function Products() {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Mobile Mate - প্রোডাক্ট তালিকা</title>
+        <title>MOBILE MATE PRO - প্রোডাক্ট তালিকা</title>
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; font-size: 11px; }
@@ -468,7 +468,7 @@ export function Products() {
       </head>
       <body>
         <div class="header">
-          <h1>👑 Mobile Mate</h1>
+          <h1>👑 MOBILE MATE PRO</h1>
           <p>প্রোডাক্ট ইনভেন্টরি তালিকা</p>
           <p style="font-size: 10px; margin-top: 5px;">তারিখ: ${new Date().toLocaleDateString('bn-BD')}</p>
         </div>
@@ -526,7 +526,7 @@ export function Products() {
         </table>
 
         <div class="footer">
-          <p>Mobile Mate - Sales & Stock Management System</p>
+          <p>MOBILE MATE PRO - Sales & Stock Management System</p>
           <p>Generated on ${new Date().toLocaleString('bn-BD')}</p>
         </div>
       </body>

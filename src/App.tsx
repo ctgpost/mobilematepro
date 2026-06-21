@@ -96,9 +96,9 @@ const App = () => {
       <div className="flex min-h-screen items-center justify-center bg-primary">
         <div className="text-center">
           <div className="inline-flex items-center justify-center w-32 h-32 rounded-2xl mb-4 animate-pulse shadow-xl">
-            <img src={defaultLogo} alt="Mobile Mate" className="w-28 h-28 animate-scale-in" />
+            <img src={defaultLogo} alt="MOBILE MATE PRO" className="w-28 h-28 animate-scale-in" />
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">Mobile Mate</h2>
+          <h2 className="text-2xl font-bold text-white mb-2">MOBILE MATE PRO</h2>
           <p className="text-white/70">Loading...</p>
         </div>
       </div>

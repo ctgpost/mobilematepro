@@ -478,7 +478,7 @@ export function Returns() {
     const w = window.open('', '_blank');
     if (!w) { toast.error("পপআপ ব্লক"); return; }
     const totalAmt = filteredReturns.reduce((s, r) => s + Number(r.refund_amount), 0);
-    w.document.write(`<html><head><title>Mobile Mate - Returns Report</title><style>
+    w.document.write(`<html><head><title>MOBILE MATE PRO - Returns Report</title><style>
       body{font-family:Arial;padding:20px;font-size:12px}
       h1{text-align:center;color:#0066cc}.summary{background:#f5f5f5;padding:10px;margin:15px 0;border-radius:6px}
       table{width:100%;border-collapse:collapse;margin-top:10px}
@@ -486,7 +486,7 @@ export function Returns() {
       th{background:#0066cc;color:white}
       tr:nth-child(even){background:#f9f9f9}
     </style></head><body>
-      <h1>Mobile Mate - রিটার্ন রিপোর্ট</h1>
+      <h1>MOBILE MATE PRO - রিটার্ন রিপোর্ট</h1>
       <div class="summary"><b>মোট রিটার্ন:</b> ${filteredReturns.length} | <b>মোট রিফান্ড:</b> ৳${totalAmt.toLocaleString('bn-BD')} | <b>তারিখ:</b> ${new Date().toLocaleDateString('bn-BD')}</div>
       <table><thead><tr><th>#</th><th>প্রোডাক্ট</th><th>IMEI</th><th>ক্রেতা</th><th>পরিমাণ</th><th>রিফান্ড</th><th>কারণ</th><th>স্ট্যাটাস</th><th>তারিখ</th></tr></thead><tbody>
       ${filteredReturns.map((r, i) => `<tr><td>${i+1}</td><td>${r.products?.name || ''}</td><td>${r.products?.imei || '-'}</td><td>${r.sales?.customers?.name || 'সাধারণ'}</td><td>${r.quantity}</td><td>৳${Number(r.refund_amount).toLocaleString('bn-BD')}</td><td>${getReasonLabel(r.reason_code)}</td><td>${r.status}</td><td>${new Date(r.created_at).toLocaleDateString('bn-BD')}</td></tr>`).join('')}

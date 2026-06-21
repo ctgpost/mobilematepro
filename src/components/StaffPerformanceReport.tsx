@@ -414,9 +414,9 @@ export function StaffPerformanceReport() {
           {/* Header */}
           <div className="flex items-center justify-between mb-6 border-b pb-4">
             <div className="flex items-center gap-3">
-              <img src={shopLogo} alt="Mobile Mate" className="w-16 h-16" />
+              <img src={shopLogo} alt="MOBILE MATE PRO" className="w-16 h-16" />
               <div>
-                <h1 className="text-2xl font-bold">👑 Mobile Mate</h1>
+                <h1 className="text-2xl font-bold">👑 MOBILE MATE PRO</h1>
                 <p className="text-gray-600">স্টাফ পারফরম্যান্স রিপোর্ট</p>
               </div>
             </div>
@@ -473,7 +473,7 @@ export function StaffPerformanceReport() {
 
           {/* Footer */}
           <div className="mt-6 pt-4 border-t text-center text-xs text-gray-500">
-            <p>এই রিপোর্টটি Mobile Mate সিস্টেম থেকে স্বয়ংক্রিয়ভাবে তৈরি হয়েছে</p>
+            <p>এই রিপোর্টটি MOBILE MATE PRO সিস্টেম থেকে স্বয়ংক্রিয়ভাবে তৈরি হয়েছে</p>
           </div>
         </div>
       </div>
