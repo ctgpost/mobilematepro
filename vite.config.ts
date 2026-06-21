@@ -24,8 +24,8 @@ export default defineConfig(({ mode }) => ({
         "robots.txt",
       ],
       manifest: {
-        name: "Apple Store",
-        short_name: "Apple Store",
+        name: "MOBILE MATE PRO",
+        short_name: "MOBILE MATE PRO",
         description: "Apple Store - Mobile inventory & POS",
         theme_color: "#1B5F74",
         background_color: "#1B5F74",
