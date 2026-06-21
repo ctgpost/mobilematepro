@@ -12,7 +12,12 @@ Deno.serve(async (req) => {
   try {
     const apiKey = Deno.env.get("CLOUDINARY_API_KEY");
     const apiSecret = Deno.env.get("CLOUDINARY_API_SECRET");
-    if (!apiKey || !apiSecret) throw new Error("Cloudinary credentials missing");
+    if (!apiKey || !apiSecret) {
+      return new Response(
+        JSON.stringify({ resources: [], next_cursor: null, not_configured: true }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     // Auth: must be logged in
     const authHeader = req.headers.get("Authorization") || "";
