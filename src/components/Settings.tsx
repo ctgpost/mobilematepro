@@ -20,6 +20,7 @@ import { ActivityLogger } from "@/hooks/useActivityLog";
 import { BrandingSettings } from "@/components/BrandingSettings";
 import { PrinterSettings } from "@/components/PrinterSettings";
 import { CloudinarySettings } from "@/components/CloudinarySettings";
+import { PWASettings } from "@/components/PWASettings";
 import { ProductFormSettings } from "@/components/ProductFormSettings";
 import { BackupExportSettings } from "@/components/BackupExportSettings";
 import { OfflineDiagnostics } from "@/components/OfflineDiagnostics";
