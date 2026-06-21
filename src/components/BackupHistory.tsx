@@ -41,9 +41,10 @@ import {
   restoreFromZip,
   logRestoreRun,
   BackupAnalysis,
-  analyzeJsonFile,
+  analyzeJsonFiles,
   restoreFromJsonGroups,
   JsonGroup,
+  MultiFileAnalysis,
 } from "@/lib/backupRestore";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -59,6 +60,8 @@ import {
   ChevronDown,
   Upload,
   FileJson,
+  X,
+  ChevronRight,
 } from "lucide-react";
 
 interface CloudResource {
@@ -135,15 +138,16 @@ export function BackupHistory() {
   const [restoring, setRestoring] = useState(false);
   const [preBackup, setPreBackup] = useState(true);
 
-  // JSON restore state
+  // JSON restore state (multi-file)
   const [jsonDialog, setJsonDialog] = useState(false);
-  const [jsonFile, setJsonFile] = useState<File | null>(null);
-  const [jsonGroups, setJsonGroups] = useState<JsonGroup[]>([]);
-  const [jsonWarnings, setJsonWarnings] = useState<string[]>([]);
-  const [jsonUnknownCount, setJsonUnknownCount] = useState(0);
+  const [jsonFiles, setJsonFiles] = useState<File[]>([]);
+  const [jsonMulti, setJsonMulti] = useState<MultiFileAnalysis | null>(null);
+  const [jsonAnalysing, setJsonAnalysing] = useState(false);
   const [jsonSelected, setJsonSelected] = useState<Set<TableKey>>(new Set());
   const [jsonBusy, setJsonBusy] = useState(false);
   const [jsonPreBackup, setJsonPreBackup] = useState(true);
+  const [jsonExpanded, setJsonExpanded] = useState<Set<string>>(new Set());
+  const [jsonManualMap, setJsonManualMap] = useState<Record<string, TableKey>>({});
 
   const loadHistory = async () => {
     setLoadingHistory(true);
@@ -307,26 +311,56 @@ export function BackupHistory() {
       s.includes(k) ? s.filter((x) => x !== k) : [...s, k],
     );
 
-  // ---------- JSON upload restore ----------
-  const handleJsonPick = async (file: File | null) => {
-    if (!file) return;
-    setJsonFile(file);
-    setJsonGroups([]);
-    setJsonWarnings([]);
-    setJsonUnknownCount(0);
+  // ---------- JSON upload restore (multi-file) ----------
+  const resetJsonState = () => {
+    setJsonFiles([]);
+    setJsonMulti(null);
     setJsonSelected(new Set());
+    setJsonExpanded(new Set());
+    setJsonManualMap({});
+  };
+
+  const runJsonAnalysis = async (files: File[]) => {
+    if (!files.length) {
+      setJsonMulti(null);
+      setJsonSelected(new Set());
+      return;
+    }
+    setJsonAnalysing(true);
     try {
-      const a = await analyzeJsonFile(file);
-      setJsonGroups(a.groups);
-      setJsonWarnings(a.warnings);
-      setJsonUnknownCount(a.unknown.rows.length);
-      setJsonSelected(new Set(a.groups.map((g) => g.table)));
-      if (a.groups.length === 0) {
+      const m = await analyzeJsonFiles(files);
+      setJsonMulti(m);
+      setJsonSelected(new Set(m.merged.map((g) => g.table)));
+      if (!m.merged.length && !m.unknown.length) {
         toast.warning("কোন পরিচিত টেবিল ম্যাচ হয়নি");
       }
     } catch (e: any) {
-      toast.error(e?.message || "JSON পড়া ব্যর্থ");
+      toast.error(e?.message || "JSON বিশ্লেষণ ব্যর্থ");
+    } finally {
+      setJsonAnalysing(false);
     }
+  };
+
+  const handleJsonPick = async (files: FileList | File[] | null) => {
+    if (!files) return;
+    const arr = Array.from(files).filter((f) => /\.json$/i.test(f.name));
+    if (!arr.length) {
+      toast.error("শুধু .json ফাইল অনুমোদিত");
+      return;
+    }
+    // Append (avoid duplicates by name+size)
+    const merged = [...jsonFiles];
+    for (const f of arr) {
+      if (!merged.some((x) => x.name === f.name && x.size === f.size)) merged.push(f);
+    }
+    setJsonFiles(merged);
+    await runJsonAnalysis(merged);
+  };
+
+  const removeJsonFile = async (name: string, size: number) => {
+    const next = jsonFiles.filter((f) => !(f.name === name && f.size === size));
+    setJsonFiles(next);
+    await runJsonAnalysis(next);
   };
 
   const toggleJsonTable = (k: TableKey) =>
@@ -337,14 +371,53 @@ export function BackupHistory() {
       return n;
     });
 
+  const toggleJsonExpand = (key: string) =>
+    setJsonExpanded((s) => {
+      const n = new Set(s);
+      if (n.has(key)) n.delete(key);
+      else n.add(key);
+      return n;
+    });
+
   const performJsonRestore = async () => {
-    const chosen = jsonGroups.filter((g) => jsonSelected.has(g.table));
-    if (!chosen.length) return;
+    if (!jsonMulti) return;
+    // Merged groups selected by user
+    const chosen: JsonGroup[] = jsonMulti.merged
+      .filter((m) => jsonSelected.has(m.table))
+      .map((m) => ({
+        table: m.table,
+        rows: m.rows,
+        confidence: m.confidences[0] || "fingerprint",
+        sourceFiles: m.sources,
+      }));
+
+    // Add manually-mapped unknown rows
+    for (const u of jsonMulti.unknown) {
+      const target = jsonManualMap[u.file];
+      if (target) {
+        const existing = chosen.find((c) => c.table === target);
+        if (existing) existing.rows.push(...u.rows);
+        else
+          chosen.push({
+            table: target,
+            rows: [...u.rows],
+            confidence: "manual",
+            sourceFiles: [u.file],
+          });
+      }
+    }
+
+    if (!chosen.length) {
+      toast.error("পুনরুদ্ধারের জন্য কোন টেবিল নির্বাচিত হয়নি");
+      return;
+    }
+
     setJsonBusy(true);
     const t = toast.loading("JSON পুনরুদ্ধার চলছে...");
     let preBackupUrl: string | null = null;
     let runErr: string | null = null;
     let results: Awaited<ReturnType<typeof restoreFromJsonGroups>> = [];
+    const fileNames = jsonFiles.map((f) => f.name).join(", ");
     try {
       if (jsonPreBackup) {
         toast.loading("পুনরুদ্ধারের আগে ব্যাকআপ তৈরি হচ্ছে...", { id: t });
@@ -375,7 +448,7 @@ export function BackupHistory() {
           { id: t, duration: 8000 },
         );
         setJsonDialog(false);
-        setJsonFile(null);
+        resetJsonState();
       } else {
         runErr = `Failed: ${failed.map((f) => f.table).join(", ")}`;
         toast.error(
@@ -388,8 +461,8 @@ export function BackupHistory() {
       toast.error(runErr, { id: t });
     } finally {
       await logRestoreRun({
-        source_url: "json-upload://" + (jsonFile?.name || "unknown.json"),
-        source_filename: jsonFile?.name || "unknown.json",
+        source_url: "json-upload://" + fileNames,
+        source_filename: fileNames || "unknown.json",
         tables: chosen.map((g) => g.table),
         results,
         pre_backup_url: preBackupUrl,
@@ -415,10 +488,7 @@ export function BackupHistory() {
             size="sm"
             variant="default"
             onClick={() => {
-              setJsonFile(null);
-              setJsonGroups([]);
-              setJsonWarnings([]);
-              setJsonSelected(new Set());
+              resetJsonState();
               setJsonDialog(true);
             }}
           >
@@ -824,37 +894,142 @@ export function BackupHistory() {
 
       {/* JSON Upload Restore Dialog */}
       <Dialog open={jsonDialog} onOpenChange={(o) => !jsonBusy && setJsonDialog(o)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileJson className="h-5 w-5" /> JSON ফাইল থেকে পুনরুদ্ধার
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             <p className="text-xs text-muted-foreground">
-              যে কোন JSON ফাইল আপলোড করুন — সিস্টেম স্বয়ংক্রিয়ভাবে টেবিল শনাক্ত করে
-              যথাযথস্থানে রেকর্ড পুনরুদ্ধার/আপডেট করবে। সাপোর্টেড ফরম্যাট:
-              অ্যারে অফ অবজেক্ট, একক অবজেক্ট, <code>{"{table, rows}"}</code>, অথবা
-              মাল্টি-টেবিল অবজেক্ট।
+              একসাথে একাধিক JSON ফাইল আপলোড করুন — সিস্টেম প্রতিটি ফাইল পড়ে
+              স্বয়ংক্রিয়ভাবে টেবিল শনাক্ত করবে এবং পুনরুদ্ধারের আগে কী কী যাবে
+              সব দেখাবে। সাপোর্টেড: অ্যারে, একক অবজেক্ট,
+              <code> {"{table, rows}"}</code>, মাল্টি-টেবিল অবজেক্ট।
             </p>
 
-            <label className="flex items-center justify-center gap-2 border-2 border-dashed rounded-lg p-6 cursor-pointer hover:bg-muted/50">
-              <Upload className="h-5 w-5 text-muted-foreground" />
-              <span className="text-sm">
-                {jsonFile ? jsonFile.name : "JSON ফাইল নির্বাচন করুন বা ড্র্যাগ করুন"}
+            {/* Drop zone */}
+            <label
+              className="flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg p-6 cursor-pointer hover:bg-muted/50"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                handleJsonPick(e.dataTransfer.files);
+              }}
+            >
+              <Upload className="h-6 w-6 text-muted-foreground" />
+              <span className="text-sm font-medium">
+                একাধিক JSON ফাইল নির্বাচন করুন বা এখানে ড্রপ করুন
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {jsonFiles.length > 0
+                  ? `${jsonFiles.length} টি ফাইল নির্বাচিত`
+                  : "একসাথে অনেকগুলো ফাইল দেওয়া যাবে"}
               </span>
               <input
                 type="file"
+                multiple
                 accept=".json,application/json"
                 className="hidden"
-                onChange={(e) => handleJsonPick(e.target.files?.[0] || null)}
+                onChange={(e) => handleJsonPick(e.target.files)}
               />
             </label>
 
-            {jsonWarnings.length > 0 && (
+            {jsonAnalysing && (
+              <p className="text-sm text-muted-foreground">বিশ্লেষণ হচ্ছে...</p>
+            )}
+
+            {/* Per-file cards */}
+            {jsonFiles.length > 0 && jsonMulti && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">আপলোডকৃত ফাইলসমূহ</p>
+                {jsonMulti.perFile.map((pf) => {
+                  const key = `${pf.file}:${pf.size}`;
+                  const isOpen = jsonExpanded.has(key);
+                  const totalRows =
+                    pf.analysis.groups.reduce((s, g) => s + g.rows.length, 0) +
+                    pf.analysis.unknown.rows.length;
+                  return (
+                    <div key={key} className="border rounded-lg overflow-hidden">
+                      <div className="flex items-center gap-2 px-3 py-2 bg-muted/40">
+                        <button
+                          type="button"
+                          onClick={() => toggleJsonExpand(key)}
+                          className="text-muted-foreground"
+                          aria-label="toggle"
+                        >
+                          {isOpen ? (
+                            <ChevronDown className="h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4" />
+                          )}
+                        </button>
+                        <FileJson className="h-4 w-4 text-primary" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{pf.file}</p>
+                          <p className="text-[11px] text-muted-foreground">
+                            {formatBytes(pf.size)} • {totalRows} রেকর্ড •{" "}
+                            {pf.analysis.groups.length} টেবিল
+                            {pf.analysis.unknown.rows.length > 0 &&
+                              ` • ${pf.analysis.unknown.rows.length} অশনাক্ত`}
+                          </p>
+                        </div>
+                        {pf.error && (
+                          <Badge variant="destructive" className="text-[10px]">
+                            ত্রুটি
+                          </Badge>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => removeJsonFile(pf.file, pf.size)}
+                          disabled={jsonBusy}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      {isOpen && (
+                        <div className="px-3 py-2 space-y-2 text-xs">
+                          {pf.error && (
+                            <p className="text-destructive">{pf.error}</p>
+                          )}
+                          {pf.analysis.groups.map((g) => (
+                            <div key={g.table} className="flex flex-wrap items-center gap-2">
+                              <Badge variant="secondary">
+                                {TABLE_LABEL[g.table] || g.table}
+                              </Badge>
+                              <span className="text-muted-foreground">
+                                {g.rows.length} রেকর্ড
+                              </span>
+                              <Badge variant="outline" className="text-[10px]">
+                                {g.confidence === "explicit"
+                                  ? "নাম থেকে"
+                                  : g.confidence === "filename"
+                                    ? "ফাইলনাম থেকে"
+                                    : g.confidence === "fingerprint"
+                                      ? "ফিল্ড থেকে"
+                                      : "ম্যানুয়াল"}
+                              </Badge>
+                            </div>
+                          ))}
+                          {pf.analysis.unknown.rows.length > 0 && (
+                            <p className="text-orange-600">
+                              ⚠️ {pf.analysis.unknown.rows.length} টি রেকর্ড শনাক্ত হয়নি
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Warnings */}
+            {jsonMulti && jsonMulti.warnings.length > 0 && (
               <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-900 p-3 rounded text-xs space-y-1">
-                {jsonWarnings.map((w, i) => (
+                {jsonMulti.warnings.map((w, i) => (
                   <div key={i} className="flex gap-2">
                     <AlertTriangle className="h-4 w-4 text-orange-600 shrink-0 mt-0.5" />
                     <span>{w}</span>
@@ -863,71 +1038,191 @@ export function BackupHistory() {
               </div>
             )}
 
-            {jsonGroups.length > 0 && (
+            {/* Merged table summary */}
+            {jsonMulti && jsonMulti.merged.length > 0 && (
               <>
                 <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-amber-900 dark:text-amber-200 p-3 rounded text-xs">
-                  ⚠️ <b>id</b> অনুযায়ী আপডেট/যোগ হবে। অপরিবর্তনীয়।
+                  ⚠️ <b>id</b> অনুযায়ী আপডেট/যোগ হবে। অপরিবর্তনীয় — প্রি-ব্যাকআপ রাখুন।
                 </div>
 
                 <div className="flex items-center justify-between rounded border p-3 bg-muted/30">
                   <div>
                     <p className="text-sm font-medium">পুনরুদ্ধারের আগে ব্যাকআপ নিন</p>
                     <p className="text-xs text-muted-foreground">
-                      বর্তমান অবস্থা ZIP-এ সেভ + ক্লাউডে আপলোড
+                      নির্বাচিত টেবিলগুলোর বর্তমান অবস্থা ZIP + ক্লাউডে সেভ
                     </p>
                   </div>
                   <Switch checked={jsonPreBackup} onCheckedChange={setJsonPreBackup} />
                 </div>
 
                 <div>
-                  <p className="text-sm font-medium mb-2">শনাক্তকৃত টেবিল</p>
-                  <div className="border rounded divide-y max-h-64 overflow-auto">
-                    {jsonGroups.map((g) => (
-                      <label
-                        key={g.table}
-                        className="flex items-center gap-2 text-sm cursor-pointer px-3 py-2 hover:bg-muted/50"
-                      >
-                        <Checkbox
-                          checked={jsonSelected.has(g.table)}
-                          onCheckedChange={() => toggleJsonTable(g.table)}
-                        />
-                        <span className="flex-1">
-                          {TABLE_LABEL[g.table] || g.table}
-                        </span>
-                        <Badge variant="outline" className="text-[10px]">
-                          {g.confidence === "explicit"
-                            ? "নাম থেকে"
-                            : g.confidence === "filename"
-                              ? "ফাইলনাম"
-                              : "ফিল্ড থেকে"}
-                        </Badge>
-                        <Badge variant="secondary" className="tabular-nums">
-                          {g.rows.length.toLocaleString("bn-BD")}
-                        </Badge>
-                      </label>
-                    ))}
-                  </div>
-                  {jsonUnknownCount > 0 && (
-                    <p className="text-[11px] text-muted-foreground mt-1">
-                      {jsonUnknownCount} টি অশনাক্তকৃত রেকর্ড স্কিপ হবে
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-medium">
+                      পুনরুদ্ধারের সারাংশ ({jsonMulti.merged.length} টেবিল)
                     </p>
-                  )}
+                    <div className="flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          setJsonSelected(
+                            new Set(jsonMulti.merged.map((m) => m.table)),
+                          )
+                        }
+                      >
+                        সব
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setJsonSelected(new Set())}
+                      >
+                        বাদ
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="border rounded overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-10"></TableHead>
+                          <TableHead>টেবিল</TableHead>
+                          <TableHead className="text-right">রেকর্ড</TableHead>
+                          <TableHead className="text-right">নতুন</TableHead>
+                          <TableHead className="text-right">আপডেট</TableHead>
+                          <TableHead>উৎস ফাইল</TableHead>
+                          <TableHead></TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {jsonMulti.merged.map((m) => {
+                          const sampleKey = `sample:${m.table}`;
+                          const isOpen = jsonExpanded.has(sampleKey);
+                          return (
+                            <>
+                              <TableRow key={m.table}>
+                                <TableCell>
+                                  <Checkbox
+                                    checked={jsonSelected.has(m.table)}
+                                    onCheckedChange={() => toggleJsonTable(m.table)}
+                                  />
+                                </TableCell>
+                                <TableCell className="font-medium text-sm">
+                                  {TABLE_LABEL[m.table] || m.table}
+                                  <div className="text-[10px] text-muted-foreground">
+                                    {m.table}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-right tabular-nums">
+                                  {m.rows.length.toLocaleString("bn-BD")}
+                                </TableCell>
+                                <TableCell className="text-right tabular-nums text-green-600">
+                                  +{m.willInsert.toLocaleString("bn-BD")}
+                                </TableCell>
+                                <TableCell className="text-right tabular-nums text-amber-600">
+                                  ~{m.willUpdate.toLocaleString("bn-BD")}
+                                </TableCell>
+                                <TableCell className="text-xs">
+                                  <div className="flex flex-wrap gap-1 max-w-[180px]">
+                                    {m.sources.map((s) => (
+                                      <Badge
+                                        key={s}
+                                        variant="outline"
+                                        className="text-[10px]"
+                                      >
+                                        {s}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => toggleJsonExpand(sampleKey)}
+                                  >
+                                    {isOpen ? (
+                                      <ChevronDown className="h-3 w-3" />
+                                    ) : (
+                                      <ChevronRight className="h-3 w-3" />
+                                    )}
+                                    নমুনা
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                              {isOpen && m.sampleRow && (
+                                <TableRow>
+                                  <TableCell colSpan={7} className="bg-muted/30">
+                                    <pre className="text-[10px] overflow-x-auto whitespace-pre-wrap break-all max-h-48 overflow-y-auto">
+                                      {JSON.stringify(m.sampleRow, null, 2)}
+                                    </pre>
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                            </>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               </>
+            )}
+
+            {/* Unknown rows — manual mapping */}
+            {jsonMulti && jsonMulti.unknown.length > 0 && (
+              <div className="border border-orange-300 rounded p-3 space-y-2 bg-orange-50/50 dark:bg-orange-950/20">
+                <p className="text-sm font-medium text-orange-900 dark:text-orange-200">
+                  অশনাক্তকৃত রেকর্ড — ম্যানুয়ালি টেবিল বাছুন
+                </p>
+                {jsonMulti.unknown.map((u) => (
+                  <div key={u.file} className="flex items-center gap-2 text-xs">
+                    <span className="flex-1 truncate">
+                      <b>{u.file}</b> — {u.rows.length} রেকর্ড
+                    </span>
+                    <select
+                      className="border rounded px-2 py-1 text-xs bg-background"
+                      value={jsonManualMap[u.file] || ""}
+                      onChange={(e) =>
+                        setJsonManualMap((m) => ({
+                          ...m,
+                          [u.file]: e.target.value as TableKey,
+                        }))
+                      }
+                    >
+                      <option value="">— স্কিপ —</option>
+                      {ALL_TABLES.map((t) => (
+                        <option key={t.key} value={t.key}>
+                          {t.label} ({t.key})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
 
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setJsonDialog(false)}
+              onClick={() => {
+                setJsonDialog(false);
+                resetJsonState();
+              }}
               disabled={jsonBusy}
             >
               বাতিল
             </Button>
             <Button
               onClick={performJsonRestore}
-              disabled={jsonBusy || jsonGroups.length === 0 || jsonSelected.size === 0}
+              disabled={
+                jsonBusy ||
+                jsonAnalysing ||
+                !jsonMulti ||
+                (jsonSelected.size === 0 &&
+                  Object.values(jsonManualMap).filter(Boolean).length === 0)
+              }
             >
               {jsonBusy ? "পুনরুদ্ধার চলছে..." : "পুনরুদ্ধার করুন"}
             </Button>
