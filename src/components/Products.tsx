@@ -1287,14 +1287,16 @@ export function Products() {
       <BarcodeScanner
         isOpen={showImeiScanner}
         onClose={() => setShowImeiScanner(false)}
+        onError={(msg) => setImeiScanError(msg)}
         onScan={(code) => {
           const digits = sanitizeImei(code);
           if (digits.length !== 15) {
-            toast.error(
-              `স্ক্যান হয়েছে কিন্তু IMEI ১৫ ডিজিট নয় (${digits.length} ডিজিট পাওয়া গেছে)। বারকোড পরিষ্কার করে আবার স্ক্যান করুন।`,
-            );
+            const msg = `স্ক্যান হয়েছে কিন্তু IMEI ১৫ ডিজিট নয় (${digits.length} ডিজিট পাওয়া গেছে)। বারকোড পরিষ্কার করে আবার স্ক্যান করুন।`;
+            toast.error(msg);
+            setImeiScanError(msg);
             return;
           }
+          setImeiScanError(null);
           setFormData((prev) => ({ ...prev, imei: digits }));
           setShowImeiScanner(false);
           toast.success(`IMEI স্ক্যান সফল: ${digits}`);
