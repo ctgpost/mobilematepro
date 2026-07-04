@@ -358,8 +358,25 @@ export function Sales() {
                     placeholder="ID, কাস্টমার, প্রোডাক্ট বা IMEI দিয়ে খুঁজুন..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9 text-sm md:text-base"
+                    className="pl-9 pr-16 text-sm md:text-base"
                   />
+                  {isSearchPending && (
+                    <Loader2 className="absolute right-9 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
+                  )}
+                  {searchTerm && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchTerm("");
+                        setDebouncedSearch("");
+                        setCurrentPage(1);
+                      }}
+                      aria-label="সার্চ পরিষ্কার করুন"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 inline-flex items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                 </div>
                 <Button
                   type="button"
