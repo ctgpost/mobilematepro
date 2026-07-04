@@ -14,7 +14,7 @@ import { ProductDetailModal } from "./ProductDetailModal";
 import { BarcodeScanner } from "./BarcodeScanner";
 import { ProductQuickView } from "./ProductQuickView";
 import { ProductLabelPrint } from "./ProductLabelPrint";
-import { Eye, ScanBarcode, Download, FileSpreadsheet, FileText, Printer } from "lucide-react";
+import { Eye, ScanBarcode, Download, FileSpreadsheet, FileText, Printer, Loader2 } from "lucide-react";
 import { ActivityLogger } from "@/hooks/useActivityLog";
 import { CollapsibleSection } from "./CollapsibleSection";
 import { PageHeader } from "./PageHeader";
@@ -41,6 +41,11 @@ const friendlyProductError = (error: any, imei?: string): string => {
   if (code === "23503") return "সম্পর্কিত তথ্য পাওয়া যায়নি (ক্যাটাগরি/সাপ্লায়ার)।";
   return msg || "প্রোডাক্ট সেভ করতে ব্যর্থ হয়েছে";
 };
+
+// Strip spaces, dashes and any non-digit char, then cap at 15 digits.
+// Handles input from keyboard-emulated hardware scanners, camera scans and manual typing.
+const sanitizeImei = (raw: string): string =>
+  (raw || "").replace(/[\s\-_.]/g, "").replace(/\D/g, "").slice(0, 15);
 
 
 export function Products() {
@@ -679,8 +684,13 @@ export function Products() {
                     <Input
                       value={formData.imei}
                       onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, '').slice(0, 15);
+                        const value = sanitizeImei(e.target.value);
                         setFormData({ ...formData, imei: value });
+                      }}
+                      onPaste={(e) => {
+                        e.preventDefault();
+                        const text = e.clipboardData.getData("text");
+                        setFormData((prev) => ({ ...prev, imei: sanitizeImei(text) }));
                       }}
                       placeholder="Enter 15-digit IMEI or scan"
                       required
@@ -697,14 +707,26 @@ export function Products() {
                       variant="outline"
                       size="icon"
                       onClick={() => setShowImeiScanner(true)}
+                      disabled={showImeiScanner}
                       title="ক্যামেরা / বারকোড স্ক্যানার দিয়ে IMEI স্ক্যান করুন"
                       aria-label="Scan IMEI"
                     >
-                      <ScanBarcode className="h-4 w-4" />
+                      {showImeiScanner ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <ScanBarcode className="h-4 w-4" />
+                      )}
                     </Button>
                   </div>
+                  {showImeiScanner && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      স্ক্যানার চলছে... ক্যামেরার সামনে বারকোড/IMEI লেবেল ধরুন
+                    </p>
+                  )}
                   {formData.imei && formData.imei.length !== 15 && (
-                    <p className="text-xs text-red-500 mt-1">IMEI must be exactly 15 digits</p>
+                    <p className="text-xs text-red-500 mt-1">
+                      IMEI অবশ্যই ঠিক ১৫ ডিজিটের হতে হবে (এখন {formData.imei.length} ডিজিট)
+                    </p>
                   )}
                 </div>
                 <div>
@@ -1237,14 +1259,16 @@ export function Products() {
         isOpen={showImeiScanner}
         onClose={() => setShowImeiScanner(false)}
         onScan={(code) => {
-          const digits = (code || "").replace(/\D/g, "").slice(0, 15);
-          if (digits.length < 14) {
-            toast.error(`স্ক্যান হয়েছে কিন্তু IMEI ১৫ ডিজিট নয় (${digits.length} ডিজিট)। আবার চেষ্টা করুন।`);
+          const digits = sanitizeImei(code);
+          if (digits.length !== 15) {
+            toast.error(
+              `স্ক্যান হয়েছে কিন্তু IMEI ১৫ ডিজিট নয় (${digits.length} ডিজিট পাওয়া গেছে)। বারকোড পরিষ্কার করে আবার স্ক্যান করুন।`,
+            );
             return;
           }
           setFormData((prev) => ({ ...prev, imei: digits }));
           setShowImeiScanner(false);
-          if (digits.length === 15) toast.success("IMEI স্ক্যান সফল");
+          toast.success(`IMEI স্ক্যান সফল: ${digits}`);
         }}
       />
 
