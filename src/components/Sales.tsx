@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAll } from "@/lib/fetchAll";
@@ -55,8 +56,10 @@ interface SaleDetail {
 }
 
 export function Sales() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialQ = searchParams.get("q") ?? "";
+  const [searchTerm, setSearchTerm] = useState(initialQ);
+  const [debouncedSearch, setDebouncedSearch] = useState(initialQ);
   const [showSalesScanner, setShowSalesScanner] = useState(false);
   const [filterPaymentMethod, setFilterPaymentMethod] = useState<string>("all");
   const [filterDateFrom, setFilterDateFrom] = useState("");
@@ -73,6 +76,46 @@ export function Sales() {
     const t = setTimeout(() => setDebouncedSearch(searchTerm.trim()), 300);
     return () => clearTimeout(t);
   }, [searchTerm]);
+
+  // Sync search term with URL query (?q=...) so refresh / back-forward preserve it.
+  useEffect(() => {
+    const current = searchParams.get("q") ?? "";
+    const next = debouncedSearch.trim();
+    if (current === next) return;
+    const params = new URLSearchParams(searchParams);
+    if (next) params.set("q", next);
+    else params.delete("q");
+    setSearchParams(params, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch]);
+
+  // Respond to external URL changes (back/forward).
+  useEffect(() => {
+    const q = searchParams.get("q") ?? "";
+    if (q !== searchTerm) {
+      setSearchTerm(q);
+      setDebouncedSearch(q);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  const isSearchPending = searchTerm.trim() !== debouncedSearch;
+
+  // Helper: does a sale match the active search term (used for highlight)?
+  const searchLowerActive = debouncedSearch.toLowerCase();
+  const saleMatchesSearch = (sale: SaleDetail) => {
+    if (!debouncedSearch) return false;
+    return (
+      sale.id.toLowerCase().includes(searchLowerActive) ||
+      sale.customers?.name?.toLowerCase().includes(searchLowerActive) ||
+      (sale.sale_items || []).some(
+        (item) =>
+          item?.products?.name?.toLowerCase().includes(searchLowerActive) ||
+          item?.products?.imei?.toLowerCase().includes(searchLowerActive) ||
+          item?.products?.brand?.toLowerCase().includes(searchLowerActive)
+      )
+    );
+  };
 
   // Fetch sales data
   const { data: sales = [], isLoading } = useQuery({
