@@ -9,6 +9,7 @@ interface BarcodeScannerProps {
   isOpen: boolean;
   onClose: () => void;
   onScan: (barcode: string) => void;
+  onError?: (message: string) => void;
 }
 
 // Retail-grade formats most relevant for products + IMEI labels.
@@ -28,9 +29,11 @@ const SUPPORTED_FORMATS = [
 
 const READER_ID = "barcode-reader-region";
 
-export function BarcodeScanner({ isOpen, onClose, onScan }: BarcodeScannerProps) {
+export function BarcodeScanner({ isOpen, onClose, onScan, onError }: BarcodeScannerProps) {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const startedRef = useRef(false);
+  const lockedRef = useRef(false);
+  const lastScanRef = useRef<{ text: string; at: number }>({ text: "", at: 0 });
   const [cameras, setCameras] = useState<CameraDevice[]>([]);
   const [activeCameraId, setActiveCameraId] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(false);
@@ -42,6 +45,8 @@ export function BarcodeScanner({ isOpen, onClose, onScan }: BarcodeScannerProps)
   // Cold start when dialog opens
   useEffect(() => {
     if (isOpen) {
+      lockedRef.current = false;
+      lastScanRef.current = { text: "", at: 0 };
       void initAndStart();
     } else {
       void teardown();
@@ -93,21 +98,26 @@ export function BarcodeScanner({ isOpen, onClose, onScan }: BarcodeScannerProps)
       console.error("Camera permission/enumerate error:", err);
       const name = err?.name || "";
       if (name === "NotAllowedError" || name === "PermissionDeniedError") {
-        setErrorMsg(
+        emitError(
           "ক্যামেরার অনুমতি বন্ধ রয়েছে। ব্রাউজার সেটিংস → সাইট পারমিশনে গিয়ে ক্যামেরা 'Allow' করে আবার চেষ্টা করুন।"
         );
       } else if (name === "NotFoundError" || name === "DevicesNotFoundError") {
-        setErrorMsg("ডিভাইসে কোন ক্যামেরা পাওয়া যায়নি।");
+        emitError("ডিভাইসে কোন ক্যামেরা পাওয়া যায়নি।");
       } else if (name === "NotReadableError" || name === "TrackStartError") {
-        setErrorMsg("ক্যামেরা অন্য একটি অ্যাপ ব্যবহার করছে। সেটি বন্ধ করে আবার চেষ্টা করুন।");
+        emitError("ক্যামেরা অন্য একটি অ্যাপ ব্যবহার করছে। সেটি বন্ধ করে আবার চেষ্টা করুন।");
       } else if (name === "OverconstrainedError") {
-        setErrorMsg("রিয়ার ক্যামেরা পাওয়া যায়নি। অন্য ক্যামেরা ব্যবহার করুন।");
+        emitError("রিয়ার ক্যামেরা পাওয়া যায়নি। অন্য ক্যামেরা ব্যবহার করুন।");
       } else {
-        setErrorMsg(err?.message || "ক্যামেরা চালু করা যায়নি।");
+        emitError(err?.message || "ক্যামেরা চালু করা যায়নি।");
       }
     } finally {
       setIsStarting(false);
     }
+  };
+
+  const emitError = (msg: string) => {
+    setErrorMsg(msg);
+    onError?.(msg);
   };
 
   const startWithCamera = async (cameraId: string) => {
@@ -138,6 +148,17 @@ export function BarcodeScanner({ isOpen, onClose, onScan }: BarcodeScannerProps)
         } as any,
         (decodedText) => {
           if (!decodedText) return;
+          // Prevent duplicate callback: lock after first success + dedupe same code within 1.5s
+          const now = Date.now();
+          if (lockedRef.current) return;
+          if (
+            lastScanRef.current.text === decodedText &&
+            now - lastScanRef.current.at < 1500
+          ) {
+            return;
+          }
+          lockedRef.current = true;
+          lastScanRef.current = { text: decodedText, at: now };
           // Beep via vibration on mobile
           try { (navigator as any).vibrate?.(60); } catch {}
           toast.success(`স্ক্যান সফল: ${decodedText}`);
@@ -167,7 +188,7 @@ export function BarcodeScanner({ isOpen, onClose, onScan }: BarcodeScannerProps)
       }
     } catch (err: any) {
       console.error("startWithCamera error:", err);
-      setErrorMsg(err?.message || "ক্যামেরা চালু করা যায়নি।");
+      emitError(err?.message || "ক্যামেরা চালু করা যায়নি।");
     } finally {
       setIsStarting(false);
     }

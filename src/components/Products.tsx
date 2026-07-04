@@ -60,6 +60,7 @@ export function Products() {
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [showScanner, setShowScanner] = useState(false);
   const [showImeiScanner, setShowImeiScanner] = useState(false);
+  const [imeiScanError, setImeiScanError] = useState<string | null>(null);
   const [showOutOfStock, setShowOutOfStock] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -706,7 +707,10 @@ export function Products() {
                       type="button"
                       variant="outline"
                       size="icon"
-                      onClick={() => setShowImeiScanner(true)}
+                      onClick={() => {
+                        setImeiScanError(null);
+                        setShowImeiScanner(true);
+                      }}
                       disabled={showImeiScanner}
                       title="ক্যামেরা / বারকোড স্ক্যানার দিয়ে IMEI স্ক্যান করুন"
                       aria-label="Scan IMEI"
@@ -722,6 +726,26 @@ export function Products() {
                     <p className="text-xs text-muted-foreground mt-1">
                       স্ক্যানার চলছে... ক্যামেরার সামনে বারকোড/IMEI লেবেল ধরুন
                     </p>
+                  )}
+                  {imeiScanError && !showImeiScanner && (
+                    <div className="mt-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive space-y-2">
+                      <p className="font-semibold">স্ক্যান ব্যর্থ</p>
+                      <p>{imeiScanError}</p>
+                      <p className="text-muted-foreground">
+                        পরবর্তী ধাপ: ব্রাউজারের অ্যাড্রেস বারের পাশে 🔒 আইকনে ক্লিক করে সাইট পারমিশন থেকে ক্যামেরা "Allow" করুন, অথবা হার্ডওয়্যার স্ক্যানার/ম্যানুয়াল ইনপুট ব্যবহার করুন।
+                      </p>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setImeiScanError(null);
+                          setShowImeiScanner(true);
+                        }}
+                      >
+                        আবার চেষ্টা করুন
+                      </Button>
+                    </div>
                   )}
                   {formData.imei && formData.imei.length !== 15 && (
                     <p className="text-xs text-red-500 mt-1">
@@ -984,7 +1008,12 @@ export function Products() {
                 >
                   Cancel
                 </Button>
-                <Button type="submit" className="bg-gradient-to-r from-primary to-accent">
+                <Button
+                  type="submit"
+                  disabled={formData.imei.length !== 15}
+                  className="bg-gradient-to-r from-primary to-accent disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={formData.imei.length !== 15 ? "IMEI অবশ্যই ঠিক ১৫ ডিজিটের হতে হবে" : undefined}
+                >
                   {editingProduct ? "Update" : "Add"} Product
                 </Button>
               </div>
@@ -1258,14 +1287,16 @@ export function Products() {
       <BarcodeScanner
         isOpen={showImeiScanner}
         onClose={() => setShowImeiScanner(false)}
+        onError={(msg) => setImeiScanError(msg)}
         onScan={(code) => {
           const digits = sanitizeImei(code);
           if (digits.length !== 15) {
-            toast.error(
-              `স্ক্যান হয়েছে কিন্তু IMEI ১৫ ডিজিট নয় (${digits.length} ডিজিট পাওয়া গেছে)। বারকোড পরিষ্কার করে আবার স্ক্যান করুন।`,
-            );
+            const msg = `স্ক্যান হয়েছে কিন্তু IMEI ১৫ ডিজিট নয় (${digits.length} ডিজিট পাওয়া গেছে)। বারকোড পরিষ্কার করে আবার স্ক্যান করুন।`;
+            toast.error(msg);
+            setImeiScanError(msg);
             return;
           }
+          setImeiScanError(null);
           setFormData((prev) => ({ ...prev, imei: digits }));
           setShowImeiScanner(false);
           toast.success(`IMEI স্ক্যান সফল: ${digits}`);
