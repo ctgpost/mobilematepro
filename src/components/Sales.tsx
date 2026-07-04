@@ -310,23 +310,19 @@ export function Sales() {
             {showOverview ? (
               <>
                 <ChevronUp className="h-4 w-4" />
-                <span>ওভারভিউ ও ফিল্টার লুকান</span>
+                <span>ওভারভিউ লুকান</span>
               </>
             ) : (
               <>
                 <ChevronDown className="h-4 w-4" />
-                <span>ওভারভিউ ও ফিল্টার দেখান</span>
-                {hasActiveFilters && (
-                  <span className="ml-1 inline-flex h-2 w-2 rounded-full bg-accent" aria-hidden />
-                )}
+                <span>ওভারভিউ দেখান</span>
               </>
             )}
           </Button>
         </div>
 
+        {/* Stats Cards (collapsible) */}
         {showOverview && (
-        <>
-        {/* Stats Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4 animate-fade-in">
         <Card className="card-hover">
           <CardHeader className="pb-3 p-4 md:p-6">
@@ -347,6 +343,7 @@ export function Sales() {
           </CardHeader>
         </Card>
         </div>
+        )}
 
         {/* Filters */}
         <Card className="animate-fade-in">
@@ -501,8 +498,6 @@ export function Sales() {
         </CardContent>
         )}
         </Card>
-        </>
-        )}
       </div>
 
       {/* Scrollable Content */}
