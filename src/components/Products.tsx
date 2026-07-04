@@ -1233,6 +1233,21 @@ export function Products() {
         onScan={handleBarcodeScanned}
       />
 
+      <BarcodeScanner
+        isOpen={showImeiScanner}
+        onClose={() => setShowImeiScanner(false)}
+        onScan={(code) => {
+          const digits = (code || "").replace(/\D/g, "").slice(0, 15);
+          if (digits.length < 14) {
+            toast.error(`স্ক্যান হয়েছে কিন্তু IMEI ১৫ ডিজিট নয় (${digits.length} ডিজিট)। আবার চেষ্টা করুন।`);
+            return;
+          }
+          setFormData((prev) => ({ ...prev, imei: digits }));
+          setShowImeiScanner(false);
+          if (digits.length === 15) toast.success("IMEI স্ক্যান সফল");
+        }}
+      />
+
       <ProductQuickView
         products={filteredProducts || []}
         initialIndex={quickViewIndex}
