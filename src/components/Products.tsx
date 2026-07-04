@@ -684,8 +684,13 @@ export function Products() {
                     <Input
                       value={formData.imei}
                       onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, '').slice(0, 15);
+                        const value = sanitizeImei(e.target.value);
                         setFormData({ ...formData, imei: value });
+                      }}
+                      onPaste={(e) => {
+                        e.preventDefault();
+                        const text = e.clipboardData.getData("text");
+                        setFormData((prev) => ({ ...prev, imei: sanitizeImei(text) }));
                       }}
                       placeholder="Enter 15-digit IMEI or scan"
                       required
@@ -702,14 +707,26 @@ export function Products() {
                       variant="outline"
                       size="icon"
                       onClick={() => setShowImeiScanner(true)}
+                      disabled={showImeiScanner}
                       title="ক্যামেরা / বারকোড স্ক্যানার দিয়ে IMEI স্ক্যান করুন"
                       aria-label="Scan IMEI"
                     >
-                      <ScanBarcode className="h-4 w-4" />
+                      {showImeiScanner ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <ScanBarcode className="h-4 w-4" />
+                      )}
                     </Button>
                   </div>
+                  {showImeiScanner && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      স্ক্যানার চলছে... ক্যামেরার সামনে বারকোড/IMEI লেবেল ধরুন
+                    </p>
+                  )}
                   {formData.imei && formData.imei.length !== 15 && (
-                    <p className="text-xs text-red-500 mt-1">IMEI must be exactly 15 digits</p>
+                    <p className="text-xs text-red-500 mt-1">
+                      IMEI অবশ্যই ঠিক ১৫ ডিজিটের হতে হবে (এখন {formData.imei.length} ডিজিট)
+                    </p>
                   )}
                 </div>
                 <div>
