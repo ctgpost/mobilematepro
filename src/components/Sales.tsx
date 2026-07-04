@@ -387,7 +387,8 @@ export function Sales() {
           </CardHeader>
         </Card>
         </div>
-        )}
+        </div>
+        </div>
 
         {/* Filters */}
         <Card className="animate-fade-in">
