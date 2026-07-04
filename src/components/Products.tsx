@@ -1259,14 +1259,16 @@ export function Products() {
         isOpen={showImeiScanner}
         onClose={() => setShowImeiScanner(false)}
         onScan={(code) => {
-          const digits = (code || "").replace(/\D/g, "").slice(0, 15);
-          if (digits.length < 14) {
-            toast.error(`স্ক্যান হয়েছে কিন্তু IMEI ১৫ ডিজিট নয় (${digits.length} ডিজিট)। আবার চেষ্টা করুন।`);
+          const digits = sanitizeImei(code);
+          if (digits.length !== 15) {
+            toast.error(
+              `স্ক্যান হয়েছে কিন্তু IMEI ১৫ ডিজিট নয় (${digits.length} ডিজিট পাওয়া গেছে)। বারকোড পরিষ্কার করে আবার স্ক্যান করুন।`,
+            );
             return;
           }
           setFormData((prev) => ({ ...prev, imei: digits }));
           setShowImeiScanner(false);
-          if (digits.length === 15) toast.success("IMEI স্ক্যান সফল");
+          toast.success(`IMEI স্ক্যান সফল: ${digits}`);
         }}
       />
 
