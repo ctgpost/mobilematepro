@@ -54,6 +54,7 @@ export function Products() {
   const [filterCondition, setFilterCondition] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [showScanner, setShowScanner] = useState(false);
+  const [showImeiScanner, setShowImeiScanner] = useState(false);
   const [showOutOfStock, setShowOutOfStock] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
