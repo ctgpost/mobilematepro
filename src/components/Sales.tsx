@@ -328,8 +328,8 @@ export function Sales() {
                 </Button>
               </div>
               <BarcodeScanner
-                open={showSalesScanner}
-                onOpenChange={setShowSalesScanner}
+                isOpen={showSalesScanner}
+                onClose={() => setShowSalesScanner(false)}
                 onScan={(code) => {
                   const clean = code.replace(/[\s\-_.]/g, "").replace(/\D/g, "");
                   const value = clean || code.trim();
