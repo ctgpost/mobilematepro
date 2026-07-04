@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
-import { Search, Calendar, User, CreditCard, Package, Filter, X, FileDown, FileSpreadsheet, Phone, MessageSquare, Mail, Eye, Share2, Copy, ScanBarcode, Loader2 } from "lucide-react";
+import { Search, Calendar, User, CreditCard, Package, Filter, X, FileDown, FileSpreadsheet, Phone, MessageSquare, Mail, Eye, Share2, Copy, ScanBarcode, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { SwipeableRow, swipeIntents } from "./SwipeableRow";
 import { BarcodeScanner } from "./BarcodeScanner";
 import { toast } from "sonner";
@@ -68,6 +68,7 @@ export function Sales() {
   const [selectedSale, setSelectedSale] = useState<SaleDetail | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
+  const [showOverview, setShowOverview] = useState(false);
   const itemsPerPage = 10;
   const printRef = useRef<HTMLDivElement>(null);
 
@@ -296,8 +297,37 @@ export function Sales() {
       />
       <div className="space-y-4 pt-3">
 
+        {/* Overview toggle: hides stats + filters to give sales list more room */}
+        <div className="flex justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setShowOverview((v) => !v)}
+            className="gap-2"
+            aria-expanded={showOverview}
+          >
+            {showOverview ? (
+              <>
+                <ChevronUp className="h-4 w-4" />
+                <span>ওভারভিউ ও ফিল্টার লুকান</span>
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-4 w-4" />
+                <span>ওভারভিউ ও ফিল্টার দেখান</span>
+                {hasActiveFilters && (
+                  <span className="ml-1 inline-flex h-2 w-2 rounded-full bg-accent" aria-hidden />
+                )}
+              </>
+            )}
+          </Button>
+        </div>
+
+        {showOverview && (
+        <>
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4 animate-fade-in">
         <Card className="card-hover">
           <CardHeader className="pb-3 p-4 md:p-6">
             <CardDescription className="text-xs md:text-sm">Total Sales</CardDescription>
@@ -319,7 +349,7 @@ export function Sales() {
         </div>
 
         {/* Filters */}
-        <Card>
+        <Card className="animate-fade-in">
         <CardHeader className="p-4 md:p-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <button 
@@ -471,6 +501,8 @@ export function Sales() {
         </CardContent>
         )}
         </Card>
+        </>
+        )}
       </div>
 
       {/* Scrollable Content */}
