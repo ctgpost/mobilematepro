@@ -310,15 +310,12 @@ export function Sales() {
             {showOverview ? (
               <>
                 <ChevronUp className="h-4 w-4" />
-                <span>ওভারভিউ ও ফিল্টার লুকান</span>
+                <span>ওভারভিউ লুকান</span>
               </>
             ) : (
               <>
                 <ChevronDown className="h-4 w-4" />
-                <span>ওভারভিউ ও ফিল্টার দেখান</span>
-                {hasActiveFilters && (
-                  <span className="ml-1 inline-flex h-2 w-2 rounded-full bg-accent" aria-hidden />
-                )}
+                <span>ওভারভিউ দেখান</span>
               </>
             )}
           </Button>
