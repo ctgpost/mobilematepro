@@ -324,8 +324,8 @@ export function Sales() {
           </Button>
         </div>
 
+        {/* Stats Cards (collapsible) */}
         {showOverview && (
-        {/* Stats Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4 animate-fade-in">
         <Card className="card-hover">
           <CardHeader className="pb-3 p-4 md:p-6">
