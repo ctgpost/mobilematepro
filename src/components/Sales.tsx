@@ -266,6 +266,32 @@ export function Sales() {
 
   return (
     <div className="flex flex-col h-screen animate-fade-in">
+      {/* Overview toggle: hides page header (title/subtitle/export) + stats cards */}
+      <div className="flex justify-end pt-3">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setShowOverview((v) => !v)}
+          className="gap-2"
+          aria-expanded={showOverview}
+        >
+          {showOverview ? (
+            <>
+              <ChevronUp className="h-4 w-4" />
+              <span>ওভারভিউ লুকান</span>
+            </>
+          ) : (
+            <>
+              <ChevronDown className="h-4 w-4" />
+              <span>ওভারভিউ দেখান</span>
+            </>
+          )}
+        </Button>
+      </div>
+
+      {showOverview && (
+      <div className="animate-fade-in">
       <PageHeader
         storageKey="sales"
         title="Sales History"
@@ -295,31 +321,9 @@ export function Sales() {
           </>
         }
       />
+      </div>
+      )}
       <div className="space-y-4 pt-3">
-
-        {/* Overview toggle: hides stats + filters to give sales list more room */}
-        <div className="flex justify-end">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setShowOverview((v) => !v)}
-            className="gap-2"
-            aria-expanded={showOverview}
-          >
-            {showOverview ? (
-              <>
-                <ChevronUp className="h-4 w-4" />
-                <span>ওভারভিউ লুকান</span>
-              </>
-            ) : (
-              <>
-                <ChevronDown className="h-4 w-4" />
-                <span>ওভারভিউ দেখান</span>
-              </>
-            )}
-          </Button>
-        </div>
 
         {/* Stats Cards (collapsible) */}
         {showOverview && (
