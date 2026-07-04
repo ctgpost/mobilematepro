@@ -188,7 +188,7 @@ export function BarcodeScanner({ isOpen, onClose, onScan, onError }: BarcodeScan
       }
     } catch (err: any) {
       console.error("startWithCamera error:", err);
-      setErrorMsg(err?.message || "ক্যামেরা চালু করা যায়নি।");
+      emitError(err?.message || "ক্যামেরা চালু করা যায়নি।");
     } finally {
       setIsStarting(false);
     }
