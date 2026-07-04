@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAll } from "@/lib/fetchAll";
@@ -55,8 +56,10 @@ interface SaleDetail {
 }
 
 export function Sales() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialQ = searchParams.get("q") ?? "";
+  const [searchTerm, setSearchTerm] = useState(initialQ);
+  const [debouncedSearch, setDebouncedSearch] = useState(initialQ);
   const [showSalesScanner, setShowSalesScanner] = useState(false);
   const [filterPaymentMethod, setFilterPaymentMethod] = useState<string>("all");
   const [filterDateFrom, setFilterDateFrom] = useState("");
@@ -73,6 +76,46 @@ export function Sales() {
     const t = setTimeout(() => setDebouncedSearch(searchTerm.trim()), 300);
     return () => clearTimeout(t);
   }, [searchTerm]);
+
+  // Sync search term with URL query (?q=...) so refresh / back-forward preserve it.
+  useEffect(() => {
+    const current = searchParams.get("q") ?? "";
+    const next = debouncedSearch.trim();
+    if (current === next) return;
+    const params = new URLSearchParams(searchParams);
+    if (next) params.set("q", next);
+    else params.delete("q");
+    setSearchParams(params, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch]);
+
+  // Respond to external URL changes (back/forward).
+  useEffect(() => {
+    const q = searchParams.get("q") ?? "";
+    if (q !== searchTerm) {
+      setSearchTerm(q);
+      setDebouncedSearch(q);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  const isSearchPending = searchTerm.trim() !== debouncedSearch;
+
+  // Helper: does a sale match the active search term (used for highlight)?
+  const searchLowerActive = debouncedSearch.toLowerCase();
+  const saleMatchesSearch = (sale: SaleDetail) => {
+    if (!debouncedSearch) return false;
+    return (
+      sale.id.toLowerCase().includes(searchLowerActive) ||
+      sale.customers?.name?.toLowerCase().includes(searchLowerActive) ||
+      (sale.sale_items || []).some(
+        (item) =>
+          item?.products?.name?.toLowerCase().includes(searchLowerActive) ||
+          item?.products?.imei?.toLowerCase().includes(searchLowerActive) ||
+          item?.products?.brand?.toLowerCase().includes(searchLowerActive)
+      )
+    );
+  };
 
   // Fetch sales data
   const { data: sales = [], isLoading } = useQuery({
@@ -315,8 +358,25 @@ export function Sales() {
                     placeholder="ID, কাস্টমার, প্রোডাক্ট বা IMEI দিয়ে খুঁজুন..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9 text-sm md:text-base"
+                    className="pl-9 pr-16 text-sm md:text-base"
                   />
+                  {isSearchPending && (
+                    <Loader2 className="absolute right-9 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
+                  )}
+                  {searchTerm && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchTerm("");
+                        setDebouncedSearch("");
+                        setCurrentPage(1);
+                      }}
+                      aria-label="সার্চ পরিষ্কার করুন"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 inline-flex items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                 </div>
                 <Button
                   type="button"
@@ -439,10 +499,11 @@ export function Sales() {
                 const phone = (sale as any).customers?.phone || (sale as any).instant_customer_phone || "";
                 const email = (sale as any).customers?.email || "";
                 const custName = (sale as any).customers?.name || (sale as any).instant_customer_name || "Walk-in";
+                const isMatch = saleMatchesSearch(sale);
                 return (
                   <SwipeableRow
                     key={sale.id}
-                    className="rounded-lg"
+                    className={`rounded-lg ${isMatch ? "ring-2 ring-accent ring-offset-1 ring-offset-background animate-fade-in" : ""}`}
                     leftActions={[
                       { label: "কল", icon: Phone, color: "bg-green-600", onAction: () => phone ? swipeIntents.call(phone) : toast.error("ফোন নেই") },
                       { label: "SMS", icon: MessageSquare, color: "bg-sky-600", onAction: () => phone ? swipeIntents.sms(phone, `ইনভয়েস #${sale.id.slice(0,8)} — ৳${Number(sale.total_amount).toLocaleString()}`) : toast.error("ফোন নেই") },
@@ -456,7 +517,9 @@ export function Sales() {
                   >
                     <div
                       onClick={() => setSelectedSale(sale)}
-                      className="border border-border rounded-lg p-3 md:p-4 hover:border-primary hover:bg-accent/5 cursor-pointer transition-all card-hover bg-card"
+                      className={`border rounded-lg p-3 md:p-4 hover:border-primary hover:bg-accent/5 cursor-pointer transition-all card-hover bg-card ${
+                        isMatch ? "border-accent bg-accent/5" : "border-border"
+                      }`}
                     >
                       <div className="flex flex-col gap-3">
                         <div className="flex-1 space-y-2">
