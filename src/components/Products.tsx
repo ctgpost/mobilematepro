@@ -60,6 +60,7 @@ export function Products() {
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [showScanner, setShowScanner] = useState(false);
   const [showImeiScanner, setShowImeiScanner] = useState(false);
+  const [imeiScanError, setImeiScanError] = useState<string | null>(null);
   const [showOutOfStock, setShowOutOfStock] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
