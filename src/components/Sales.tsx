@@ -499,10 +499,11 @@ export function Sales() {
                 const phone = (sale as any).customers?.phone || (sale as any).instant_customer_phone || "";
                 const email = (sale as any).customers?.email || "";
                 const custName = (sale as any).customers?.name || (sale as any).instant_customer_name || "Walk-in";
+                const isMatch = saleMatchesSearch(sale);
                 return (
                   <SwipeableRow
                     key={sale.id}
-                    className="rounded-lg"
+                    className={`rounded-lg ${isMatch ? "ring-2 ring-accent ring-offset-1 ring-offset-background animate-fade-in" : ""}`}
                     leftActions={[
                       { label: "কল", icon: Phone, color: "bg-green-600", onAction: () => phone ? swipeIntents.call(phone) : toast.error("ফোন নেই") },
                       { label: "SMS", icon: MessageSquare, color: "bg-sky-600", onAction: () => phone ? swipeIntents.sms(phone, `ইনভয়েস #${sale.id.slice(0,8)} — ৳${Number(sale.total_amount).toLocaleString()}`) : toast.error("ফোন নেই") },
@@ -516,7 +517,9 @@ export function Sales() {
                   >
                     <div
                       onClick={() => setSelectedSale(sale)}
-                      className="border border-border rounded-lg p-3 md:p-4 hover:border-primary hover:bg-accent/5 cursor-pointer transition-all card-hover bg-card"
+                      className={`border rounded-lg p-3 md:p-4 hover:border-primary hover:bg-accent/5 cursor-pointer transition-all card-hover bg-card ${
+                        isMatch ? "border-accent bg-accent/5" : "border-border"
+                      }`}
                     >
                       <div className="flex flex-col gap-3">
                         <div className="flex-1 space-y-2">
