@@ -1008,7 +1008,12 @@ export function Products() {
                 >
                   Cancel
                 </Button>
-                <Button type="submit" className="bg-gradient-to-r from-primary to-accent">
+                <Button
+                  type="submit"
+                  disabled={formData.imei.length !== 15}
+                  className="bg-gradient-to-r from-primary to-accent disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={formData.imei.length !== 15 ? "IMEI অবশ্যই ঠিক ১৫ ডিজিটের হতে হবে" : undefined}
+                >
                   {editingProduct ? "Update" : "Add"} Product
                 </Button>
               </div>
