@@ -54,6 +54,7 @@ export function Products() {
   const [filterCondition, setFilterCondition] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [showScanner, setShowScanner] = useState(false);
+  const [showImeiScanner, setShowImeiScanner] = useState(false);
   const [showOutOfStock, setShowOutOfStock] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -674,19 +675,34 @@ export function Products() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">IMEI * (15 digits)</label>
-                  <Input
-                    value={formData.imei}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, '').slice(0, 15);
-                      setFormData({ ...formData, imei: value });
-                    }}
-                    placeholder="Enter 15-digit IMEI"
-                    required
-                    pattern="[0-9]{15}"
-                    minLength={15}
-                    maxLength={15}
-                    title="IMEI must be exactly 15 digits"
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      value={formData.imei}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '').slice(0, 15);
+                        setFormData({ ...formData, imei: value });
+                      }}
+                      placeholder="Enter 15-digit IMEI or scan"
+                      required
+                      pattern="[0-9]{15}"
+                      minLength={15}
+                      maxLength={15}
+                      title="IMEI must be exactly 15 digits"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setShowImeiScanner(true)}
+                      title="ক্যামেরা / বারকোড স্ক্যানার দিয়ে IMEI স্ক্যান করুন"
+                      aria-label="Scan IMEI"
+                    >
+                      <ScanBarcode className="h-4 w-4" />
+                    </Button>
+                  </div>
                   {formData.imei && formData.imei.length !== 15 && (
                     <p className="text-xs text-red-500 mt-1">IMEI must be exactly 15 digits</p>
                   )}
@@ -1215,6 +1231,21 @@ export function Products() {
         isOpen={showScanner}
         onClose={() => setShowScanner(false)}
         onScan={handleBarcodeScanned}
+      />
+
+      <BarcodeScanner
+        isOpen={showImeiScanner}
+        onClose={() => setShowImeiScanner(false)}
+        onScan={(code) => {
+          const digits = (code || "").replace(/\D/g, "").slice(0, 15);
+          if (digits.length < 14) {
+            toast.error(`স্ক্যান হয়েছে কিন্তু IMEI ১৫ ডিজিট নয় (${digits.length} ডিজিট)। আবার চেষ্টা করুন।`);
+            return;
+          }
+          setFormData((prev) => ({ ...prev, imei: digits }));
+          setShowImeiScanner(false);
+          if (digits.length === 15) toast.success("IMEI স্ক্যান সফল");
+        }}
       />
 
       <ProductQuickView
