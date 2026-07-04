@@ -10,8 +10,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
-import { Search, Calendar, User, CreditCard, Package, Filter, X, FileDown, FileSpreadsheet, Phone, MessageSquare, Mail, Eye, Share2, Copy } from "lucide-react";
+import { Search, Calendar, User, CreditCard, Package, Filter, X, FileDown, FileSpreadsheet, Phone, MessageSquare, Mail, Eye, Share2, Copy, ScanBarcode, Loader2 } from "lucide-react";
 import { SwipeableRow, swipeIntents } from "./SwipeableRow";
+import { BarcodeScanner } from "./BarcodeScanner";
 import { toast } from "sonner";
 import { useReactToPrint } from "react-to-print";
 import * as XLSX from "xlsx";
@@ -55,6 +56,7 @@ interface SaleDetail {
 
 export function Sales() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [showSalesScanner, setShowSalesScanner] = useState(false);
   const [filterPaymentMethod, setFilterPaymentMethod] = useState<string>("all");
   const [filterDateFrom, setFilterDateFrom] = useState("");
   const [filterDateTo, setFilterDateTo] = useState("");
@@ -299,15 +301,46 @@ export function Sales() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
             {/* Search */}
             <div className="sm:col-span-2 lg:col-span-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by ID, customer, product..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 text-sm md:text-base"
-                />
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="ID, কাস্টমার, প্রোডাক্ট বা IMEI দিয়ে খুঁজুন..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9 text-sm md:text-base"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setShowSalesScanner(true)}
+                  disabled={showSalesScanner}
+                  title="IMEI / বারকোড স্ক্যান করে খুঁজুন"
+                  aria-label="IMEI / বারকোড স্ক্যান করে খুঁজুন"
+                >
+                  {showSalesScanner ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <ScanBarcode className="w-4 h-4" />
+                  )}
+                </Button>
               </div>
+              <BarcodeScanner
+                isOpen={showSalesScanner}
+                onClose={() => setShowSalesScanner(false)}
+                onScan={(code) => {
+                  const clean = code.replace(/[\s\-_.]/g, "").replace(/\D/g, "");
+                  const value = clean || code.trim();
+                  setSearchTerm(value);
+                  setShowSalesScanner(false);
+                  toast.success(`স্ক্যান সফল: ${value}`);
+                }}
+                onError={(msg) => {
+                  toast.error(msg || "স্ক্যান ব্যর্থ হয়েছে। আবার চেষ্টা করুন।");
+                }}
+              />
             </div>
 
             {/* Date From */}
