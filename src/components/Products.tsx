@@ -14,7 +14,7 @@ import { ProductDetailModal } from "./ProductDetailModal";
 import { BarcodeScanner } from "./BarcodeScanner";
 import { ProductQuickView } from "./ProductQuickView";
 import { ProductLabelPrint } from "./ProductLabelPrint";
-import { Eye, ScanBarcode, Download, FileSpreadsheet, FileText, Printer, Loader2 } from "lucide-react";
+import { Eye, ScanBarcode, Download, FileSpreadsheet, FileText, Printer, Loader2, Pencil, History, Trash2 } from "lucide-react";
 import { ActivityLogger } from "@/hooks/useActivityLog";
 import { CollapsibleSection } from "./CollapsibleSection";
 import { PageHeader } from "./PageHeader";
@@ -1185,10 +1185,11 @@ export function Products() {
                   </div>
                 )}
               </div>
-              <div className="flex gap-2 pt-2">
+              <div className="grid grid-cols-5 gap-1.5 pt-2">
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="icon"
+                  title="দেখুন"
                   onClick={() => {
                     const index = filteredProducts.findIndex(p => p.id === product.id);
                     if (window.innerWidth < 1024) {
@@ -1197,48 +1198,50 @@ export function Products() {
                       setDetailProduct(product);
                     }
                   }}
-                  className="flex-1"
+                  className="w-full h-9"
                 >
                   <Eye className="w-4 h-4" />
                 </Button>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="icon"
+                  title="এডিট করুন"
                   onClick={() => startEdit(product)}
-                  className="flex-1"
+                  className="w-full h-9"
                 >
-                  ✏️
+                  <Pencil className="w-4 h-4" />
                 </Button>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="icon"
                   onClick={() => setHistoryProduct({ imei: product.imei || "", name: product.name })}
-                  className="flex-1"
+                  className="w-full h-9"
                   disabled={!product.imei}
-                  title="History"
+                  title="হিস্ট্রি"
                 >
-                  📜
+                  <History className="w-4 h-4" />
                 </Button>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="icon"
                   onClick={() => setLabelProduct(product)}
-                  className="flex-1"
+                  className="w-full h-9"
                   title="বারকোড লেবেল প্রিন্ট"
                 >
                   <Printer className="w-4 h-4" />
                 </Button>
                 <Button
                   variant="destructive"
-                  size="sm"
+                  size="icon"
+                  title="ডিলিট"
                   onClick={() => {
                     if (confirm("Are you sure you want to delete this product?")) {
                       deleteMutation.mutate({ id: product.id, name: product.name });
                     }
                   }}
-                  className="flex-1"
+                  className="w-full h-9"
                 >
-                  🗑️
+                  <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
             </div>
