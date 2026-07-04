@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAll } from "@/lib/fetchAll";
@@ -56,6 +56,7 @@ interface SaleDetail {
 
 export function Sales() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [showSalesScanner, setShowSalesScanner] = useState(false);
   const [filterPaymentMethod, setFilterPaymentMethod] = useState<string>("all");
   const [filterDateFrom, setFilterDateFrom] = useState("");
@@ -66,6 +67,12 @@ export function Sales() {
   const [showFilters, setShowFilters] = useState(false);
   const itemsPerPage = 10;
   const printRef = useRef<HTMLDivElement>(null);
+
+  // Debounce search input (300ms) so typing / repeated scans don't over-render.
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchTerm.trim()), 300);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
 
   // Fetch sales data
   const { data: sales = [], isLoading } = useQuery({
@@ -100,9 +107,9 @@ export function Sales() {
   const filteredSales = useMemo(() => {
     return sales.filter((sale) => {
       // Search filter
-      const searchLower = searchTerm.toLowerCase();
+      const searchLower = debouncedSearch.toLowerCase();
       const matchesSearch =
-        !searchTerm ||
+        !debouncedSearch ||
         sale.id.toLowerCase().includes(searchLower) ||
         sale.customers?.name.toLowerCase().includes(searchLower) ||
         (sale.sale_items || []).some(
@@ -135,7 +142,7 @@ export function Sales() {
         matchesDateTo
       );
     });
-  }, [sales, searchTerm, filterPaymentMethod, filterCustomer, filterDateFrom, filterDateTo]);
+  }, [sales, debouncedSearch, filterPaymentMethod, filterCustomer, filterDateFrom, filterDateTo]);
 
   // Pagination
   const totalPages = Math.ceil(filteredSales.length / itemsPerPage);
@@ -334,6 +341,9 @@ export function Sales() {
                   const clean = code.replace(/[\s\-_.]/g, "").replace(/\D/g, "");
                   const value = clean || code.trim();
                   setSearchTerm(value);
+                  // Auto-submit: bypass debounce so filter applies immediately.
+                  setDebouncedSearch(value);
+                  setCurrentPage(1);
                   setShowSalesScanner(false);
                   toast.success(`স্ক্যান সফল: ${value}`);
                 }}
