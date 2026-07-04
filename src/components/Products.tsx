@@ -707,7 +707,10 @@ export function Products() {
                       type="button"
                       variant="outline"
                       size="icon"
-                      onClick={() => setShowImeiScanner(true)}
+                      onClick={() => {
+                        setImeiScanError(null);
+                        setShowImeiScanner(true);
+                      }}
                       disabled={showImeiScanner}
                       title="ক্যামেরা / বারকোড স্ক্যানার দিয়ে IMEI স্ক্যান করুন"
                       aria-label="Scan IMEI"
@@ -723,6 +726,26 @@ export function Products() {
                     <p className="text-xs text-muted-foreground mt-1">
                       স্ক্যানার চলছে... ক্যামেরার সামনে বারকোড/IMEI লেবেল ধরুন
                     </p>
+                  )}
+                  {imeiScanError && !showImeiScanner && (
+                    <div className="mt-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive space-y-2">
+                      <p className="font-semibold">স্ক্যান ব্যর্থ</p>
+                      <p>{imeiScanError}</p>
+                      <p className="text-muted-foreground">
+                        পরবর্তী ধাপ: ব্রাউজারের অ্যাড্রেস বারের পাশে 🔒 আইকনে ক্লিক করে সাইট পারমিশন থেকে ক্যামেরা "Allow" করুন, অথবা হার্ডওয়্যার স্ক্যানার/ম্যানুয়াল ইনপুট ব্যবহার করুন।
+                      </p>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setImeiScanError(null);
+                          setShowImeiScanner(true);
+                        }}
+                      >
+                        আবার চেষ্টা করুন
+                      </Button>
+                    </div>
                   )}
                   {formData.imei && formData.imei.length !== 15 && (
                     <p className="text-xs text-red-500 mt-1">
