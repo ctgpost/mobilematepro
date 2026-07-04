@@ -68,7 +68,22 @@ export function Sales() {
   const [selectedSale, setSelectedSale] = useState<SaleDetail | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
-  const [showOverview, setShowOverview] = useState(false);
+  const OVERVIEW_STORAGE_KEY = "sales.showOverview";
+  const [showOverview, setShowOverview] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return window.localStorage.getItem(OVERVIEW_STORAGE_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(OVERVIEW_STORAGE_KEY, showOverview ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+  }, [showOverview]);
   const itemsPerPage = 10;
   const printRef = useRef<HTMLDivElement>(null);
 
@@ -273,25 +288,42 @@ export function Sales() {
           variant="outline"
           size="sm"
           onClick={() => setShowOverview((v) => !v)}
-          className="gap-2"
+          className="gap-2 relative"
           aria-expanded={showOverview}
+          aria-controls="sales-overview-panel"
+          aria-label={showOverview ? "ওভারভিউ লুকান" : "ওভারভিউ দেখান"}
         >
           {showOverview ? (
             <>
-              <ChevronUp className="h-4 w-4" />
+              <ChevronUp className="h-4 w-4" aria-hidden="true" />
               <span>ওভারভিউ লুকান</span>
             </>
           ) : (
             <>
-              <ChevronDown className="h-4 w-4" />
+              <ChevronDown className="h-4 w-4" aria-hidden="true" />
               <span>ওভারভিউ দেখান</span>
             </>
+          )}
+          {hasActiveFilters && (
+            <span
+              className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-background"
+              aria-label="সক্রিয় ফিল্টার রয়েছে"
+              role="status"
+            />
           )}
         </Button>
       </div>
 
-      {showOverview && (
-      <div className="animate-fade-in">
+      <div
+        id="sales-overview-panel"
+        aria-hidden={!showOverview}
+        className={`grid transition-all duration-300 ease-out ${
+          showOverview
+            ? "grid-rows-[1fr] opacity-100"
+            : "grid-rows-[0fr] opacity-0 pointer-events-none"
+        }`}
+      >
+      <div className="overflow-hidden min-h-0">
       <PageHeader
         storageKey="sales"
         title="Sales History"
@@ -322,12 +354,20 @@ export function Sales() {
         }
       />
       </div>
-      )}
+      </div>
       <div className="space-y-4 pt-3">
 
-        {/* Stats Cards (collapsible) */}
-        {showOverview && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4 animate-fade-in">
+        {/* Stats Cards (collapsible with smooth transition) */}
+        <div
+          className={`grid transition-all duration-300 ease-out ${
+            showOverview
+              ? "grid-rows-[1fr] opacity-100"
+              : "grid-rows-[0fr] opacity-0 pointer-events-none"
+          }`}
+          aria-hidden={!showOverview}
+        >
+        <div className="overflow-hidden min-h-0">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
         <Card className="card-hover">
           <CardHeader className="pb-3 p-4 md:p-6">
             <CardDescription className="text-xs md:text-sm">Total Sales</CardDescription>
@@ -347,7 +387,8 @@ export function Sales() {
           </CardHeader>
         </Card>
         </div>
-        )}
+        </div>
+        </div>
 
         {/* Filters */}
         <Card className="animate-fade-in">
