@@ -14,7 +14,7 @@ import { ProductDetailModal } from "./ProductDetailModal";
 import { BarcodeScanner } from "./BarcodeScanner";
 import { ProductQuickView } from "./ProductQuickView";
 import { ProductLabelPrint } from "./ProductLabelPrint";
-import { Eye, ScanBarcode, Download, FileSpreadsheet, FileText, Printer } from "lucide-react";
+import { Eye, ScanBarcode, Download, FileSpreadsheet, FileText, Printer, Loader2 } from "lucide-react";
 import { ActivityLogger } from "@/hooks/useActivityLog";
 import { CollapsibleSection } from "./CollapsibleSection";
 import { PageHeader } from "./PageHeader";
@@ -41,6 +41,11 @@ const friendlyProductError = (error: any, imei?: string): string => {
   if (code === "23503") return "সম্পর্কিত তথ্য পাওয়া যায়নি (ক্যাটাগরি/সাপ্লায়ার)।";
   return msg || "প্রোডাক্ট সেভ করতে ব্যর্থ হয়েছে";
 };
+
+// Strip spaces, dashes and any non-digit char, then cap at 15 digits.
+// Handles input from keyboard-emulated hardware scanners, camera scans and manual typing.
+const sanitizeImei = (raw: string): string =>
+  (raw || "").replace(/[\s\-_.]/g, "").replace(/\D/g, "").slice(0, 15);
 
 
 export function Products() {
