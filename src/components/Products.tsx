@@ -1300,17 +1300,51 @@ export function Products() {
         ))}
         </div>
 
-        {(!filteredProducts || filteredProducts.length === 0) && (
+        {productsLoading && (
+          <Card className="p-12 text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-primary" />
+            <p className="text-muted-foreground">প্রোডাক্ট লোড হচ্ছে...</p>
+          </Card>
+        )}
+
+        {!productsLoading && productsError && (
+          <Card className="p-12 text-center space-y-3">
+            <div className="text-5xl">⚠️</div>
+            <h3 className="text-xl font-semibold text-foreground">প্রোডাক্ট লোড করা যায়নি</h3>
+            <p className="text-sm text-muted-foreground">
+              {(productsErrorObj as any)?.message || "ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।"}
+            </p>
+            <Button variant="outline" onClick={() => refetchProducts()} disabled={productsFetching}>
+              {productsFetching ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+              আবার চেষ্টা করুন
+            </Button>
+          </Card>
+        )}
+
+        {!productsLoading && !productsError && filteredProducts.length === 0 && (
           <Card className="p-12 text-center">
             <div className="text-6xl mb-4">📦</div>
             <h3 className="text-xl font-semibold mb-2 text-foreground">
-              {products && products.length > 0 ? "No matching products" : "No products yet"}
+              {products && products.length > 0 ? "কোনো মিল পাওয়া যায়নি" : "এখনো কোনো প্রোডাক্ট নেই"}
             </h3>
             <p className="text-muted-foreground">
-              {products && products.length > 0 
-                ? "Try adjusting your search or filters" 
-                : "Add your first product to get started!"}
+              {products && products.length > 0
+                ? "সার্চ বা ফিল্টার পরিবর্তন করে দেখুন"
+                : "প্রথম প্রোডাক্ট যোগ করে শুরু করুন!"}
             </p>
+            {products && products.length > 0 && hasActiveFilters && (
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => {
+                  setSearchTerm("");
+                  setFilterCondition("all");
+                  setFilterCategory("all");
+                }}
+              >
+                ফিল্টার মুছুন
+              </Button>
+            )}
           </Card>
         )}
       </div>
