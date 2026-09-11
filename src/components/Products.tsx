@@ -530,7 +530,7 @@ export function Products() {
         
         <div class="summary">
           <div class="summary-item">
-            <div class="value">${products.length}</div>
+            <div class="value">${exportProducts.length}</div>
             <div class="label">মোট প্রোডাক্ট</div>
           </div>
           <div class="summary-item">
@@ -565,7 +565,7 @@ export function Products() {
             </tr>
           </thead>
           <tbody>
-            ${products.map((product, index) => `
+            ${exportProducts.map((product, index) => `
               <tr class="${(product.stock_quantity || 0) <= 0 ? 'stock-out' : ''}">
                 <td class="text-center">${index + 1}</td>
                 <td><strong>${product.name}</strong><br/><small>${product.brand || ''} ${product.model || ''}</small></td>
@@ -597,7 +597,7 @@ export function Products() {
         printWindow.print();
         printWindow.close();
       }, 250);
-      toast.success(`${products.length}টি প্রোডাক্ট PDF এ ডাউনলোড হচ্ছে`);
+      toast.success(`${exportProducts.length}টি প্রোডাক্ট PDF এ ডাউনলোড হচ্ছে`);
     } else {
       toast.error("পপআপ ব্লক করা আছে। অনুগ্রহ করে পপআপ অনুমতি দিন।");
     }
