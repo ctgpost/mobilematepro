@@ -119,7 +119,14 @@ export function Products() {
     },
   });
 
-  const { data: products } = useQuery({
+  const {
+    data: products,
+    isLoading: productsLoading,
+    isError: productsError,
+    error: productsErrorObj,
+    refetch: refetchProducts,
+    isFetching: productsFetching,
+  } = useQuery({
     queryKey: ["products"],
     queryFn: async () =>
       fetchAll<any>("products", "*, categories(name)", (q) => q.order("name")),
@@ -311,8 +318,9 @@ export function Products() {
       model: formData.model || extractModel(formData.name),
       price: price,
       cost: cost,
-      stock_quantity: 1,
-      low_stock_threshold: 0,
+      // Keep existing stock when editing (a sold unit must not silently return to stock)
+      stock_quantity: editingProduct ? (editingProduct.stock_quantity ?? 1) : 1,
+      low_stock_threshold: editingProduct ? (editingProduct.low_stock_threshold ?? 0) : 0,
       category_id: formData.category_id || null,
       supplier_id: formData.supplier_id || null,
     };
@@ -406,27 +414,38 @@ export function Products() {
     });
   }, [products, searchTerm, filterCondition, filterCategory, showOutOfStock]);
 
+  const hasActiveFilters =
+    isSearching || filterCondition !== "all" || filterCategory !== "all";
+
+  // Exports follow what the user currently sees when any filter/search is active.
+  const exportProducts: any[] = hasActiveFilters ? filteredProducts : (products || []);
+
   const handleBarcodeScanned = (barcode: string) => {
+    const code = (barcode || "").trim();
     // Search for product by barcode or IMEI
     const product = products?.find(p => 
-      p.barcode === barcode || p.imei === barcode
+      p.barcode === code || p.imei === code
     );
+
+    // Always reflect the scan in the search box so the list filters too.
+    setSearchTerm(code);
 
     if (product) {
       setDetailProduct(product);
     } else {
-      toast.error("Product not found with this barcode");
+      toast.error("এই বারকোড/IMEI দিয়ে কোনো প্রোডাক্ট পাওয়া যায়নি");
     }
   };
 
   // Download products as Excel
   const downloadExcel = () => {
-    if (!products || products.length === 0) {
+    if (exportProducts.length === 0) {
       toast.error("কোনো প্রোডাক্ট নেই ডাউনলোড করার জন্য");
       return;
     }
 
-    const excelData = products.map((product, index) => ({
+
+    const excelData = exportProducts.map((product, index) => ({
       'ক্রমিক': index + 1,
       'প্রোডাক্ট নাম': product.name,
       'ব্র্যান্ড': product.brand || '',
@@ -460,20 +479,20 @@ export function Products() {
 
     const fileName = `MobileMatePro_Products_${new Date().toISOString().split('T')[0]}.xlsx`;
     XLSX.writeFile(workbook, fileName);
-    toast.success(`${products.length}টি প্রোডাক্ট Excel এ ডাউনলোড হয়েছে`);
+    toast.success(`${exportProducts.length}টি প্রোডাক্ট Excel এ ডাউনলোড হয়েছে`);
   };
 
   // Download products as PDF (using print)
   const downloadPDF = () => {
-    if (!products || products.length === 0) {
+    if (exportProducts.length === 0) {
       toast.error("কোনো প্রোডাক্ট নেই ডাউনলোড করার জন্য");
       return;
     }
 
-    const totalValue = products.reduce((sum, p) => sum + (p.price || 0) * (p.stock_quantity || 0), 0);
-    const totalCost = products.reduce((sum, p) => sum + (p.cost || 0) * (p.stock_quantity || 0), 0);
-    const inStock = products.filter(p => (p.stock_quantity || 0) > 0).length;
-    const outOfStock = products.filter(p => (p.stock_quantity || 0) <= 0).length;
+    const totalValue = exportProducts.reduce((sum, p) => sum + (p.price || 0) * (p.stock_quantity || 0), 0);
+    const totalCost = exportProducts.reduce((sum, p) => sum + (p.cost || 0) * (p.stock_quantity || 0), 0);
+    const inStock = exportProducts.filter(p => (p.stock_quantity || 0) > 0).length;
+    const outOfStock = exportProducts.filter(p => (p.stock_quantity || 0) <= 0).length;
 
     const printContent = `
       <!DOCTYPE html>
@@ -511,7 +530,7 @@ export function Products() {
         
         <div class="summary">
           <div class="summary-item">
-            <div class="value">${products.length}</div>
+            <div class="value">${exportProducts.length}</div>
             <div class="label">মোট প্রোডাক্ট</div>
           </div>
           <div class="summary-item">
@@ -546,7 +565,7 @@ export function Products() {
             </tr>
           </thead>
           <tbody>
-            ${products.map((product, index) => `
+            ${exportProducts.map((product, index) => `
               <tr class="${(product.stock_quantity || 0) <= 0 ? 'stock-out' : ''}">
                 <td class="text-center">${index + 1}</td>
                 <td><strong>${product.name}</strong><br/><small>${product.brand || ''} ${product.model || ''}</small></td>
@@ -578,7 +597,7 @@ export function Products() {
         printWindow.print();
         printWindow.close();
       }, 250);
-      toast.success(`${products.length}টি প্রোডাক্ট PDF এ ডাউনলোড হচ্ছে`);
+      toast.success(`${exportProducts.length}টি প্রোডাক্ট PDF এ ডাউনলোড হচ্ছে`);
     } else {
       toast.error("পপআপ ব্লক করা আছে। অনুগ্রহ করে পপআপ অনুমতি দিন।");
     }
@@ -1060,7 +1079,7 @@ export function Products() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="md:col-span-2 flex gap-2">
             <Input
-              placeholder="Search by name, IMEI, brand, or SKU..."
+              placeholder="নাম, IMEI, বারকোড, ব্র্যান্ড, মডেল, SKU, সাপ্লায়ার দিয়ে সার্চ..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="flex-1"
@@ -1196,7 +1215,7 @@ export function Products() {
                 )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Price:</span>
-                  <span className="font-semibold text-foreground">${Number(product.price).toFixed(2)}</span>
+                  <span className="font-semibold text-foreground">৳{Number(product.price || 0).toLocaleString('bn-BD')}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Stock:</span>
@@ -1281,17 +1300,51 @@ export function Products() {
         ))}
         </div>
 
-        {(!filteredProducts || filteredProducts.length === 0) && (
+        {productsLoading && (
+          <Card className="p-12 text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-primary" />
+            <p className="text-muted-foreground">প্রোডাক্ট লোড হচ্ছে...</p>
+          </Card>
+        )}
+
+        {!productsLoading && productsError && (
+          <Card className="p-12 text-center space-y-3">
+            <div className="text-5xl">⚠️</div>
+            <h3 className="text-xl font-semibold text-foreground">প্রোডাক্ট লোড করা যায়নি</h3>
+            <p className="text-sm text-muted-foreground">
+              {(productsErrorObj as any)?.message || "ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।"}
+            </p>
+            <Button variant="outline" onClick={() => refetchProducts()} disabled={productsFetching}>
+              {productsFetching ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+              আবার চেষ্টা করুন
+            </Button>
+          </Card>
+        )}
+
+        {!productsLoading && !productsError && filteredProducts.length === 0 && (
           <Card className="p-12 text-center">
             <div className="text-6xl mb-4">📦</div>
             <h3 className="text-xl font-semibold mb-2 text-foreground">
-              {products && products.length > 0 ? "No matching products" : "No products yet"}
+              {products && products.length > 0 ? "কোনো মিল পাওয়া যায়নি" : "এখনো কোনো প্রোডাক্ট নেই"}
             </h3>
             <p className="text-muted-foreground">
-              {products && products.length > 0 
-                ? "Try adjusting your search or filters" 
-                : "Add your first product to get started!"}
+              {products && products.length > 0
+                ? "সার্চ বা ফিল্টার পরিবর্তন করে দেখুন"
+                : "প্রথম প্রোডাক্ট যোগ করে শুরু করুন!"}
             </p>
+            {products && products.length > 0 && hasActiveFilters && (
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => {
+                  setSearchTerm("");
+                  setFilterCondition("all");
+                  setFilterCategory("all");
+                }}
+              >
+                ফিল্টার মুছুন
+              </Button>
+            )}
           </Card>
         )}
       </div>
