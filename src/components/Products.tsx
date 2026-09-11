@@ -1112,6 +1112,9 @@ export function Products() {
           <div className="mt-3 flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
               Found {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}
+              {isSearching && !showOutOfStock && (
+                <span className="ml-1">(স্টক শূন্য পণ্যসহ)</span>
+              )}
             </p>
             <Button
               variant="ghost"
