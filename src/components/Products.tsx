@@ -352,26 +352,55 @@ export function Products() {
     setSupplierMode(product.supplier_id ? "existing" : (product.supplier_name ? "custom" : "existing"));
   };
 
+  const isSearching = searchTerm.trim() !== "";
+
   const filteredProducts = useMemo(() => {
     if (!products) return [];
-    
-    return products.filter((product) => {
-      const matchesSearch = 
-        searchTerm === "" ||
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.imei?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.brand?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.sku?.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesCondition = 
-        filterCondition === "all" || 
+    const query = searchTerm.trim().toLowerCase();
+    const terms = query.split(/\s+/).filter(Boolean);
+    const digitsQuery = query.replace(/\D/g, "");
+
+    return products.filter((product) => {
+      const haystack = [
+        product.name,
+        product.imei,
+        product.brand,
+        product.model,
+        product.sku,
+        product.barcode,
+        product.description,
+        product.supplier_name,
+        product.supplier_mobile,
+        product.categories?.name,
+        product.ram,
+        product.storage,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      const digitsHaystack = [product.imei, product.barcode, product.sku, product.supplier_mobile]
+        .filter(Boolean)
+        .join(" ")
+        .replace(/\D/g, "");
+
+      const matchesSearch =
+        terms.length === 0 ||
+        terms.every((t) => haystack.includes(t)) ||
+        (digitsQuery.length >= 4 && digitsHaystack.includes(digitsQuery));
+
+      const matchesCondition =
+        filterCondition === "all" ||
         product.condition === filterCondition;
 
-      const matchesCategory = 
-        filterCategory === "all" || 
+      const matchesCategory =
+        filterCategory === "all" ||
         product.category_id === filterCategory;
 
-      const hasStock = showOutOfStock || product.stock_quantity > 0;
+      // While searching, never hide a matching product just because stock is 0.
+      const hasStock =
+        showOutOfStock || terms.length > 0 || (product.stock_quantity ?? 0) > 0;
 
       return matchesSearch && matchesCondition && matchesCategory && hasStock;
     });
