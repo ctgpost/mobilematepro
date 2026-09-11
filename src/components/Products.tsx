@@ -445,7 +445,7 @@ export function Products() {
     }
 
 
-    const excelData = products.map((product, index) => ({
+    const excelData = exportProducts.map((product, index) => ({
       'ক্রমিক': index + 1,
       'প্রোডাক্ট নাম': product.name,
       'ব্র্যান্ড': product.brand || '',
@@ -479,20 +479,20 @@ export function Products() {
 
     const fileName = `MobileMatePro_Products_${new Date().toISOString().split('T')[0]}.xlsx`;
     XLSX.writeFile(workbook, fileName);
-    toast.success(`${products.length}টি প্রোডাক্ট Excel এ ডাউনলোড হয়েছে`);
+    toast.success(`${exportProducts.length}টি প্রোডাক্ট Excel এ ডাউনলোড হয়েছে`);
   };
 
   // Download products as PDF (using print)
   const downloadPDF = () => {
-    if (!products || products.length === 0) {
+    if (exportProducts.length === 0) {
       toast.error("কোনো প্রোডাক্ট নেই ডাউনলোড করার জন্য");
       return;
     }
 
-    const totalValue = products.reduce((sum, p) => sum + (p.price || 0) * (p.stock_quantity || 0), 0);
-    const totalCost = products.reduce((sum, p) => sum + (p.cost || 0) * (p.stock_quantity || 0), 0);
-    const inStock = products.filter(p => (p.stock_quantity || 0) > 0).length;
-    const outOfStock = products.filter(p => (p.stock_quantity || 0) <= 0).length;
+    const totalValue = exportProducts.reduce((sum, p) => sum + (p.price || 0) * (p.stock_quantity || 0), 0);
+    const totalCost = exportProducts.reduce((sum, p) => sum + (p.cost || 0) * (p.stock_quantity || 0), 0);
+    const inStock = exportProducts.filter(p => (p.stock_quantity || 0) > 0).length;
+    const outOfStock = exportProducts.filter(p => (p.stock_quantity || 0) <= 0).length;
 
     const printContent = `
       <!DOCTYPE html>
