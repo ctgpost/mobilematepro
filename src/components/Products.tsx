@@ -414,25 +414,36 @@ export function Products() {
     });
   }, [products, searchTerm, filterCondition, filterCategory, showOutOfStock]);
 
+  const hasActiveFilters =
+    isSearching || filterCondition !== "all" || filterCategory !== "all";
+
+  // Exports follow what the user currently sees when any filter/search is active.
+  const exportProducts: any[] = hasActiveFilters ? filteredProducts : (products || []);
+
   const handleBarcodeScanned = (barcode: string) => {
+    const code = (barcode || "").trim();
     // Search for product by barcode or IMEI
     const product = products?.find(p => 
-      p.barcode === barcode || p.imei === barcode
+      p.barcode === code || p.imei === code
     );
+
+    // Always reflect the scan in the search box so the list filters too.
+    setSearchTerm(code);
 
     if (product) {
       setDetailProduct(product);
     } else {
-      toast.error("Product not found with this barcode");
+      toast.error("এই বারকোড/IMEI দিয়ে কোনো প্রোডাক্ট পাওয়া যায়নি");
     }
   };
 
   // Download products as Excel
   const downloadExcel = () => {
-    if (!products || products.length === 0) {
+    if (exportProducts.length === 0) {
       toast.error("কোনো প্রোডাক্ট নেই ডাউনলোড করার জন্য");
       return;
     }
+
 
     const excelData = products.map((product, index) => ({
       'ক্রমিক': index + 1,
