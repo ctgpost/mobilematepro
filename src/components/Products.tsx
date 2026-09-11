@@ -119,7 +119,14 @@ export function Products() {
     },
   });
 
-  const { data: products } = useQuery({
+  const {
+    data: products,
+    isLoading: productsLoading,
+    isError: productsError,
+    error: productsErrorObj,
+    refetch: refetchProducts,
+    isFetching: productsFetching,
+  } = useQuery({
     queryKey: ["products"],
     queryFn: async () =>
       fetchAll<any>("products", "*, categories(name)", (q) => q.order("name")),
@@ -311,8 +318,9 @@ export function Products() {
       model: formData.model || extractModel(formData.name),
       price: price,
       cost: cost,
-      stock_quantity: 1,
-      low_stock_threshold: 0,
+      // Keep existing stock when editing (a sold unit must not silently return to stock)
+      stock_quantity: editingProduct ? (editingProduct.stock_quantity ?? 1) : 1,
+      low_stock_threshold: editingProduct ? (editingProduct.low_stock_threshold ?? 0) : 0,
       category_id: formData.category_id || null,
       supplier_id: formData.supplier_id || null,
     };
