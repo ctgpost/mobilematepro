@@ -1079,7 +1079,7 @@ export function Products() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="md:col-span-2 flex gap-2">
             <Input
-              placeholder="Search by name, IMEI, brand, or SKU..."
+              placeholder="নাম, IMEI, বারকোড, ব্র্যান্ড, মডেল, SKU, সাপ্লায়ার দিয়ে সার্চ..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="flex-1"
@@ -1215,7 +1215,7 @@ export function Products() {
                 )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Price:</span>
-                  <span className="font-semibold text-foreground">${Number(product.price).toFixed(2)}</span>
+                  <span className="font-semibold text-foreground">৳{Number(product.price || 0).toLocaleString('bn-BD')}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Stock:</span>
