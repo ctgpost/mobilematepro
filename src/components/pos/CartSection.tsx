@@ -10,6 +10,7 @@ interface CartSectionProps {
   onUpdatePrice: (productId: string, price: number) => void;
   onUpdateQuantity: (productId: string, quantity: number) => void;
   onRemoveItem: (productId: string) => void;
+  onClearCart?: () => void;
   total: number;
 }
 
@@ -20,20 +21,30 @@ export function CartSection({
   onUpdatePrice,
   onUpdateQuantity,
   onRemoveItem,
+  onClearCart,
   total,
 }: CartSectionProps) {
   return (
     <Card className="p-4 lg:p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg lg:text-xl font-semibold text-foreground">কার্ট</h2>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onToggleCollapse}
-          className="lg:hidden"
-        >
-          {isCollapsed ? "বিস্তারিত" : "সংক্ষিপ্ত"}
-        </Button>
+        <h2 className="text-lg lg:text-xl font-semibold text-foreground">
+          কার্ট {cart.length > 0 && <span className="text-sm text-muted-foreground">({cart.length})</span>}
+        </h2>
+        <div className="flex items-center gap-1">
+          {cart.length > 0 && onClearCart && (
+            <Button variant="ghost" size="sm" onClick={onClearCart} className="text-destructive">
+              খালি করুন
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggleCollapse}
+            className="lg:hidden"
+          >
+            {isCollapsed ? "বিস্তারিত" : "সংক্ষিপ্ত"}
+          </Button>
+        </div>
       </div>
 
       {!isCollapsed && (
