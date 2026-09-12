@@ -214,6 +214,10 @@ export function POS() {
   });
 
   const addToCart = (product: Product) => {
+    if ((product.stock_quantity ?? 0) <= 0) {
+      toast.error(`${product.name} স্টকে নেই`);
+      return;
+    }
     const existingItem = cart.find(item => item.product.id === product.id);
     if (existingItem) {
       toast.error(`${product.name} ইতিমধ্যে কার্টে আছে`);
@@ -234,13 +238,17 @@ export function POS() {
   const updateQuantity = (productId: string, quantity: number) => {
     if (quantity <= 0) {
       setCart(cart.filter(item => item.product.id !== productId));
-    } else {
-      setCart(cart.map(item =>
-        item.product.id === productId
-          ? { ...item, quantity }
-          : item
-      ));
+      return;
     }
+    setCart(cart.map(item => {
+      if (item.product.id !== productId) return item;
+      const maxStock = Number(item.product.stock_quantity ?? 1);
+      if (quantity > maxStock) {
+        toast.error(`${item.product.name}: স্টকে মাত্র ${maxStock}টি আছে`);
+        return { ...item, quantity: maxStock };
+      }
+      return { ...item, quantity };
+    }));
   };
 
   const removeFromCart = (productId: string) => {
@@ -251,11 +259,35 @@ export function POS() {
     return cart.reduce((sum, item) => sum + (item.customPrice * item.quantity), 0);
   };
 
+  const clearCart = () => {
+    setCart([]);
+    toast.success("কার্ট খালি করা হয়েছে");
+  };
+
   const handleCompleteSaleClick = () => {
     if (cart.length === 0) {
       toast.error("কার্ট খালি");
       return;
     }
+
+    const overStock = cart.find(item => item.quantity > Number(item.product.stock_quantity ?? 0));
+    if (overStock) {
+      toast.error(`${overStock.product.name}: স্টকের চেয়ে বেশি পরিমাণ নির্বাচন করা হয়েছে`);
+      return;
+    }
+
+    const invalidPrice = cart.find(item => !(item.customPrice > 0));
+    if (invalidPrice) {
+      toast.error(`${invalidPrice.product.name}: বিক্রয় মূল্য সঠিক নয়`);
+      return;
+    }
+
+    const dueNow = Math.max(0, getTotal() - paidAmount);
+    if (dueNow > 0 && !selectedCustomer && !instantCustomerName.trim()) {
+      toast.error("বাকিতে বিক্রয় করতে কাস্টমার নির্বাচন করুন বা ইন্সট্যান্ট কাস্টমারের নাম দিন");
+      return;
+    }
+
 
     const warningItems = cart.filter(item => {
       const cost = Number(item.product.cost) || 0;
@@ -367,6 +399,7 @@ export function POS() {
               onUpdatePrice={updatePrice}
               onUpdateQuantity={updateQuantity}
               onRemoveItem={removeFromCart}
+              onClearCart={clearCart}
               total={total}
             />
             <div className="mt-4">

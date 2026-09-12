@@ -10,6 +10,7 @@ interface CartSectionProps {
   onUpdatePrice: (productId: string, price: number) => void;
   onUpdateQuantity: (productId: string, quantity: number) => void;
   onRemoveItem: (productId: string) => void;
+  onClearCart?: () => void;
   total: number;
 }
 
@@ -20,20 +21,30 @@ export function CartSection({
   onUpdatePrice,
   onUpdateQuantity,
   onRemoveItem,
+  onClearCart,
   total,
 }: CartSectionProps) {
   return (
     <Card className="p-4 lg:p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg lg:text-xl font-semibold text-foreground">কার্ট</h2>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onToggleCollapse}
-          className="lg:hidden"
-        >
-          {isCollapsed ? "বিস্তারিত" : "সংক্ষিপ্ত"}
-        </Button>
+        <h2 className="text-lg lg:text-xl font-semibold text-foreground">
+          কার্ট {cart.length > 0 && <span className="text-sm text-muted-foreground">({cart.length})</span>}
+        </h2>
+        <div className="flex items-center gap-1">
+          {cart.length > 0 && onClearCart && (
+            <Button variant="ghost" size="sm" onClick={onClearCart} className="text-destructive">
+              খালি করুন
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggleCollapse}
+            className="lg:hidden"
+          >
+            {isCollapsed ? "বিস্তারিত" : "সংক্ষিপ্ত"}
+          </Button>
+        </div>
       </div>
 
       {!isCollapsed && (
@@ -56,10 +67,30 @@ export function CartSection({
                     </div>
                   </div>
                   <div className="flex items-center gap-1 lg:gap-2 flex-shrink-0">
-                    <span className="w-6 lg:w-8 text-center font-semibold text-sm">1</span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      aria-label="পরিমাণ কমান"
+                      onClick={() => onUpdateQuantity(item.product.id, item.quantity - 1)}
+                      className="h-7 w-7 p-0 text-xs"
+                    >
+                      −
+                    </Button>
+                    <span className="w-6 lg:w-8 text-center font-semibold text-sm">{item.quantity}</span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      aria-label="পরিমাণ বাড়ান"
+                      disabled={item.quantity >= (item.product.stock_quantity ?? 1)}
+                      onClick={() => onUpdateQuantity(item.product.id, item.quantity + 1)}
+                      className="h-7 w-7 p-0 text-xs"
+                    >
+                      +
+                    </Button>
                     <Button
                       size="sm"
                       variant="destructive"
+                      aria-label="বাদ দিন"
                       onClick={() => onRemoveItem(item.product.id)}
                       className="h-7 w-7 p-0 text-xs"
                     >
@@ -67,9 +98,14 @@ export function CartSection({
                     </Button>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  সাবটোটাল: ৳{(item.customPrice * item.quantity).toLocaleString('bn-BD')}
-                </p>
+                <div className="flex justify-between items-center">
+                  <p className="text-xs text-muted-foreground">
+                    সাবটোটাল: ৳{(item.customPrice * item.quantity).toLocaleString('bn-BD')}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    স্টক: {Number(item.product.stock_quantity ?? 0).toLocaleString('bn-BD')}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
