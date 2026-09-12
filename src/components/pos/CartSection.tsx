@@ -67,10 +67,30 @@ export function CartSection({
                     </div>
                   </div>
                   <div className="flex items-center gap-1 lg:gap-2 flex-shrink-0">
-                    <span className="w-6 lg:w-8 text-center font-semibold text-sm">1</span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      aria-label="পরিমাণ কমান"
+                      onClick={() => onUpdateQuantity(item.product.id, item.quantity - 1)}
+                      className="h-7 w-7 p-0 text-xs"
+                    >
+                      −
+                    </Button>
+                    <span className="w-6 lg:w-8 text-center font-semibold text-sm">{item.quantity}</span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      aria-label="পরিমাণ বাড়ান"
+                      disabled={item.quantity >= (item.product.stock_quantity ?? 1)}
+                      onClick={() => onUpdateQuantity(item.product.id, item.quantity + 1)}
+                      className="h-7 w-7 p-0 text-xs"
+                    >
+                      +
+                    </Button>
                     <Button
                       size="sm"
                       variant="destructive"
+                      aria-label="বাদ দিন"
                       onClick={() => onRemoveItem(item.product.id)}
                       className="h-7 w-7 p-0 text-xs"
                     >
@@ -78,9 +98,14 @@ export function CartSection({
                     </Button>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  সাবটোটাল: ৳{(item.customPrice * item.quantity).toLocaleString('bn-BD')}
-                </p>
+                <div className="flex justify-between items-center">
+                  <p className="text-xs text-muted-foreground">
+                    সাবটোটাল: ৳{(item.customPrice * item.quantity).toLocaleString('bn-BD')}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    স্টক: {Number(item.product.stock_quantity ?? 0).toLocaleString('bn-BD')}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
