@@ -399,6 +399,7 @@ export function POS() {
               onUpdatePrice={updatePrice}
               onUpdateQuantity={updateQuantity}
               onRemoveItem={removeFromCart}
+              onClearCart={clearCart}
               total={total}
             />
             <div className="mt-4">

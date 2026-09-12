@@ -151,11 +151,23 @@ export function PaymentSection({
         <Input
           type="number"
           value={paidAmount || ""}
-          onChange={(e) => onPaidAmountChange(Number(e.target.value) || 0)}
+          onChange={(e) => {
+            const val = Number(e.target.value) || 0;
+            onPaidAmountChange(Math.min(Math.max(0, val), total));
+          }}
           className="h-9"
           placeholder="প্রদত্ত পরিমাণ"
           min={0}
+          max={total}
         />
+        <div className="flex gap-2">
+          <Button type="button" variant="outline" size="sm" className="h-7 text-xs" onClick={() => onPaidAmountChange(total)}>
+            সম্পূর্ণ পরিশোধ
+          </Button>
+          <Button type="button" variant="outline" size="sm" className="h-7 text-xs" onClick={() => onPaidAmountChange(0)}>
+            সম্পূর্ণ বাকি
+          </Button>
+        </div>
         {dueAmount > 0 && (
           <div className="bg-destructive/10 border border-destructive/30 p-2 rounded-lg">
             <div className="flex justify-between items-center">
