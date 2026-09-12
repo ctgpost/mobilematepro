@@ -238,13 +238,17 @@ export function POS() {
   const updateQuantity = (productId: string, quantity: number) => {
     if (quantity <= 0) {
       setCart(cart.filter(item => item.product.id !== productId));
-    } else {
-      setCart(cart.map(item =>
-        item.product.id === productId
-          ? { ...item, quantity }
-          : item
-      ));
+      return;
     }
+    setCart(cart.map(item => {
+      if (item.product.id !== productId) return item;
+      const maxStock = Number(item.product.stock_quantity ?? 1);
+      if (quantity > maxStock) {
+        toast.error(`${item.product.name}: স্টকে মাত্র ${maxStock}টি আছে`);
+        return { ...item, quantity: maxStock };
+      }
+      return { ...item, quantity };
+    }));
   };
 
   const removeFromCart = (productId: string) => {
