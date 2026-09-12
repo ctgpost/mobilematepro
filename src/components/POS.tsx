@@ -259,11 +259,35 @@ export function POS() {
     return cart.reduce((sum, item) => sum + (item.customPrice * item.quantity), 0);
   };
 
+  const clearCart = () => {
+    setCart([]);
+    toast.success("কার্ট খালি করা হয়েছে");
+  };
+
   const handleCompleteSaleClick = () => {
     if (cart.length === 0) {
       toast.error("কার্ট খালি");
       return;
     }
+
+    const overStock = cart.find(item => item.quantity > Number(item.product.stock_quantity ?? 0));
+    if (overStock) {
+      toast.error(`${overStock.product.name}: স্টকের চেয়ে বেশি পরিমাণ নির্বাচন করা হয়েছে`);
+      return;
+    }
+
+    const invalidPrice = cart.find(item => !(item.customPrice > 0));
+    if (invalidPrice) {
+      toast.error(`${invalidPrice.product.name}: বিক্রয় মূল্য সঠিক নয়`);
+      return;
+    }
+
+    const dueNow = Math.max(0, getTotal() - paidAmount);
+    if (dueNow > 0 && !selectedCustomer && !instantCustomerName.trim()) {
+      toast.error("বাকিতে বিক্রয় করতে কাস্টমার নির্বাচন করুন বা ইন্সট্যান্ট কাস্টমারের নাম দিন");
+      return;
+    }
+
 
     const warningItems = cart.filter(item => {
       const cost = Number(item.product.cost) || 0;
