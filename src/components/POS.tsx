@@ -214,6 +214,10 @@ export function POS() {
   });
 
   const addToCart = (product: Product) => {
+    if ((product.stock_quantity ?? 0) <= 0) {
+      toast.error(`${product.name} স্টকে নেই`);
+      return;
+    }
     const existingItem = cart.find(item => item.product.id === product.id);
     if (existingItem) {
       toast.error(`${product.name} ইতিমধ্যে কার্টে আছে`);
