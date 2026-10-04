@@ -246,7 +246,7 @@ export function Returns() {
         // 1) Stock restore
         const newStock = (returnData.products?.stock_quantity || 0) + returnData.quantity;
         const { error: inventoryError } = await supabase
-          .from("products").update({ stock_quantity: newStock }).eq("id", returnData.product_id);
+          .from("products").update({ stock_quantity: newStock, last_stock_reason: "return", last_stock_ref: String(returnData.id ?? "") } as any).eq("id", returnData.product_id);
         if (inventoryError) throw inventoryError;
         stockDelta = returnData.quantity;
 

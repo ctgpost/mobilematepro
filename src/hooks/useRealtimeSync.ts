@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 // Map of postgres tables -> related react-query keys to invalidate on change.
 const TABLE_TO_KEYS: Record<string, string[][]> = {
-  products: [["products"], ["dashboard"], ["stock-sync"]],
+  products: [["products"], ["dashboard"], ["stock-sync"], ["stock-movements"]],
   sales: [["sales"], ["dashboard"], ["due-sales"], ["staff-performance"]],
   sale_items: [["sales"], ["dashboard"], ["sale-items"]],
   customers: [["customers"], ["dashboard"]],
