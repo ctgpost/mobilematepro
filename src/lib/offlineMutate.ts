@@ -214,7 +214,7 @@ async function processOutboxItem(item: OutboxItem): Promise<void> {
       const next = Math.max(0, (prod?.stock_quantity ?? 0) - it.quantity);
       const { error: uErr } = await supabase
         .from("products")
-        .update({ stock_quantity: next })
+        .update({ stock_quantity: next, last_stock_reason: "sale", last_stock_ref: sale.id } as any)
         .eq("id", it.product_id);
       if (uErr) throw uErr;
     }

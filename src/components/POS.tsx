@@ -168,7 +168,7 @@ export function POS() {
           const newStockQuantity = Math.max(0, product.stock_quantity - item.quantity);
           const { error: stockUpdateError } = await supabase
             .from("products")
-            .update({ stock_quantity: newStockQuantity })
+            .update({ stock_quantity: newStockQuantity, last_stock_reason: "sale", last_stock_ref: sale.id } as any)
             .eq("id", item.product_id);
 
           if (stockUpdateError) {

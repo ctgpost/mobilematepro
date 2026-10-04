@@ -16,6 +16,7 @@ import { ActivityLog } from "@/components/ActivityLog";
 import { UserManagement } from "@/components/UserManagement";
 import { StaffPerformanceReport } from "@/components/StaffPerformanceReport";
 import { StockSyncCheck } from "@/components/StockSyncCheck";
+import { StockHistory } from "@/components/StockHistory";
 import { DueCollectionPage } from "@/components/DueCollectionPage";
 import { CustomerLedger } from "@/components/CustomerLedger";
 import { Button } from "@/components/ui/button";
@@ -31,7 +32,7 @@ import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
 import { useAutoBackup } from "@/hooks/useAutoBackup";
 
-import { 
+import { History, 
   LayoutDashboard, 
   Package, 
   ShoppingCart, 
@@ -206,6 +207,7 @@ export default function Index({ user }: IndexProps) {
     { id: "investments", label: "ইনভেস্টমেন্ট", icon: Wallet, permission: 'canAccessReports' },
     { id: "reports", label: "রিপোর্ট", icon: FileText, permission: 'canAccessReports' },
     { id: "staff-performance", label: "স্টাফ পারফরম্যান্স", icon: Trophy, permission: 'canAccessReports' },
+    { id: "stock-history", label: "স্টক ইতিহাস ও মিলকরণ", icon: History, permission: 'canAccessReports' },
     { id: "stock-sync", label: "স্টক সিঙ্ক", icon: GitCompare, permission: 'canAccessReports' },
     { id: "activity-log", label: "অ্যাক্টিভিটি লগ", icon: Activity, permission: 'canAccessUserManagement' },
     { id: "user-management", label: "ইউজার ম্যানেজমেন্ট", icon: UserCog, permission: 'canAccessUserManagement' },
@@ -249,6 +251,7 @@ export default function Index({ user }: IndexProps) {
       case "due-collection": return <DueCollectionPage />;
       case "staff-performance": return <StaffPerformanceReport />;
       case "stock-sync": return <StockSyncCheck />;
+      case "stock-history": return <StockHistory />;
       case "activity-log": return <ActivityLog />;
       case "user-management": return <UserManagement />;
       case "settings": return <Settings />;
