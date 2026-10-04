@@ -1,3 +1,4 @@
+import { fetchAll } from "@/lib/fetchAll";
 import { useState, useMemo } from "react";
 import { CollapsibleSection } from "./CollapsibleSection";
 import { PageHeader } from "./PageHeader";
@@ -53,9 +54,7 @@ export function Suppliers() {
   const { data: products } = useQuery({
     queryKey: ["products-all"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("products").select("*").order("name");
-      if (error) throw error;
-      return data;
+      return (await fetchAll<any>("products", "*, categories(name)", (q) => q.order("name"))) as any[];
     },
   });
 
