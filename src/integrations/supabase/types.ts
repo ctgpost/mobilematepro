@@ -366,6 +366,8 @@ export type Database = {
           id: string
           image_url: string | null
           imei: string | null
+          last_stock_reason: string | null
+          last_stock_ref: string | null
           low_stock_threshold: number
           model: string | null
           name: string
@@ -396,6 +398,8 @@ export type Database = {
           id?: string
           image_url?: string | null
           imei?: string | null
+          last_stock_reason?: string | null
+          last_stock_ref?: string | null
           low_stock_threshold?: number
           model?: string | null
           name: string
@@ -426,6 +430,8 @@ export type Database = {
           id?: string
           image_url?: string | null
           imei?: string | null
+          last_stock_reason?: string | null
+          last_stock_ref?: string | null
           low_stock_threshold?: number
           model?: string | null
           name?: string
@@ -921,6 +927,51 @@ export type Database = {
           shop_phone?: string | null
           shop_subtitle?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      stock_movements: {
+        Row: {
+          change: number
+          created_at: string
+          id: string
+          imei: string | null
+          movement_type: string
+          new_quantity: number
+          old_quantity: number
+          product_id: string
+          product_name: string | null
+          reason: string | null
+          ref_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          change?: number
+          created_at?: string
+          id?: string
+          imei?: string | null
+          movement_type: string
+          new_quantity?: number
+          old_quantity?: number
+          product_id: string
+          product_name?: string | null
+          reason?: string | null
+          ref_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          change?: number
+          created_at?: string
+          id?: string
+          imei?: string | null
+          movement_type?: string
+          new_quantity?: number
+          old_quantity?: number
+          product_id?: string
+          product_name?: string | null
+          reason?: string | null
+          ref_id?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
