@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Keep interface language in one persistent client-side provider with an offline phrase catalog; translation must never alter form values or stored records.

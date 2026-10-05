@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { ActivityLogger } from "@/hooks/useActivityLog";
 import { useShopSettings } from "@/hooks/useShopSettings";
+import { LanguageSwitch } from "@/components/LanguageProvider";
 
 const authSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
@@ -64,6 +65,7 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-primary p-4">
       <div className="w-full max-w-md space-y-8 animate-slide-up">
+        <div className="flex justify-end"><LanguageSwitch /></div>
         <div className="text-center">
           <div className="inline-flex items-center justify-center w-48 h-48 rounded-2xl mb-4 shadow-xl animate-fade-in">
             <img src={logoSrc} alt={settings.shop_name} className="w-36 h-36 animate-scale-in object-cover" />
