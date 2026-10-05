@@ -15,6 +15,7 @@ import NotFound from "./pages/NotFound";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { useOfflineRefreshGuard } from "@/hooks/useOfflineRefreshGuard";
 import defaultLogo from "@/assets/mobile-mate-pro-logo.png";
+import { LanguageProvider } from "@/components/LanguageProvider";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -114,6 +115,7 @@ const App = () => {
         buster: "v1",
       }}
     >
+      <LanguageProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -127,6 +129,7 @@ const App = () => {
           <OfflineIndicator />
         </BrowserRouter>
       </TooltipProvider>
+      </LanguageProvider>
     </PersistQueryClientProvider>
   );
 };
