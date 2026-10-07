@@ -29,7 +29,13 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }
 
-export function useLanguage() { return useContext(LanguageContext); }
+export function useLanguage() {
+  const context = useContext(LanguageContext);
+  return {
+    ...context,
+    locale: context.language === "bn" ? "bn-BD" : "en-US",
+  };
+}
 
 export function LanguageSwitch() {
   const { language, setLanguage } = useLanguage();
