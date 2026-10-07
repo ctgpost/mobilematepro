@@ -1,0 +1,3 @@
+- [ ] Move the unlabeled language switch to the dashboard corner and default new language preferences to English.
+- [ ] Remove invalid map-page translations while preserving currency and mismatch labels.
+- [ ] Verify language switching, persistence, and placement in the signed-in app.

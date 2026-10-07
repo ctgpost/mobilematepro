@@ -7,6 +7,7 @@ interface PageHeaderProps {
   subtitle?: ReactNode;
   icon?: ReactNode;
   actions?: ReactNode;
+  cornerControl?: ReactNode;
   /** Persists collapsed state across reloads. */
   storageKey?: string;
   /** When true, collapse only affects mobile; desktop always shows everything. */
@@ -25,6 +26,7 @@ export function PageHeader({
   subtitle,
   icon,
   actions,
+  cornerControl,
   storageKey,
   mobileOnly = true,
   children,
@@ -70,6 +72,7 @@ export function PageHeader({
             )}
           </div>
         </div>
+        <div className="flex shrink-0 items-center gap-2">
         <Button
           type="button"
           size="icon"
@@ -81,6 +84,8 @@ export function PageHeader({
         >
           {open ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
         </Button>
+        {cornerControl}
+        </div>
       </div>
 
       {actions && (

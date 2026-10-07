@@ -6,6 +6,7 @@ import { useShopSettings } from "@/hooks/useShopSettings";
 import { MobileDashboardWidget } from "./MobileDashboardWidget";
 import { fetchAll } from "@/lib/fetchAll";
 import { PageHeader } from "./PageHeader";
+import { LanguageSwitch } from "./LanguageProvider";
 
 interface DashboardProps {
   onNavigateToPOS?: () => void;
@@ -136,6 +137,7 @@ export function Dashboard({ onNavigateToPOS, onNavigateToProducts }: DashboardPr
         storageKey="dashboard"
         title="ড্যাশবোর্ড"
         subtitle="স্বাগতম! আপনার ব্যবসার সারসংক্ষেপ দেখুন।"
+        cornerControl={<LanguageSwitch />}
         icon={<img src={logoSrc} alt={settings.shop_name} className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 shrink-0 object-contain" />}
       />
 

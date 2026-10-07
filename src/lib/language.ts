@@ -3,8 +3,8 @@ import { bengaliToEnglish, englishToBengali } from "./uiTranslations";
 export type Language = "bn" | "en";
 export const LANGUAGE_KEY = "mobile-mate-pro.language";
 export function getLanguage(): Language {
-  try { return localStorage.getItem(LANGUAGE_KEY) === "en" ? "en" : "bn"; }
-  catch { return "bn"; }
+  try { return localStorage.getItem(LANGUAGE_KEY) === "bn" ? "bn" : "en"; }
+  catch { return "en"; }
 }
 
 // Keep business data, form values, and currency untouched. Only translate interface copy.
