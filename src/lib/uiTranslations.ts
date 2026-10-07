@@ -964,7 +964,11 @@ export const bengaliToEnglish: Record<string, string> = {
   "নিশ্চিত করুন": "Confirm",
   "তৈরি": "Ready",
   "মুছে ফেলা": "Deleted",
-  "input[type=\"search\"], input[placeholder*=\"খুঁজুন\"], input[placeholder*=\"Search\"]": "The input type=search], the input token *=\" key\""
+  "input[type=\"search\"], input[placeholder*=\"খুঁজুন\"], input[placeholder*=\"Search\"]": "The input type=search], the input token *=\" key\"",
+  "কাস্টমার রিটার্ন": "Customer Returns",
+  "ইনভেস্টমেন্ট সেক্টর": "Investment Sectors",
+  "ইনভেস্টমেন্ট আয়": "Investment Income",
+  "শপ সেটিংস": "Shop Settings"
 };
 
 export const englishToBengali: Record<string, string> = {
