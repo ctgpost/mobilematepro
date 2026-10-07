@@ -20,7 +20,6 @@ import { StockHistory } from "@/components/StockHistory";
 import { DueCollectionPage } from "@/components/DueCollectionPage";
 import { CustomerLedger } from "@/components/CustomerLedger";
 import { Button } from "@/components/ui/button";
-import { LanguageSwitch } from "@/components/LanguageProvider";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -300,7 +299,6 @@ export default function Index({ user }: IndexProps) {
             })}
           </nav>
           
-          <div className="border-t border-sidebar-border py-3"><LanguageSwitch /></div>
           {/* Logout */}
           <div className="pt-4 border-t border-sidebar-border">
             <button
@@ -334,7 +332,6 @@ export default function Index({ user }: IndexProps) {
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-1">
-          <LanguageSwitch />
           <Button
             variant="ghost"
             size="icon"

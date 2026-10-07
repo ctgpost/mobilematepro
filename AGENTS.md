@@ -10,3 +10,4 @@
 <!-- LOVABLE:END -->
 
 - Keep interface language in one persistent client-side provider with an offline phrase catalog; translation must never alter form values or stored records.
+- Place non-collapsible page-corner controls in PageHeader's cornerControl slot so they remain available independently of collapsed subtitle and actions.
