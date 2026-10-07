@@ -25,7 +25,7 @@ const translate = (source: string, lang: Language): string => {
 const originalText = new WeakMap<Text, string>();
 const originalAttributes = new WeakMap<Element, Map<string, string>>();
 const watchedAttributes = ["placeholder", "title", "aria-label", "aria-description", "alt"];
-const excluded = new Set(["SCRIPT", "STYLE", "TEXTAREA", "INPUT", "OPTION", "CODE", "PRE"]);
+const excludedText = new Set(["SCRIPT", "STYLE", "TEXTAREA", "INPUT", "CODE", "PRE"]);
 
 export function localizeTree(root: Node, lang: Language) {
   const visit = (node: Node) => {
@@ -33,10 +33,10 @@ export function localizeTree(root: Node, lang: Language) {
       const text = node as Text;
       if (text.parentElement?.closest('[data-no-translate], [contenteditable="true"]')) return;
       const parent = text.parentElement;
-      if (!parent || excluded.has(parent.tagName)) return;
+      if (!parent || excludedText.has(parent.tagName)) return;
       const known = originalText.get(text);
       // React may reuse a text node for new content; adopt its new value.
-      const source = known !== undefined && text.data === translate(known, "en") || known !== undefined && text.data === translate(known, "bn") ? known : text.data;
+      const source = known !== undefined && (text.data === translate(known, "en") || text.data === translate(known, "bn")) ? known : text.data;
       originalText.set(text, source);
       const result = translate(source, lang);
       if (text.data !== result) text.data = result;
@@ -44,7 +44,7 @@ export function localizeTree(root: Node, lang: Language) {
     }
     if (node.nodeType !== Node.ELEMENT_NODE) return;
     const el = node as Element;
-    if (el.hasAttribute("data-no-translate") || excluded.has(el.tagName)) return;
+    if (el.hasAttribute("data-no-translate") || el.closest('[contenteditable="true"]')) return;
     let sources = originalAttributes.get(el);
     if (!sources) { sources = new Map(); originalAttributes.set(el, sources); }
     for (const attr of watchedAttributes) {
@@ -56,6 +56,7 @@ export function localizeTree(root: Node, lang: Language) {
       const result = translate(source, lang);
       if (value !== result) el.setAttribute(attr, result);
     }
+    if (excludedText.has(el.tagName)) return;
     el.childNodes.forEach(visit);
   };
   visit(root);

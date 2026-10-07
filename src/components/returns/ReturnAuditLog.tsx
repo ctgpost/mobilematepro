@@ -2,7 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { fetchReturnAudit } from "@/lib/returnsAudit";
 import { format } from "date-fns";
-import { bn } from "date-fns/locale";
+import { bn, enUS } from "date-fns/locale";
+import { useLanguage } from "@/components/LanguageProvider";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -32,6 +33,8 @@ interface Props {
 }
 
 export function ReturnAuditLog({ open, onOpenChange, returnType, returnId }: Props) {
+  const { language } = useLanguage();
+  const dateLocale = language === "bn" ? bn : enUS;
   const { data: logs, isLoading } = useQuery({
     queryKey: ["return-audit", returnType, returnId],
     queryFn: () => fetchReturnAudit(returnType, returnId!),
@@ -58,7 +61,7 @@ export function ReturnAuditLog({ open, onOpenChange, returnType, returnId }: Pro
                       {ACTION_LABEL[log.action] || log.action}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
-                      {format(new Date(log.created_at), "dd MMM yyyy, hh:mm a", { locale: bn })}
+                      {format(new Date(log.created_at), "dd MMM yyyy, hh:mm a", { locale: dateLocale })}
                     </span>
                   </div>
                   <div className="mt-2 text-sm grid grid-cols-2 gap-2">

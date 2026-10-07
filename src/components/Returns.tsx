@@ -13,7 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { bn } from "date-fns/locale";
+import { bn, enUS } from "date-fns/locale";
+import { useLanguage } from "@/components/LanguageProvider";
 import { RotateCcw, Search, Package, Calendar, CheckCircle, XCircle, Clock, Trash2, FileSpreadsheet, FileText, History, Truck } from "lucide-react";
 import * as XLSX from "xlsx";
 import { logReturnAudit } from "@/lib/returnsAudit";
@@ -23,6 +24,8 @@ import { ReconciliationReport } from "./returns/ReconciliationReport";
 import { RefundSettlementDialog, SettlementPlan } from "./returns/RefundSettlementDialog";
 
 export function Returns() {
+  const { language } = useLanguage();
+  const dateLocale = language === "bn" ? bn : enUS;
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [searchSaleId, setSearchSaleId] = useState("");
   const [selectedSale, setSelectedSale] = useState<any>(null);
@@ -565,7 +568,7 @@ export function Returns() {
                             <div className="flex items-center justify-between gap-2 flex-wrap">
                               <span className="font-mono text-sm font-semibold">#{s.id.slice(0, 8)}</span>
                               <span className="text-xs text-muted-foreground">
-                                {format(new Date(s.created_at), "dd MMM yyyy", { locale: bn })}
+                                {format(new Date(s.created_at), "dd MMM yyyy", { locale: dateLocale })}
                               </span>
                             </div>
                             <p className="text-sm mt-1">
@@ -597,7 +600,7 @@ export function Returns() {
                       </div>
                       <div>
                         <p className="text-muted-foreground">তারিখ</p>
-                        <p className="font-medium">{format(new Date(selectedSale.created_at), "dd MMM yyyy", { locale: bn })}</p>
+                        <p className="font-medium">{format(new Date(selectedSale.created_at), "dd MMM yyyy", { locale: dateLocale })}</p>
                       </div>
                       <div>
                         <p className="text-muted-foreground">ক্রেতা</p>
@@ -827,7 +830,7 @@ export function Returns() {
                       </div>
                       <div>
                         <p className="text-muted-foreground flex items-center gap-1"><Calendar className="h-3 w-3" /> তারিখ</p>
-                        <p className="font-medium">{format(new Date(returnItem.created_at), "dd MMM yyyy", { locale: bn })}</p>
+                        <p className="font-medium">{format(new Date(returnItem.created_at), "dd MMM yyyy", { locale: dateLocale })}</p>
                       </div>
                     </div>
 
@@ -891,7 +894,7 @@ export function Returns() {
                       <p className="text-xs text-muted-foreground">কারণ: {sr.reason} • পরিমাণ: {sr.quantity} • রিকভারি: ৳{Number(sr.return_amount || 0).toLocaleString("bn-BD")}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-muted-foreground">{format(new Date(sr.created_at), "dd MMM yyyy", { locale: bn })}</p>
+                      <p className="text-xs text-muted-foreground">{format(new Date(sr.created_at), "dd MMM yyyy", { locale: dateLocale })}</p>
                       <Button size="sm" variant="ghost" onClick={() => { setAuditTarget({ type: "supplier", id: sr.id }); setAuditOpen(true); }}>
                         <History className="h-4 w-4 mr-1" /> অডিট
                       </Button>

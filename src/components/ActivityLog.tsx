@@ -25,7 +25,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useUserRole } from "@/hooks/useUserRole";
 import { format, formatDistanceToNow, startOfDay, endOfDay, subDays } from "date-fns";
-import { bn } from "date-fns/locale";
+import { bn, enUS } from "date-fns/locale";
+import { useLanguage } from "@/components/LanguageProvider";
 import { 
   Activity, 
   Shield, 
@@ -72,6 +73,8 @@ interface UserActivitySummary {
 }
 
 export function ActivityLog() {
+  const { language } = useLanguage();
+  const dateLocale = language === "bn" ? bn : enUS;
   const { isAdmin, isManager, loading: roleLoading } = useUserRole();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
@@ -366,7 +369,7 @@ export function ActivityLog() {
                             {format(new Date(log.created_at), 'dd MMM, HH:mm')}
                           </div>
                           <div className="text-xs text-muted-foreground/70">
-                            {formatDistanceToNow(new Date(log.created_at), { addSuffix: true, locale: bn })}
+                            {formatDistanceToNow(new Date(log.created_at), { addSuffix: true, locale: dateLocale })}
                           </div>
                         </TableCell>
                         <TableCell className="text-sm">
@@ -450,7 +453,7 @@ export function ActivityLog() {
                   {summary.lastLogin && (
                     <div className="pt-2 border-t border-border">
                       <p className="text-muted-foreground">
-                        সর্বশেষ লগইন: {formatDistanceToNow(new Date(summary.lastLogin), { addSuffix: true, locale: bn })}
+                        সর্বশেষ লগইন: {formatDistanceToNow(new Date(summary.lastLogin), { addSuffix: true, locale: dateLocale })}
                       </p>
                     </div>
                   )}
@@ -514,7 +517,7 @@ export function ActivityLog() {
                         {summary.lastActivity ? (
                           <div className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
-                            {formatDistanceToNow(new Date(summary.lastActivity), { addSuffix: true, locale: bn })}
+                            {formatDistanceToNow(new Date(summary.lastActivity), { addSuffix: true, locale: dateLocale })}
                           </div>
                         ) : '-'}
                       </TableCell>

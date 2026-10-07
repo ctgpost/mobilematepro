@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { bn } from "date-fns/locale";
+import { bn, enUS } from "date-fns/locale";
+import { useLanguage } from "@/components/LanguageProvider";
 
 interface DueCollectionProps {
   saleId: string;
@@ -16,6 +17,8 @@ interface DueCollectionProps {
 }
 
 export function DueCollection({ saleId, currentDue }: DueCollectionProps) {
+  const { language } = useLanguage();
+  const dateLocale = language === "bn" ? bn : enUS;
   const queryClient = useQueryClient();
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cash");
@@ -119,7 +122,7 @@ export function DueCollection({ saleId, currentDue }: DueCollectionProps) {
             {payments.map(p => (
               <div key={p.id} className="flex justify-between items-center text-xs py-1">
                 <span className="text-muted-foreground">
-                  {format(new Date(p.created_at), 'dd MMM yyyy, hh:mm a', { locale: bn })}
+                  {format(new Date(p.created_at), 'dd MMM yyyy, hh:mm a', { locale: dateLocale })}
                 </span>
                 <span className="font-semibold text-accent">৳{Number(p.amount).toLocaleString('bn-BD')}</span>
               </div>

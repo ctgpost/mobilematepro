@@ -32,7 +32,8 @@ import {
   subWeeks,
   subMonths
 } from "date-fns";
-import { bn } from "date-fns/locale";
+import { bn, enUS } from "date-fns/locale";
+import { useLanguage } from "@/components/LanguageProvider";
 import { 
   FileText, 
   Download, 
@@ -68,6 +69,8 @@ interface StaffPerformance {
 type ReportPeriod = 'today' | 'yesterday' | 'thisWeek' | 'lastWeek' | 'thisMonth' | 'lastMonth';
 
 export function StaffPerformanceReport() {
+  const { language } = useLanguage();
+  const dateLocale = language === "bn" ? bn : enUS;
   const { isAdmin, isManager, loading: roleLoading } = useUserRole();
   const [period, setPeriod] = useState<ReportPeriod>('thisWeek');
   const printRef = useRef<HTMLDivElement>(null);
@@ -422,8 +425,8 @@ export function StaffPerformanceReport() {
             </div>
             <div className="text-right text-sm text-gray-600">
               <p>সময়কাল: {dateRange.label}</p>
-              <p>{format(dateRange.start, 'dd MMM yyyy', { locale: bn })} - {format(dateRange.end, 'dd MMM yyyy', { locale: bn })}</p>
-              <p className="mt-1">প্রিন্ট: {format(new Date(), 'dd MMM yyyy, hh:mm a', { locale: bn })}</p>
+              <p>{format(dateRange.start, 'dd MMM yyyy', { locale: dateLocale })} - {format(dateRange.end, 'dd MMM yyyy', { locale: dateLocale })}</p>
+              <p className="mt-1">প্রিন্ট: {format(new Date(), 'dd MMM yyyy, hh:mm a', { locale: dateLocale })}</p>
             </div>
           </div>
 

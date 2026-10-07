@@ -10,10 +10,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { DueCollection } from "./DueCollection";
 import { format } from "date-fns";
-import { bn } from "date-fns/locale";
+import { bn, enUS } from "date-fns/locale";
+import { useLanguage } from "@/components/LanguageProvider";
 import { Search, Wallet } from "lucide-react";
 
 export function DueCollectionPage() {
+  const { language } = useLanguage();
+  const dateLocale = language === "bn" ? bn : enUS;
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<{ id: string; due: number; name: string } | null>(null);
 
@@ -102,7 +105,7 @@ export function DueCollectionPage() {
                     {phone} · #{s.id.slice(0, 8)}
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
-                    {format(new Date(s.created_at), "dd MMM yyyy, hh:mm a", { locale: bn })}
+                    {format(new Date(s.created_at), "dd MMM yyyy, hh:mm a", { locale: dateLocale })}
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
