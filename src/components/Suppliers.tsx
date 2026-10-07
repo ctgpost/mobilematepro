@@ -16,7 +16,8 @@ import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Building2, RotateCcw, Search, Phone, MapPin, FileText, MessageSquare, Mail, Share2 } from "lucide-react";
 import { SwipeableRow, swipeIntents } from "./SwipeableRow";
 import { format } from "date-fns";
-import { bn } from "date-fns/locale";
+import { bn, enUS } from "date-fns/locale";
+import { useLanguage } from "@/components/LanguageProvider";
 import { PhotoUpload } from "./PhotoUpload";
 import { PhotoZoom } from "./PhotoZoom";
 import { logReturnAudit } from "@/lib/returnsAudit";
@@ -24,6 +25,8 @@ import { deleteFromCloudinary } from "@/lib/cloudinary";
 import { offlineMutate } from "@/lib/offlineMutate";
 
 export function Suppliers() {
+  const { language } = useLanguage();
+  const dateLocale = language === "bn" ? bn : enUS;
   const qc = useQueryClient();
   const [supplierDialog, setSupplierDialog] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<any>(null);
@@ -445,7 +448,7 @@ export function Suppliers() {
                       </div>
                       {productImeiById(r.product_id) && <p className="text-xs font-mono text-muted-foreground">IMEI: {productImeiById(r.product_id)}</p>}
                       <p className="text-xs text-muted-foreground">সাপ্লায়ার: {r.supplier_name || "—"}</p>
-                      <p className="text-xs text-muted-foreground">পরিমাণ: {r.quantity} | তারিখ: {format(new Date(r.created_at), 'dd MMM yyyy', { locale: bn })}</p>
+                      <p className="text-xs text-muted-foreground">পরিমাণ: {r.quantity} | তারিখ: {format(new Date(r.created_at), 'dd MMM yyyy', { locale: dateLocale })}</p>
                       {r.notes && <p className="text-xs italic mt-1">"{r.notes}"</p>}
                     </div>
                     <div className="text-right">

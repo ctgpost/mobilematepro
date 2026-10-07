@@ -13,10 +13,13 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { TrendingUp, Wallet, PiggyBank, ArrowDownCircle, ArrowUpCircle, Trash2, Pencil, Building2, FileSpreadsheet, FileText } from "lucide-react";
 import { format } from "date-fns";
-import { bn } from "date-fns/locale";
+import { bn, enUS } from "date-fns/locale";
+import { useLanguage } from "@/components/LanguageProvider";
 import * as XLSX from "xlsx";
 
 export function Investments() {
+  const { language } = useLanguage();
+  const dateLocale = language === "bn" ? bn : enUS;
   const qc = useQueryClient();
   const [showSector, setShowSector] = useState(false);
   const [showEntry, setShowEntry] = useState(false);
@@ -454,7 +457,7 @@ export function Investments() {
                   </div>
                   {e.purpose && <p className="text-xs mt-1">{e.purpose}</p>}
                   {e.notes && <p className="text-[10px] italic text-muted-foreground">{e.notes}</p>}
-                  <p className="text-[10px] text-muted-foreground">{format(new Date(e.entry_date), 'dd MMM yyyy', { locale: bn })}</p>
+                  <p className="text-[10px] text-muted-foreground">{format(new Date(e.entry_date), 'dd MMM yyyy', { locale: dateLocale })}</p>
                 </div>
                 <div className="flex flex-col items-end gap-1">
                   <p className={`font-bold text-sm ${e.entry_type === 'deposit' ? 'text-primary' : 'text-destructive'}`}>
@@ -481,7 +484,7 @@ export function Investments() {
                   {i.source && <p className="text-xs">উৎস: {i.source}</p>}
                   {i.purpose && <p className="text-xs text-muted-foreground">{i.purpose}</p>}
                   {i.notes && <p className="text-[10px] italic text-muted-foreground">{i.notes}</p>}
-                  <p className="text-[10px] text-muted-foreground">{format(new Date(i.income_date), 'dd MMM yyyy', { locale: bn })}</p>
+                  <p className="text-[10px] text-muted-foreground">{format(new Date(i.income_date), 'dd MMM yyyy', { locale: dateLocale })}</p>
                 </div>
                 <div className="flex flex-col items-end gap-1">
                   <p className="font-bold text-sm text-accent">+৳{Number(i.amount).toLocaleString('bn-BD')}</p>
