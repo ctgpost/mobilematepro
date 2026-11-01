@@ -53,11 +53,8 @@ export function StockSyncCheck() {
   const { data: saleItems } = useQuery({
     queryKey: ["sale_items_for_sync"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("sale_items")
-        .select("product_id, quantity");
-      if (error) throw error;
-      return data || [];
+      // Unlimited fetch — no 1000-row cap
+      return fetchAll<any>("sale_items", "product_id, quantity");
     },
   });
 
@@ -65,12 +62,8 @@ export function StockSyncCheck() {
   const { data: returns } = useQuery({
     queryKey: ["returns_for_sync"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("returns")
-        .select("product_id, quantity, status")
-        .eq("status", "completed");
-      if (error) throw error;
-      return data || [];
+      // Unlimited fetch — no 1000-row cap
+      return fetchAll<any>("returns", "product_id, quantity, status", (q) => q.eq("status", "completed"));
     },
   });
 

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAll } from "@/lib/fetchAll";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -14,28 +15,24 @@ export function ReconciliationReport() {
   const { data: sales } = useQuery({
     queryKey: ["recon-sales"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("sales")
-        .select("id, total_amount, paid_amount, due_amount, created_at, sale_items(id, product_id, quantity, total_price, unit_price)");
-      return data || [];
+      // Unlimited fetch — no 1000-row cap
+      return fetchAll<any>("sales", "id, total_amount, paid_amount, due_amount, created_at, sale_items(id, product_id, quantity, total_price, unit_price)");
     },
   });
 
   const { data: returns } = useQuery({
     queryKey: ["recon-returns"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("returns")
-        .select("id, sale_id, sale_item_id, product_id, quantity, refund_amount, status");
-      return data || [];
+      // Unlimited fetch — no 1000-row cap
+      return fetchAll<any>("returns", "id, sale_id, sale_item_id, product_id, quantity, refund_amount, status");
     },
   });
 
   const { data: supplierReturns } = useQuery({
     queryKey: ["recon-supplier-returns"],
     queryFn: async () => {
-      const { data } = await supabase.from("supplier_returns").select("id, product_id, quantity, return_amount, status");
-      return data || [];
+      // Unlimited fetch — no 1000-row cap
+      return fetchAll<any>("supplier_returns", "id, product_id, quantity, return_amount, status");
     },
   });
 
