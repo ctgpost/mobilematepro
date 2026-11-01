@@ -46,9 +46,9 @@ export function POS() {
   const { data: customers } = useQuery({
     queryKey: ["customers"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("customers").select("*").order("name");
-      if (error) throw error;
-      return data as Customer[];
+      // Unlimited fetch — no 1000-row cap
+      const rows = await fetchAll<any>("customers", "*", (q) => q.order("name"));
+      return rows as Customer[];
     },
   });
 

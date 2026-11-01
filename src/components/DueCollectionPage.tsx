@@ -3,6 +3,7 @@ import { CollapsibleSection } from "./CollapsibleSection";
 import { PageHeader } from "./PageHeader";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAll } from "@/lib/fetchAll";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -23,13 +24,12 @@ export function DueCollectionPage() {
   const { data: sales = [], isLoading } = useQuery({
     queryKey: ["due-sales"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("sales")
-        .select("id, instant_customer_name, instant_customer_phone, total_amount, paid_amount, due_amount, created_at, customer_id, customers(name, phone)")
-        .gt("due_amount", 0)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data || [];
+      // Unlimited fetch — no 1000-row cap
+      return fetchAll<any>(
+        "sales",
+        "id, instant_customer_name, instant_customer_phone, total_amount, paid_amount, due_amount, created_at, customer_id, customers(name, phone)",
+        (q) => q.gt("due_amount", 0).order("created_at", { ascending: false })
+      );
     },
   });
 

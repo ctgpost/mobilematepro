@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { PageHeader } from "./PageHeader";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAll } from "@/lib/fetchAll";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -35,8 +36,8 @@ export function CustomerLedger() {
   const { data: customers } = useQuery({
     queryKey: ["customers-ledger"],
     queryFn: async () => {
-      const { data } = await supabase.from("customers").select("*").order("name");
-      return data || [];
+      // Unlimited fetch — no 1000-row cap
+      return fetchAll<any>("customers", "*", (q) => q.order("name"));
     },
   });
 
@@ -44,8 +45,8 @@ export function CustomerLedger() {
     queryKey: ["ledger-sales", selectedCustomerId],
     enabled: !!selectedCustomerId,
     queryFn: async () => {
-      const { data } = await supabase.from("sales").select("*").eq("customer_id", selectedCustomerId).order("created_at");
-      return data || [];
+      // Unlimited fetch — no 1000-row cap
+      return fetchAll<any>("sales", "*", (q) => q.eq("customer_id", selectedCustomerId).order("created_at"));
     },
   });
 
@@ -55,8 +56,8 @@ export function CustomerLedger() {
     queryFn: async () => {
       const ids = sales?.map(s => s.id) || [];
       if (!ids.length) return [];
-      const { data } = await supabase.from("due_payments").select("*").in("sale_id", ids).order("created_at");
-      return data || [];
+      // Unlimited fetch — no 1000-row cap
+      return fetchAll<any>("due_payments", "*", (q) => q.in("sale_id", ids).order("created_at"));
     },
   });
 
@@ -64,8 +65,8 @@ export function CustomerLedger() {
     queryKey: ["ledger-adjustments", selectedCustomerId],
     enabled: !!selectedCustomerId,
     queryFn: async () => {
-      const { data } = await supabase.from("customer_ledger_entries").select("*").eq("customer_id", selectedCustomerId).order("entry_date");
-      return data || [];
+      // Unlimited fetch — no 1000-row cap
+      return fetchAll<any>("customer_ledger_entries", "*", (q) => q.eq("customer_id", selectedCustomerId).order("entry_date"));
     },
   });
 

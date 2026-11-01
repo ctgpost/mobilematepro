@@ -153,12 +153,8 @@ export function Sales() {
   const { data: customers = [] } = useQuery({
     queryKey: ["customers"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("customers")
-        .select("id, name")
-        .order("name");
-      if (error) throw error;
-      return data;
+      // Unlimited fetch — no 1000-row cap
+      return fetchAll<any>("customers", "id, name", (q) => q.order("name"));
     },
   });
 
