@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAll } from "@/lib/fetchAll";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, Package, DollarSign, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,25 +17,20 @@ export function MobileDashboardWidget({ onNavigateToPOS, onNavigateToProducts }:
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
-      const { data, error } = await supabase
-        .from("sales")
-        .select("*, sale_items(quantity, total_price)")
-        .gte("created_at", today.toISOString())
-        .order("created_at", { ascending: false });
-      
-      if (error) throw error;
-      return data;
+      // Paginated fetch so daily totals stay accurate past the 1000-row API cap
+      return fetchAll<any>(
+        "sales",
+        "*, sale_items(quantity, total_price)",
+        (q) => q.gte("created_at", today.toISOString()).order("created_at", { ascending: false })
+      );
     },
   });
 
   const { data: products } = useQuery({
     queryKey: ["products-count"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("id, stock_quantity, low_stock_threshold");
-      if (error) throw error;
-      return data;
+      // Paginated fetch so product/stock counts stay accurate past the 1000-row cap
+      return fetchAll<any>("products", "id, stock_quantity, low_stock_threshold");
     },
   });
 

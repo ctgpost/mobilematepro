@@ -3,6 +3,7 @@ import { CollapsibleSection } from "./CollapsibleSection";
 import { PageHeader } from "./PageHeader";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAll } from "@/lib/fetchAll";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,27 +39,24 @@ export function Investments() {
   const { data: sectors } = useQuery({
     queryKey: ["investment-sectors"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("investment_sectors").select("*").order("created_at");
-      if (error) throw error;
-      return data;
+      // Unlimited fetch — no 1000-row cap
+      return fetchAll<any>("investment_sectors", "*", (q) => q.order("created_at"));
     },
   });
 
   const { data: entries } = useQuery({
     queryKey: ["investment-entries"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("investment_entries").select("*, investment_sectors(name)").order("entry_date", { ascending: false });
-      if (error) throw error;
-      return data;
+      // Unlimited fetch — no 1000-row cap
+      return fetchAll<any>("investment_entries", "*, investment_sectors(name)", (q) => q.order("entry_date", { ascending: false }));
     },
   });
 
   const { data: incomes } = useQuery({
     queryKey: ["investment-incomes"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("investment_incomes").select("*, investment_sectors(name)").order("income_date", { ascending: false });
-      if (error) throw error;
-      return data;
+      // Unlimited fetch — no 1000-row cap
+      return fetchAll<any>("investment_incomes", "*, investment_sectors(name)", (q) => q.order("income_date", { ascending: false }));
     },
   });
 

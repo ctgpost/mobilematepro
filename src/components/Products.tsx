@@ -113,9 +113,8 @@ export function Products() {
   const { data: suppliersList } = useQuery({
     queryKey: ["suppliers"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("suppliers").select("*").order("name");
-      if (error) throw error;
-      return data;
+      // Unlimited fetch — no 1000-row cap
+      return fetchAll<any>("suppliers", "*", (q) => q.order("name"));
     },
   });
 

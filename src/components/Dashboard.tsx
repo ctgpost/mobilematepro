@@ -29,10 +29,9 @@ export function Dashboard({ onNavigateToPOS, onNavigateToProducts }: DashboardPr
 
   const { data: completedReturns } = useQuery({
     queryKey: ["returns", "dashboard-all"],
-    queryFn: async () => {
-      const { data } = await supabase.from("returns").select("refund_amount, created_at, status").eq("status", "completed");
-      return data || [];
-    },
+    // Unlimited fetch — no 1000-row cap
+    queryFn: async () =>
+      fetchAll<any>("returns", "refund_amount, created_at, status", (q) => q.eq("status", "completed")),
   });
 
   const totalProducts = products?.length || 0;

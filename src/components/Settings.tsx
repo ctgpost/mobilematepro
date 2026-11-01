@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAll } from "@/lib/fetchAll";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
@@ -213,46 +214,47 @@ export function Settings() {
         activityLogs,
         shopSettings,
       ] = await Promise.all([
-        supabase.from("products").select("*"),
-        supabase.from("categories").select("*"),
-        supabase.from("customers").select("*"),
-        supabase.from("suppliers").select("*"),
-        supabase.from("sales").select("*"),
-        supabase.from("sale_items").select("*"),
-        supabase.from("purchases").select("*"),
-        supabase.from("purchase_items").select("*"),
-        supabase.from("returns").select("*"),
-        supabase.from("due_payments").select("*"),
-        supabase.from("customer_ledger_entries").select("*"),
-        supabase.from("supplier_returns").select("*"),
-        supabase.from("investment_sectors").select("*"),
-        supabase.from("investment_entries").select("*"),
-        supabase.from("investment_incomes").select("*"),
-        supabase.from("activity_logs").select("*"),
-        supabase.from("shop_settings").select("*"),
+        // Unlimited paginated fetch — backups must include every row, no 1000-row cap
+        fetchAll<any>("products"),
+        fetchAll<any>("categories"),
+        fetchAll<any>("customers"),
+        fetchAll<any>("suppliers"),
+        fetchAll<any>("sales"),
+        fetchAll<any>("sale_items"),
+        fetchAll<any>("purchases"),
+        fetchAll<any>("purchase_items"),
+        fetchAll<any>("returns"),
+        fetchAll<any>("due_payments"),
+        fetchAll<any>("customer_ledger_entries"),
+        fetchAll<any>("supplier_returns"),
+        fetchAll<any>("investment_sectors"),
+        fetchAll<any>("investment_entries"),
+        fetchAll<any>("investment_incomes"),
+        fetchAll<any>("activity_logs"),
+        fetchAll<any>("shop_settings"),
       ]);
 
       const backup = {
         version: "2.0",
         timestamp: new Date().toISOString(),
         data: {
-          products: products.data || [],
-          categories: categories.data || [],
-          customers: customers.data || [],
-          suppliers: suppliers.data || [],
-          sales: sales.data || [],
-          sale_items: saleItems.data || [],
-          purchases: purchases.data || [],
-          purchase_items: purchaseItems.data || [],
-          returns: returns.data || [],
-          due_payments: duePayments.data || [],
-          customer_ledger_entries: customerLedger.data || [],
-          supplier_returns: supplierReturns.data || [],
-          investment_sectors: investmentSectors.data || [],
-          investment_entries: investmentEntries.data || [],
-          investment_incomes: investmentIncomes.data || [],
-          activity_logs: activityLogs.data || [],
-          shop_settings: shopSettings.data || [],
+          products: products || [],
+          categories: categories || [],
+          customers: customers || [],
+          suppliers: suppliers || [],
+          sales: sales || [],
+          sale_items: saleItems || [],
+          purchases: purchases || [],
+          purchase_items: purchaseItems || [],
+          returns: returns || [],
+          due_payments: duePayments || [],
+          customer_ledger_entries: customerLedger || [],
+          supplier_returns: supplierReturns || [],
+          investment_sectors: investmentSectors || [],
+          investment_entries: investmentEntries || [],
+          investment_incomes: investmentIncomes || [],
+          activity_logs: activityLogs || [],
+          shop_settings: shopSettings || [],
         },
       };
 
@@ -465,8 +467,10 @@ export function Settings() {
 
   const fetchResetStats = async () => {
     try {
-      const [salesRes, saleItemsRes, returnsRes, purchasesRes, purchaseItemsRes, productsRes, customersRes, suppliersRes, categoriesRes] = await Promise.all([
-        supabase.from("sales").select("total_amount", { count: "exact" }),
+      const [salesRows, salesRes, saleItemsRes, returnsRes, purchasesRes, purchaseItemsRes, productsRes, customersRes, suppliersRes, categoriesRes] = await Promise.all([
+        // Unlimited paginated fetch so revenue totals stay accurate past the 1000-row cap
+        fetchAll<any>("sales", "total_amount"),
+        supabase.from("sales").select("total_amount", { count: "exact", head: true }),
         supabase.from("sale_items").select("*", { count: "exact", head: true }),
         supabase.from("returns").select("*", { count: "exact", head: true }),
         supabase.from("purchases").select("*", { count: "exact", head: true }),
@@ -477,7 +481,7 @@ export function Settings() {
         supabase.from("categories").select("*", { count: "exact", head: true }),
       ]);
 
-      const totalRevenue = salesRes.data?.reduce((sum, sale) => sum + Number(sale.total_amount || 0), 0) || 0;
+      const totalRevenue = salesRows.reduce((sum, sale) => sum + Number(sale.total_amount || 0), 0) || 0;
 
       setResetStats({
         sales: salesRes.count || 0,
@@ -499,13 +503,15 @@ export function Settings() {
 
   const fetchSalesStats = async () => {
     try {
-      const [salesRes, saleItemsRes, returnsRes] = await Promise.all([
-        supabase.from("sales").select("total_amount", { count: "exact" }),
+      const [salesRows, salesRes, saleItemsRes, returnsRes] = await Promise.all([
+        // Unlimited paginated fetch so revenue totals stay accurate past the 1000-row cap
+        fetchAll<any>("sales", "total_amount"),
+        supabase.from("sales").select("total_amount", { count: "exact", head: true }),
         supabase.from("sale_items").select("*", { count: "exact", head: true }),
         supabase.from("returns").select("*", { count: "exact", head: true }),
       ]);
 
-      const totalRevenue = salesRes.data?.reduce((sum, sale) => sum + Number(sale.total_amount || 0), 0) || 0;
+      const totalRevenue = salesRows.reduce((sum, sale) => sum + Number(sale.total_amount || 0), 0) || 0;
 
       setSalesStats({
         sales: salesRes.count || 0,
