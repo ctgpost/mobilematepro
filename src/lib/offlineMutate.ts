@@ -128,17 +128,19 @@ export async function drainOutbox(): Promise<{
       processed++;
     } catch (err: any) {
       failed++;
+      // Never drop queued work: after repeated failures the item is paused,
+      // not deleted — no product, sale or ledger entry may ever be lost.
+      // The user can retry paused items from the offline diagnostics panel.
+      const retryCount = (item.retryCount || 0) + 1;
       const updated: OutboxItem = {
         ...item,
-        retryCount: (item.retryCount || 0) + 1,
+        retryCount,
         lastError: err?.message || String(err),
+        paused: retryCount >= 5,
       };
-      // Drop after 5 failed retries to avoid permanent block
-      if (updated.retryCount >= 5) {
-        errors.push(`${item.table}/${item.op}: ${updated.lastError}`);
-        await deleteOutbox(item.id!);
-      } else {
-        await updateOutbox(updated);
+      await updateOutbox(updated);
+      if (updated.paused) {
+        errors.push(`${item.table}/${item.op}: ${updated.lastError} (paused for manual retry)`);
       }
     }
   }

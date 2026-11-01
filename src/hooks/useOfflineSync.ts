@@ -47,5 +47,15 @@ export function useOfflineSync() {
     }
   }, [online]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Periodic retry so a failed sync is retried automatically instead of
+  // waiting for the next offline→online flip; queued data is never lost.
+  useEffect(() => {
+    if (!online) return;
+    const interval = setInterval(() => {
+      if (pendingCount > 0) sync();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [online, pendingCount, sync]);
+
   return { online, pendingCount, syncing, sync };
 }
