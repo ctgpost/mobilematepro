@@ -130,7 +130,7 @@ export function Returns() {
         .limit(50);
       if (prodMatches?.length) {
         const pids = prodMatches.map((p: any) => p.id);
-        const { data: si } = await supabase.from("sale_items").select("sale_id").in("product_id", pids);
+        const si = await fetchAll<any>("sale_items", "sale_id", (q) => q.in("product_id", pids));
         const saleIds = Array.from(new Set((si || []).map((s: any) => s.sale_id)));
         if (saleIds.length) {
           const { data: byImei } = await supabase
