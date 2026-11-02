@@ -3,6 +3,7 @@ import { CollapsibleSection } from "./CollapsibleSection";
 import { PageHeader } from "./PageHeader";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAll } from "@/lib/fetchAll";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -52,9 +53,10 @@ export function Returns() {
   const { data: returns, isLoading } = useQuery({
     queryKey: ["returns"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("returns")
-        .select(`
+      // Unlimited paginated fetch — no 1000-row cap
+      return fetchAll<any>(
+        "returns",
+        `
           *,
           sales (
             id,
@@ -75,11 +77,9 @@ export function Returns() {
             imei,
             brand
           )
-        `)
-        .order("created_at", { ascending: false });
-      
-      if (error) throw error;
-      return data || [];
+        `,
+        (q) => q.order("created_at", { ascending: false })
+      );
     },
   });
 
@@ -87,11 +87,12 @@ export function Returns() {
   const { data: supplierReturns } = useQuery({
     queryKey: ["supplier_returns"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("supplier_returns")
-        .select("*, products(name, imei, brand)")
-        .order("created_at", { ascending: false });
-      return data || [];
+      // Unlimited paginated fetch — no 1000-row cap
+      return fetchAll<any>(
+        "supplier_returns",
+        "*, products(name, imei, brand)",
+        (q) => q.order("created_at", { ascending: false })
+      );
     },
   });
 
@@ -129,7 +130,7 @@ export function Returns() {
         .limit(50);
       if (prodMatches?.length) {
         const pids = prodMatches.map((p: any) => p.id);
-        const { data: si } = await supabase.from("sale_items").select("sale_id").in("product_id", pids);
+        const si = await fetchAll<any>("sale_items", "sale_id", (q) => q.in("product_id", pids));
         const saleIds = Array.from(new Set((si || []).map((s: any) => s.sale_id)));
         if (saleIds.length) {
           const { data: byImei } = await supabase

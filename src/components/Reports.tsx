@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { useReactToPrint } from "react-to-print";
 import * as XLSX from "xlsx";
-import { fetchAll } from "@/lib/fetchAll";
 import { PageHeader } from "./PageHeader";
 
 export function Reports() {
