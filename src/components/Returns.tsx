@@ -52,9 +52,10 @@ export function Returns() {
   const { data: returns, isLoading } = useQuery({
     queryKey: ["returns"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("returns")
-        .select(`
+      // Unlimited paginated fetch — no 1000-row cap
+      return fetchAll<any>(
+        "returns",
+        `
           *,
           sales (
             id,
@@ -75,11 +76,9 @@ export function Returns() {
             imei,
             brand
           )
-        `)
-        .order("created_at", { ascending: false });
-      
-      if (error) throw error;
-      return data || [];
+        `,
+        (q) => q.order("created_at", { ascending: false })
+      );
     },
   });
 
@@ -87,11 +86,12 @@ export function Returns() {
   const { data: supplierReturns } = useQuery({
     queryKey: ["supplier_returns"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("supplier_returns")
-        .select("*, products(name, imei, brand)")
-        .order("created_at", { ascending: false });
-      return data || [];
+      // Unlimited paginated fetch — no 1000-row cap
+      return fetchAll<any>(
+        "supplier_returns",
+        "*, products(name, imei, brand)",
+        (q) => q.order("created_at", { ascending: false })
+      );
     },
   });
 
