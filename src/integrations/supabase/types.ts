@@ -353,6 +353,75 @@ export type Database = {
         }
         Relationships: []
       }
+      product_transaction_history: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          customer_name: string | null
+          id: string
+          notes: string | null
+          payment_method: string | null
+          product_condition: string | null
+          product_id: string | null
+          product_imei: string | null
+          product_name: string
+          quantity: number
+          reference_id: string | null
+          source_key: string
+          supplier_id: string | null
+          supplier_name: string | null
+          total_amount: number
+          transaction_id: string | null
+          transaction_type: string
+          unit_cost: number | null
+          unit_price: number | null
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          product_condition?: string | null
+          product_id?: string | null
+          product_imei?: string | null
+          product_name: string
+          quantity?: number
+          reference_id?: string | null
+          source_key?: string
+          supplier_id?: string | null
+          supplier_name?: string | null
+          total_amount?: number
+          transaction_id?: string | null
+          transaction_type: string
+          unit_cost?: number | null
+          unit_price?: number | null
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          product_condition?: string | null
+          product_id?: string | null
+          product_imei?: string | null
+          product_name?: string
+          quantity?: number
+          reference_id?: string | null
+          source_key?: string
+          supplier_id?: string | null
+          supplier_name?: string | null
+          total_amount?: number
+          transaction_id?: string | null
+          transaction_type?: string
+          unit_cost?: number | null
+          unit_price?: number | null
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           barcode: string | null
@@ -380,6 +449,7 @@ export type Database = {
           supplier_mobile: string | null
           supplier_name: string | null
           supplier_nid: string | null
+          supplier_paid_amount: number
           supplier_photo_url: string | null
           unit: string | null
           updated_at: string
@@ -412,6 +482,7 @@ export type Database = {
           supplier_mobile?: string | null
           supplier_name?: string | null
           supplier_nid?: string | null
+          supplier_paid_amount?: number
           supplier_photo_url?: string | null
           unit?: string | null
           updated_at?: string
@@ -444,6 +515,7 @@ export type Database = {
           supplier_mobile?: string | null
           supplier_name?: string | null
           supplier_nid?: string | null
+          supplier_paid_amount?: number
           supplier_photo_url?: string | null
           unit?: string | null
           updated_at?: string
@@ -974,6 +1046,71 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      supplier_ledger_entries: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          product_condition: string | null
+          product_id: string | null
+          product_imei: string | null
+          product_name: string | null
+          purchase_id: string | null
+          quantity: number | null
+          source_key: string
+          supplier_id: string | null
+          supplier_name: string
+          transaction_type: string
+          unit_cost: number | null
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          product_condition?: string | null
+          product_id?: string | null
+          product_imei?: string | null
+          product_name?: string | null
+          purchase_id?: string | null
+          quantity?: number | null
+          source_key?: string
+          supplier_id?: string | null
+          supplier_name: string
+          transaction_type: string
+          unit_cost?: number | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          product_condition?: string | null
+          product_id?: string | null
+          product_imei?: string | null
+          product_name?: string | null
+          purchase_id?: string | null
+          quantity?: number | null
+          source_key?: string
+          supplier_id?: string | null
+          supplier_name?: string
+          transaction_type?: string
+          unit_cost?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_ledger_entries_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       supplier_returns: {
         Row: {
