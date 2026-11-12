@@ -15,6 +15,20 @@
       "when": 1794374382261,
       "tag": "0001_supplier_purchase_history",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794458108860,
+      "tag": "0002_supplier_account_payment_details",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794458152610,
+      "tag": "0003_supplier_payment_recording",
+      "breakpoints": true
     }
   ]
 }

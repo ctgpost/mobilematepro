@@ -450,6 +450,7 @@ export type Database = {
           supplier_name: string | null
           supplier_nid: string | null
           supplier_paid_amount: number
+          supplier_payment_method: string | null
           supplier_photo_url: string | null
           unit: string | null
           updated_at: string
@@ -483,6 +484,7 @@ export type Database = {
           supplier_name?: string | null
           supplier_nid?: string | null
           supplier_paid_amount?: number
+          supplier_payment_method?: string | null
           supplier_photo_url?: string | null
           unit?: string | null
           updated_at?: string
@@ -516,6 +518,7 @@ export type Database = {
           supplier_name?: string | null
           supplier_nid?: string | null
           supplier_paid_amount?: number
+          supplier_payment_method?: string | null
           supplier_photo_url?: string | null
           unit?: string | null
           updated_at?: string
@@ -1054,6 +1057,7 @@ export type Database = {
           created_by: string | null
           id: string
           notes: string | null
+          payment_method: string | null
           product_condition: string | null
           product_id: string | null
           product_imei: string | null
@@ -1072,6 +1076,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           notes?: string | null
+          payment_method?: string | null
           product_condition?: string | null
           product_id?: string | null
           product_imei?: string | null
@@ -1090,6 +1095,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           notes?: string | null
+          payment_method?: string | null
           product_condition?: string | null
           product_id?: string | null
           product_imei?: string | null
@@ -1234,6 +1240,15 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      record_supplier_payment: {
+        Args: {
+          p_amount: number
+          p_notes?: string
+          p_payment_method: string
+          p_supplier_id: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "manager" | "staff"
