@@ -95,7 +95,7 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
           <DialogTitle className="text-2xl">{product.name}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Basic Information */}
           <Card className="p-4">
             <h3 className="text-lg font-semibold mb-3">Basic Information</h3>
