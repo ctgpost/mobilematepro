@@ -129,6 +129,19 @@
   }
 }
 
+/* Mobile-first overflow, safe-area and touch ergonomics. */
+@media (max-width: 640px) {
+  .glass-card, .card { min-width: 0; }
+  input, select, textarea, button { touch-action: manipulation; }
+  button, [role="button"] { -webkit-tap-highlight-color: transparent; }
+}
+.table-scroll, [data-mobile-scroll="true"] {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* MOBILE MATE PRO Glassmorphism */
 .glass-card {
   background: hsl(var(--velvet-glass));
