@@ -1,6 +1,7 @@
 import { ReactNode, useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ImeiLifecycle } from "@/components/ImeiLifecycle";
 
 interface PageHeaderProps {
   title: ReactNode;
@@ -88,6 +89,7 @@ export function PageHeader({
               {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             </Button>
             {cornerControl}
+            <ImeiLifecycle />
           </div>
         </div>
         {actions && (

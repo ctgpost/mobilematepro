@@ -29,9 +29,9 @@ test("IMEI lifecycle captures sale and completed return references without guess
 });
 
 test("IMEI lifecycle popup is available from the application header and searches barcode/IMEI", async () => {
-  const index = await read("../src/pages/Index.tsx");
+  const header = await read("../src/components/PageHeader.tsx");
   const component = await read("../src/components/ImeiLifecycle.tsx");
-  assert.match(index, /<ImeiLifecycle\s*\/>/);
+  assert.match(header, /<ImeiLifecycle\s*\/>/);
   assert.match(component, /eq\("imei"/);
   assert.match(component, /eq\("barcode"/);
   assert.match(component, /<BarcodeScanner/);
