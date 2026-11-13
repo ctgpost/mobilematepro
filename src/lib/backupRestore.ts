@@ -225,6 +225,7 @@ export async function restoreFromJsonGroups(
     opts.onProgress?.(`${g.table} পুনরুদ্ধার হচ্ছে... (${g.rows.length})`);
     try {
       const rows = g.rows;
+      validateRestoreRows(g.table, rows);
       if (!rows.length) {
         results.push({ table: g.table, inserted: 0, updated: 0, processed: 0 });
         continue;
@@ -240,7 +241,7 @@ export async function restoreFromJsonGroups(
           .from(g.table as any)
           .select("id")
           .in("id", slice);
-        if (error) throw new Error(`Existing ID lookup failed for ${key}: ${error.message}`);
+        if (error) throw new Error(`Existing ID lookup failed for ${g.table}: ${error.message}`);
         for (const r of (data as any[]) || []) existing.add(r.id);
       }
 
