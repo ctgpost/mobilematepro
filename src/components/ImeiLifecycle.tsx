@@ -96,8 +96,10 @@ export function ImeiLifecycle() {
         db.from("stock_movements").select("*").eq("product_id", selected.id).order("created_at", { ascending: false }).limit(300),
         db.from("supplier_ledger_entries").select("*").eq("product_id", selected.id).order("created_at", { ascending: false }).limit(200),
         db.from("sale_items").select("*, sales(id,created_at,total_amount,paid_amount,due_amount,payment_method,customer_id,instant_customer_name,instant_customer_phone,customers(name,phone))").eq("product_id", selected.id).order("created_at", { ascending: false }).limit(200),
+        db.from("returns").select("*").eq("product_id", selected.id).order("created_at", { ascending: false }).limit(200),
+        db.from("purchase_items").select("*, purchases(id,purchase_number,created_at,status,supplier_id,suppliers(name))").eq("product_id", selected.id).order("created_at", { ascending: false }).limit(200),
       ]);
-      for (const result of [events, transactions, stock, supplier, saleItems]) if (result.error) throw result.error;
+      for (const result of [events, transactions, stock, supplier, saleItems, returns, purchaseItems]) if (result.error) throw result.error;
       const rows: AnyRow[] = [];
       for (const row of events.data || []) rows.push({ ...row, source: "imei", title: eventLabels[row.event_type] || row.event_type });
       for (const row of transactions.data || []) rows.push({ ...row, source: "transaction", title: row.transaction_type, amount: row.total_amount, notes: row.notes || row.product_name });
