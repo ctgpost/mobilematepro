@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
     const folder: string = typeof body.folder === "string" ? body.folder : "uploads";
     const publicId: string | undefined = typeof body.public_id === "string" ? body.public_id : undefined;
     const folderParts = folder.split("/");
-    const allowedRoots = new Set(["products", "customers", "suppliers", "avatars", "shop", "mobile-mate-pro-backups"]);
+    const allowedRoots = new Set(["uploads", "products", "customers", "suppliers", "avatars", "shop", "mobile-mate-pro-backups"]);
     if (folder.length > 160 || !allowedRoots.has(folderParts[0]) || folderParts.some((part) => !/^[A-Za-z0-9_-]+$/.test(part))) {
       throw new Error("Invalid upload folder");
     }
