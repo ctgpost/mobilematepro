@@ -603,7 +603,7 @@ export function Products() {
   };
 
   return (
-    <div className="flex flex-col h-screen animate-fade-in">
+    <div className="flex min-h-[calc(100dvh-4.25rem)] flex-col animate-fade-in">
       <PageHeader
         storageKey="products"
         title="Products"
@@ -1235,7 +1235,7 @@ export function Products() {
                   </div>
                 )}
               </div>
-              <div className="grid grid-cols-5 gap-1.5 pt-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1.5 pt-2">
                 <Button
                   variant="outline"
                   size="icon"
