@@ -224,10 +224,7 @@ export function POS() {
       toast.error(`${product.name} স্টকে নেই`);
       return;
     }
-    if (cart.some(item => item.product.id === product.id)) {
-      toast.error(`${product.name} ইতিমধ্যে কার্টে আছে`);
-      return;
-    }
+
     try {
       const { data: registered, error } = await (supabase as any)
         .from("imei_registry").select("imei,status").eq("product_id", product.id)
@@ -246,9 +243,18 @@ export function POS() {
         toast.error("এই IMEI ডিভাইসটি বর্তমানে বিক্রয়যোগ্য স্টকে নেই");
         return;
       }
-      const selectedImei = requestedImei || imeiOptions[0] || null;
+      const selectedImei = requestedImei || imeiOptions.find((value: string) => !cart.some(item => item.imei === value)) || null;
+      if (imeiOptions.length > 0 && !selectedImei) {
+        toast.error("এই প্রোডাক্টের সব IMEI ডিভাইস ইতিমধ্যে কার্টে যোগ করা হয়েছে");
+        return;
+      }
+      const cartKey = selectedImei ? `${product.id}::${selectedImei}` : product.id;
+      if (cart.some(item => (item.cartKey || item.product.id) === cartKey)) {
+        toast.error("এই IMEI ডিভাইসটি ইতিমধ্যে কার্টে রয়েছে");
+        return;
+      }
       setCart(prev => [...prev, {
-        product, quantity: 1, customPrice: Number(product.price),
+        product, cartKey, quantity: 1, customPrice: Number(product.price),
         imei: selectedImei, availableImeis: imeiOptions.length ? imeiOptions : undefined,
       }]);
       toast.success(`${product.name} কার্টে যোগ হয়েছে${selectedImei ? ` · IMEI ${selectedImei}` : ""}`);
@@ -257,21 +263,21 @@ export function POS() {
     }
   };
 
-  const updatePrice = (productId: string, price: number) => {
+  const updatePrice = (cartKey: string, price: number) => {
     setCart(cart.map(item =>
-      item.product.id === productId
+      (item.cartKey || item.product.id) === cartKey
         ? { ...item, customPrice: price }
         : item
     ));
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
+  const updateQuantity = (cartKey: string, quantity: number) => {
     if (quantity <= 0) {
-      setCart(cart.filter(item => item.product.id !== productId));
+      setCart(cart.filter(item => (item.cartKey || item.product.id) !== cartKey));
       return;
     }
     setCart(cart.map(item => {
-      if (item.product.id !== productId) return item;
+      if ((item.cartKey || item.product.id) !== cartKey) return item;
       const maxStock = item.availableImeis?.length ? 1 : Number(item.product.stock_quantity ?? 1);
       if (quantity > maxStock) {
         toast.error(`${item.product.name}: স্টকে মাত্র ${maxStock}টি আছে`);
@@ -281,8 +287,8 @@ export function POS() {
     }));
   };
 
-  const removeFromCart = (productId: string) => {
-    setCart(cart.filter(item => item.product.id !== productId));
+  const removeFromCart = (cartKey: string) => {
+    setCart(cart.filter(item => (item.cartKey || item.product.id) !== cartKey));
   };
 
   const getTotal = () => {
@@ -428,7 +434,7 @@ export function POS() {
               isCollapsed={isCartCollapsed}
               onToggleCollapse={() => setIsCartCollapsed(!isCartCollapsed)}
               onUpdatePrice={updatePrice}
-              onSelectImei={(productId, value) => setCart(prev => prev.map(item => item.product.id === productId ? { ...item, imei: value } : item))}
+              onSelectImei={(cartKey, value) => setCart(prev => prev.map(item => (item.cartKey || item.product.id) === cartKey ? { ...item, imei: value, cartKey: `${item.product.id}::${value}` } : item))}
               onUpdateQuantity={updateQuantity}
               onRemoveItem={removeFromCart}
               onClearCart={clearCart}
