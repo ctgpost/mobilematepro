@@ -206,7 +206,13 @@ BEGIN
   SELECT * INTO v_sale FROM public.sales WHERE id = NEW.sale_id;
   SELECT * INTO v_registry FROM public.imei_registry
     WHERE imei = regexp_replace(COALESCE(NEW.imei, v_product.imei), '[^0-9]', '', 'g') FOR UPDATE;
-  IF NOT FOUND THEN RETURN NEW; END IF;
+  IF NOT FOUND THEN
+    IF NEW.imei IS NOT NULL THEN RAISE EXCEPTION 'IMEI is not registered'; END IF;
+    RETURN NEW;
+  END IF;
+  IF v_registry.product_id <> NEW.product_id THEN
+    RAISE EXCEPTION 'IMEI belongs to a different product';
+  END IF;
   IF v_registry.status NOT IN ('in_stock','returned') THEN
     RAISE EXCEPTION 'IMEI is not available for sale (current status: %)', v_registry.status;
   END IF;
@@ -256,7 +262,13 @@ BEGIN
   IF NOT FOUND OR NEW.quantity <> 1 THEN RETURN NEW; END IF;
   SELECT * INTO v_registry FROM public.imei_registry
     WHERE imei = regexp_replace(COALESCE(NEW.imei, v_product.imei), '[^0-9]', '', 'g') FOR UPDATE;
-  IF NOT FOUND THEN RETURN NEW; END IF;
+  IF NOT FOUND THEN
+    IF NEW.imei IS NOT NULL THEN RAISE EXCEPTION 'Returned IMEI is not registered'; END IF;
+    RETURN NEW;
+  END IF;
+  IF v_registry.product_id <> NEW.product_id THEN
+    RAISE EXCEPTION 'Returned IMEI belongs to a different product';
+  END IF;
 
   UPDATE public.imei_registry
      SET status = 'returned', updated_at = now()
