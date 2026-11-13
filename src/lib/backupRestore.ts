@@ -446,11 +446,7 @@ export async function analyzeJsonFiles(files: File[]): Promise<MultiFileAnalysis
         for (const r of g.rows) {
           if (r?.id && existingIds.has(r.id)) existing.duplicateIds += 1;
         }
-        // last-file-wins: replace prior rows that share id with new ones
-        if (g.rows.some((r) => r?.id)) {
-          const incomingIds = new Set(g.rows.map((r) => r?.id).filter(Boolean));
-          existing.rows = existing.rows.filter((r) => !(r?.id && incomingIds.has(r.id)));
-        }
+        // Preserve duplicates so restore validation rejects ambiguous conflicting records.
         existing.rows.push(...g.rows);
         if (!existing.sources.includes(pf.file)) existing.sources.push(pf.file);
         existing.confidences.push(g.confidence);
