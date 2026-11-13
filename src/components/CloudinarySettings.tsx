@@ -142,7 +142,7 @@ export function CloudinarySettings() {
   };
 
   return (
-    <Card className="p-6 space-y-5">
+    <Card className="p-4 space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <ImageIcon className="w-5 h-5 text-primary" />
