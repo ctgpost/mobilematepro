@@ -78,6 +78,96 @@ async function readTableJson(zip: JSZip, key: TableKey): Promise<any[]> {
   validateRestoreRows(key, parsed);
   return parsed;
 }
+/**
+ * Inspect a ZIP before allowing a restore. Invalid table files fail the analysis.
+ */
+export async function analyzeBackup(zip: JSZip): Promise<BackupAnalysis> {
+  const present: { table: TableKey; count: number }[] = [];
+  const missing: TableKey[] = [];
+  for (const table of ALL_TABLES) {
+    if (!zip.file(`json/${table.key}.json`)) {
+      missing.push(table.key);
+      continue;
+    }
+    const rows = await readTableJson(zip, table.key);
+    present.push({ table: table.key, count: rows.length });
+  }
+  return { present, missing };
+}
+
+/**
+ * Restore selected tables only after validating their complete JSON payload.
+ * Existing-ID lookup failures are fatal for that table, never treated as inserts.
+ */
+export async function restoreFromZip(
+  zip: JSZip,
+  tables: TableKey[],
+  opts: { onProgress?: (msg: string) => void } = {},
+): Promise<RestoreResult[]> {
+  const results: RestoreResult[] = [];
+  for (const key of tables) {
+    opts.onProgress?.(`${key} পুনরুদ্ধার হচ্ছে...`);
+    try {
+      if (!ALL_TABLES.some((table) => table.key === key)) throw new Error("Unsupported restore table");
+      const rows = await readTableJson(zip, key);
+      if (!rows.length) {
+        results.push({ table: key, inserted: 0, updated: 0, processed: 0 });
+        continue;
+      }
+      const ids = rows.map((row) => row.id).filter(Boolean);
+      const existing = new Set<string>();
+      for (let i = 0; i < ids.length; i += 500) {
+        const { data, error } = await supabase.from(key as any).select("id").in("id", ids.slice(i, i + 500));
+        if (error) throw new Error(`Existing ID lookup failed for ${key}: ${error.message}`);
+        for (const row of (data as any[]) || []) existing.add(row.id);
+      }
+      let processed = 0;
+      for (let i = 0; i < rows.length; i += 200) {
+        const { error } = await supabase.from(key as any).upsert(rows.slice(i, i + 200) as any, { onConflict: "id" });
+        if (error) throw error;
+        processed += Math.min(200, rows.length - i);
+      }
+      const updated = rows.filter((row) => row.id && existing.has(row.id)).length;
+      results.push({ table: key, inserted: processed - updated, updated, processed });
+    } catch (error: any) {
+      results.push({ table: key, inserted: 0, updated: 0, processed: 0, error: error?.message || "Restore failed" });
+    }
+  }
+  return results;
+}
+
+export interface LogRestoreArgs {
+  source_url: string;
+  source_filename: string;
+  tables: TableKey[];
+  results: RestoreResult[];
+  pre_backup_url?: string | null;
+  error?: string | null;
+}
+
+export async function logRestoreRun(args: LogRestoreArgs): Promise<void> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    const total = args.results.reduce((sum, row) => sum + row.processed, 0);
+    const success = args.results.length > 0 && args.results.every((row) => !row.error);
+    const { error } = await supabase.from("restore_history" as any).insert({
+      user_id: user?.id ?? null,
+      user_email: user?.email ?? null,
+      source_url: args.source_url,
+      source_filename: args.source_filename,
+      tables: args.tables as unknown as string[],
+      results: args.results as any,
+      total_processed: total,
+      pre_backup_url: args.pre_backup_url ?? null,
+      success,
+      error: args.error ?? null,
+    });
+    if (error) console.warn("logRestoreRun failed", error.message);
+  } catch (error) {
+    console.warn("logRestoreRun failed", error);
+  }
+}
+
 function inferTableFromRow(row: any): TableKey | null {
   if (!row || typeof row !== "object") return null;
   const keys = new Set(Object.keys(row));
