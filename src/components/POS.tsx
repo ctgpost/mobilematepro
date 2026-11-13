@@ -212,18 +212,38 @@ export function POS() {
     },
   });
 
-  const addToCart = (product: Product) => {
+  const addToCart = async (product: Product, requestedImei?: string) => {
     if ((product.stock_quantity ?? 0) <= 0) {
       toast.error(`${product.name} স্টকে নেই`);
       return;
     }
-    const existingItem = cart.find(item => item.product.id === product.id);
-    if (existingItem) {
+    if (cart.some(item => item.product.id === product.id)) {
       toast.error(`${product.name} ইতিমধ্যে কার্টে আছে`);
       return;
     }
-    setCart([...cart, { product, quantity: 1, customPrice: Number(product.price) }]);
-    toast.success(`${product.name} কার্টে যোগ হয়েছে`);
+    try {
+      const { data: registered, error } = await (supabase as any)
+        .from("imei_registry").select("imei,status").eq("product_id", product.id)
+        .eq("status", "in_stock").order("created_at", { ascending: true });
+      if (error) throw error;
+      const registeredRows = registered || [];
+      let imeiOptions = registeredRows.map((row: any) => row.imei as string);
+      if (imeiOptions.length === 0 && registeredRows.length === 0 && product.imei && /^\\d{15}$/.test(product.imei)) {
+        imeiOptions = [product.imei];
+      }
+      if (requestedImei && !imeiOptions.includes(requestedImei)) {
+        toast.error("এই IMEI ডিভাইসটি বর্তমানে বিক্রয়যোগ্য স্টকে নেই");
+        return;
+      }
+      const selectedImei = requestedImei || imeiOptions[0] || null;
+      setCart(prev => [...prev, {
+        product, quantity: 1, customPrice: Number(product.price),
+        imei: selectedImei, availableImeis: imeiOptions.length ? imeiOptions : undefined,
+      }]);
+      toast.success(`${product.name} কার্টে যোগ হয়েছে${selectedImei ? ` · IMEI ${selectedImei}` : ""}`);
+    } catch (error: any) {
+      toast.error(error.message || "IMEI স্টক যাচাই করা যায়নি");
+    }
   };
 
   const updatePrice = (productId: string, price: number) => {
@@ -241,7 +261,7 @@ export function POS() {
     }
     setCart(cart.map(item => {
       if (item.product.id !== productId) return item;
-      const maxStock = Number(item.product.stock_quantity ?? 1);
+      const maxStock = item.availableImeis?.length ? 1 : Number(item.product.stock_quantity ?? 1);
       if (quantity > maxStock) {
         toast.error(`${item.product.name}: স্টকে মাত্র ${maxStock}টি আছে`);
         return { ...item, quantity: maxStock };
@@ -333,20 +353,20 @@ export function POS() {
     completeSaleMutation.mutate(saleData);
   };
 
-  const handleBarcodeScanned = (barcode: string) => {
-    const product = products?.find(p => 
-      p.barcode === barcode || p.imei === barcode
-    );
-
-    if (product) {
-      if (product.stock_quantity <= 0) {
-        toast.error(`${product.name} স্টকে নেই`);
-        return;
-      }
-      addToCart(product);
-    } else {
-      toast.error("এই বারকোড দিয়ে পণ্য পাওয়া যায়নি");
+  const handleBarcodeScanned = async (barcode: string) => {
+    const cleanCode = barcode.replace(/\\D/g, "");
+    const { data: device } = await (supabase as any)
+      .from("imei_registry").select("product_id,imei,status").eq("imei", cleanCode).maybeSingle();
+    const product = products?.find(p => p.barcode === barcode || p.imei === barcode || p.id === device?.product_id);
+    if (!product) {
+      toast.error("এই বারকোড / IMEI দিয়ে পণ্য পাওয়া যায়নি");
+      return;
     }
+    if (device?.status && device.status !== "in_stock") {
+      toast.error("এই IMEI ডিভাইসটি বর্তমানে বিক্রয়যোগ্য স্টকে নেই");
+      return;
+    }
+    await addToCart(product, device?.imei || (product.imei === barcode ? barcode : undefined));
   };
 
   const filteredProducts = products?.filter(p => {
