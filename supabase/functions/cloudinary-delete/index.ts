@@ -63,6 +63,13 @@ Deno.serve(async (req) => {
       });
     }
 
+    const { data: roleRow } = await supa.from("user_roles").select("role").eq("user_id", userRes.user.id).maybeSingle();
+    if (!roleRow || !["admin", "manager"].includes(roleRow.role)) {
+      return new Response(JSON.stringify({ error: "Admin or manager permission required" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Read cloud_name from shop_settings
     const { data: settings } = await supa
       .from("shop_settings")
