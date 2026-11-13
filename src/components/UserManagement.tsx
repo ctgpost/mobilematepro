@@ -221,7 +221,7 @@ export function UserManagement() {
 
   if (roleLoading) {
     return (
-      <Card className="p-6">
+      <Card className="p-4">
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
@@ -231,9 +231,9 @@ export function UserManagement() {
 
   if (!isAdmin) {
     return (
-      <Card className="p-6">
+      <Card className="p-4">
         <div className="flex flex-col items-center justify-center py-8 text-center">
-          <Shield className="w-12 h-12 text-muted-foreground mb-4" />
+          <Shield className="w-12 h-10 text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold text-foreground mb-2">অ্যাক্সেস সীমাবদ্ধ</h3>
           <p className="text-muted-foreground">শুধুমাত্র এডমিন ব্যবহারকারী ব্যবস্থাপনা করতে পারেন।</p>
         </div>
@@ -264,7 +264,7 @@ export function UserManagement() {
     >
 
       {/* Role Legend */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <div className="bg-red-500/10 rounded-lg p-4 border border-red-500/20">
           <div className="flex items-center gap-2 mb-2">
             <Crown className="w-5 h-5 text-red-500" />
