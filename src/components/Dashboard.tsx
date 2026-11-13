@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -7,6 +8,9 @@ import { MobileDashboardWidget } from "./MobileDashboardWidget";
 import { fetchAll } from "@/lib/fetchAll";
 import { PageHeader } from "./PageHeader";
 import { LanguageSwitch } from "./LanguageProvider";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { ArrowDownLeft, ArrowUpRight, CalendarDays, CreditCard, Eye, Package, UserRound, Truck } from "lucide-react";
 
 interface DashboardProps {
   onNavigateToPOS?: () => void;
@@ -15,6 +19,8 @@ interface DashboardProps {
 
 export function Dashboard({ onNavigateToPOS, onNavigateToProducts }: DashboardProps = {}) {
   const { settings, logoSrc } = useShopSettings();
+  const [activityFilter, setActivityFilter] = useState<"all" | "sale" | "purchase">("all");
+  const [selectedActivity, setSelectedActivity] = useState<any>(null);
 
   const { data: products, isLoading: productsLoading } = useQuery({
     queryKey: ["products", "dashboard-all"],
@@ -24,7 +30,17 @@ export function Dashboard({ onNavigateToPOS, onNavigateToProducts }: DashboardPr
   const { data: sales, isLoading: salesLoading } = useQuery({
     queryKey: ["sales", "dashboard-all"],
     queryFn: async () =>
-      fetchAll<any>("sales", "*, sale_items(*, products(condition))"),
+      fetchAll<any>("sales", "*, customers(name, phone), sale_items(*, products(name, sku, condition, imei))", (q) => q.order("created_at", { ascending: false })),
+  });
+
+  const { data: purchaseEntries = [], isLoading: purchasesLoading } = useQuery({
+    queryKey: ["dashboard", "recent-purchases"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("supplier_ledger_entries").select("*")
+        .eq("transaction_type", "purchase").order("created_at", { ascending: false }).limit(40);
+      if (error) throw error;
+      return data || [];
+    },
   });
 
   const { data: completedReturns } = useQuery({
@@ -297,30 +313,102 @@ export function Dashboard({ onNavigateToPOS, onNavigateToProducts }: DashboardPr
         </div>
       </Card>
 
-      <Card className="p-6">
-        <h2 className="text-xl font-semibold mb-4 text-foreground">সাম্প্রতিক কার্যক্রম</h2>
-        <div className="space-y-4">
-          {sales?.slice(0, 5).map((sale) => (
-            <div key={sale.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
-              <div>
-                <p className="font-medium text-foreground">বিক্রয় #{sale.id.slice(0, 8)}</p>
-                <p className="text-sm text-muted-foreground">
-                  {new Date(sale.created_at).toLocaleDateString('bn-BD')}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="font-semibold text-foreground">৳{Number(sale.total_amount).toLocaleString('bn-BD')}</p>
-                <p className="text-sm text-muted-foreground">
-                  {sale.payment_method === 'cash' ? 'নগদ' : sale.payment_method === 'card' ? 'কার্ড' : 'মোবাইল'}
-                </p>
-              </div>
-            </div>
-          ))}
-          {(!sales || sales.length === 0) && (
-            <p className="text-center text-muted-foreground py-8">এখনো কোনো বিক্রয় নেই। বিক্রয় শুরু করুন!</p>
-          )}
+      <Card className="p-4 sm:p-6 border-border/80">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+          <div>
+            <h2 className="text-xl font-semibold text-foreground">সাম্প্রতিক কার্যক্রম</h2>
+            <p className="text-sm text-muted-foreground mt-1">সর্বশেষ বিক্রয় ও ক্রয়ের লেনদেন, বিস্তারিত দেখতে কার্ডে ক্লিক করুন</p>
+          </div>
+          <div className="flex items-center gap-1 rounded-xl bg-muted p-1 self-start">
+            {([["all", "সব"], ["sale", "বিক্রয়"], ["purchase", "ক্রয়"]] as const).map(([value, label]) => (
+              <button key={value} type="button" onClick={() => setActivityFilter(value)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${activityFilter === value ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                aria-pressed={activityFilter === value}>{label}</button>
+            ))}
+          </div>
         </div>
+        {(() => {
+          const items = [
+            ...(sales || []).map((record: any) => ({ kind: "sale" as const, id: record.id, date: record.created_at, amount: Number(record.total_amount || 0), record })),
+            ...purchaseEntries.map((record: any) => ({ kind: "purchase" as const, id: record.id, date: record.created_at, amount: Number(record.amount || 0), record })),
+          ].filter((item) => activityFilter === "all" || item.kind === activityFilter)
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 10);
+          if (salesLoading || purchasesLoading) return <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{[1,2,3,4].map(i => <Skeleton key={i} className="h-24 rounded-xl" />)}</div>;
+          if (!items.length) return <div className="py-10 text-center text-sm text-muted-foreground">এই মুহূর্তে দেখানোর মতো কোনো লেনদেন নেই।</div>;
+          return <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+            {items.map(item => {
+              const sale = item.kind === "sale" ? item.record : null;
+              const person = item.kind === "sale" ? (sale.customers?.name || sale.instant_customer_name || "ওয়াক-ইন ক্রেতা") : (item.record.supplier_name || "অজানা সাপ্লায়ার");
+              return <button key={item.kind + item.id} type="button" onClick={() => setSelectedActivity(item)}
+                className="group w-full rounded-xl border border-border bg-card p-4 text-left transition-all hover:border-primary/50 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className={`h-10 w-10 shrink-0 rounded-xl flex items-center justify-center ${item.kind === "sale" ? "bg-emerald-500/10 text-emerald-600" : "bg-blue-500/10 text-blue-600"}`}>
+                      {item.kind === "sale" ? <ArrowUpRight className="h-5 w-5" /> : <ArrowDownLeft className="h-5 w-5" />}
+                    </div>
+                    <div className="min-w-0"><p className="font-semibold text-foreground truncate">{item.kind === "sale" ? "বিক্রয়" : "ক্রয়"} #{item.id.slice(0,8)}</p><p className="text-xs text-muted-foreground truncate">{person}</p></div>
+                  </div>
+                  <Badge variant={item.kind === "sale" ? "default" : "secondary"}>{item.kind === "sale" ? "বিক্রয়" : "ক্রয়"}</Badge>
+                </div>
+                <div className="mt-4 flex items-end justify-between gap-2">
+                  <div className="text-xs text-muted-foreground flex items-center gap-1.5"><CalendarDays className="h-3.5 w-3.5" />{new Date(item.date).toLocaleString("bn-BD",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"})}</div>
+                  <p className="text-lg font-bold text-foreground">৳{item.amount.toLocaleString("bn-BD")}</p>
+                </div>
+                <div className="mt-3 pt-3 border-t border-border/70 flex items-center justify-between text-xs text-muted-foreground">
+                  <span>{item.kind === "sale" ? `${sale.sale_items?.length || 0}টি পণ্য` : `${item.record.quantity || 0} ইউনিট · ক্রয়`}</span>
+                  <span className="inline-flex items-center gap-1 group-hover:text-primary">বিস্তারিত <Eye className="h-3.5 w-3.5" /></span>
+                </div>
+              </button>;
+            })}
+          </div>;
+        })()}
       </Card>
+      <Dialog open={!!selectedActivity} onOpenChange={(open) => !open && setSelectedActivity(null)}>
+        <DialogContent className="max-w-2xl max-h-[88vh] overflow-y-auto">
+          {selectedActivity && <>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                {selectedActivity.kind === "sale" ? <ArrowUpRight className="h-5 w-5 text-emerald-600" /> : <ArrowDownLeft className="h-5 w-5 text-blue-600" />}
+                {selectedActivity.kind === "sale" ? "বিক্রয় লেনদেনের বিস্তারিত" : "ক্রয় লেনদেনের বিস্তারিত"}
+              </DialogTitle>
+              <DialogDescription>রেফারেন্স: #{selectedActivity.id.slice(0,8)} · {new Date(selectedActivity.date).toLocaleString("bn-BD")}</DialogDescription>
+            </DialogHeader>
+            {selectedActivity.kind === "sale" ? <div className="space-y-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="rounded-xl bg-muted/60 p-3"><p className="text-xs text-muted-foreground">মোট বিল</p><p className="text-lg font-bold">৳{Number(selectedActivity.record.total_amount || 0).toLocaleString("bn-BD")}</p></div>
+                <div className="rounded-xl bg-muted/60 p-3"><p className="text-xs text-muted-foreground">পরিশোধ</p><p className="text-lg font-bold text-emerald-600">৳{Number(selectedActivity.record.paid_amount || 0).toLocaleString("bn-BD")}</p></div>
+                <div className="rounded-xl bg-muted/60 p-3"><p className="text-xs text-muted-foreground">বাকি</p><p className="text-lg font-bold text-destructive">৳{Number(selectedActivity.record.due_amount || 0).toLocaleString("bn-BD")}</p></div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <p className="flex items-center gap-2"><UserRound className="h-4 w-4 text-muted-foreground" />{selectedActivity.record.customers?.name || selectedActivity.record.instant_customer_name || "ওয়াক-ইন ক্রেতা"}</p>
+                <p className="flex items-center gap-2"><CreditCard className="h-4 w-4 text-muted-foreground" />{selectedActivity.record.payment_method || "উল্লেখ নেই"}</p>
+                {(selectedActivity.record.customers?.phone || selectedActivity.record.instant_customer_phone) && <p className="sm:col-span-2">ফোন: {selectedActivity.record.customers?.phone || selectedActivity.record.instant_customer_phone}</p>}
+              </div>
+              <div><h3 className="font-semibold mb-2">পণ্যসমূহ</h3><div className="rounded-xl border border-border divide-y divide-border">
+                {(selectedActivity.record.sale_items || []).map((line: any, index: number) => <div key={line.id || index} className="p-3 flex items-start justify-between gap-3 text-sm">
+                  <div className="min-w-0"><p className="font-medium">{line.products?.name || "পণ্য"}</p><p className="text-xs text-muted-foreground">SKU: {line.products?.sku || "—"}{line.imei ? ` · IMEI: ${line.imei}` : ""} · {line.quantity} × ৳{Number(line.unit_price || 0).toLocaleString("bn-BD")}</p></div>
+                  <p className="font-semibold whitespace-nowrap">৳{Number(line.total_price || 0).toLocaleString("bn-BD")}</p>
+                </div>)}
+              </div></div>
+              {selectedActivity.record.notes && <p className="text-sm text-muted-foreground">নোট: {selectedActivity.record.notes}</p>}
+            </div> : <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-xl bg-muted/60 p-3"><p className="text-xs text-muted-foreground">ক্রয় মূল্য</p><p className="text-lg font-bold">৳{Number(selectedActivity.record.amount || 0).toLocaleString("bn-BD")}</p></div>
+                <div className="rounded-xl bg-muted/60 p-3"><p className="text-xs text-muted-foreground">পরিমাণ</p><p className="text-lg font-bold">{selectedActivity.record.quantity || 0} ইউনিট</p></div>
+              </div>
+              <div className="space-y-2 text-sm">
+                <p className="flex items-center gap-2"><Truck className="h-4 w-4 text-muted-foreground" />সাপ্লায়ার: {selectedActivity.record.supplier_name || "উল্লেখ নেই"}</p>
+                <p className="flex items-center gap-2"><Package className="h-4 w-4 text-muted-foreground" />পণ্য: {selectedActivity.record.product_name || "উল্লেখ নেই"}</p>
+                <p>প্রতি ইউনিট ক্রয় মূল্য: ৳{Number(selectedActivity.record.unit_cost || 0).toLocaleString("bn-BD")}</p>
+                <p>পেমেন্ট মাধ্যম: {selectedActivity.record.payment_method || "উল্লেখ নেই"}</p>
+                {selectedActivity.record.product_imei && <p>IMEI: {selectedActivity.record.product_imei}</p>}
+                {selectedActivity.record.purchase_id && <p>ক্রয় রেফারেন্স: #{selectedActivity.record.purchase_id.slice(0,8)}</p>}
+                {selectedActivity.record.notes && <p>নোট: {selectedActivity.record.notes}</p>}
+              </div>
+            </div>}
+          </>}
+        </DialogContent>
+      </Dialog>
       </div>
     </div>
   );

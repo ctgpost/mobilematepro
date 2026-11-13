@@ -274,6 +274,11 @@ export function Returns() {
       return;
     }
 
+    if (selectedItem.imei && returnQuantity !== 1) {
+      toast.error("IMEI ট্র্যাক করা ডিভাইস একবারে একটি করে রিটার্ন করতে হবে");
+      return;
+    }
+
     if (returnQuantity < 1 || returnQuantity > selectedItem.quantity) {
       toast.error(`রিটার্ন পরিমাণ ১ থেকে ${selectedItem.quantity} এর মধ্যে হতে হবে`);
       return;
@@ -285,6 +290,7 @@ export function Returns() {
       sale_id: selectedSale.id,
       sale_item_id: selectedItem.id,
       product_id: selectedItem.product_id,
+      imei: selectedItem.imei || null,
       quantity: returnQuantity,
       refund_amount: refundAmount,
       reason_code: reasonCode,

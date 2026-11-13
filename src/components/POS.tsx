@@ -57,6 +57,11 @@ export function POS() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      // Offline path: IMEI device sales need the online atomic registry lock.
+      if (!isOnline() && saleData.items.some((item: any) => item.imei)) {
+        throw new Error("IMEI ট্র্যাক করা ডিভাইস বিক্রির জন্য অনলাইন সংযোগ প্রয়োজন। সংযোগ ফিরে এলে বিক্রয় সম্পন্ন করুন।");
+      }
+
       // Offline path: queue compound sale + optimistically update caches
       if (!isOnline()) {
         const { tempSaleId, queuedAt } = await enqueueCompoundSale({
@@ -108,6 +113,7 @@ export function POS() {
             quantity: it.quantity,
             unit_price: it.unit_price,
             total_price: it.total_price,
+            imei: it.imei || null,
             products: productMap.get(it.product_id) || { id: it.product_id, name: "(offline)" },
           })),
         };
@@ -149,6 +155,7 @@ export function POS() {
             quantity: item.quantity,
             unit_price: item.unit_price,
             total_price: item.total_price,
+            imei: item.imei || null,
           }]);
 
         if (itemError) throw itemError;
@@ -212,36 +219,81 @@ export function POS() {
     },
   });
 
-  const addToCart = (product: Product) => {
+  const addToCart = async (product: Product, requestedImei?: string) => {
     if ((product.stock_quantity ?? 0) <= 0) {
       toast.error(`${product.name} স্টকে নেই`);
       return;
     }
-    const existingItem = cart.find(item => item.product.id === product.id);
-    if (existingItem) {
-      toast.error(`${product.name} ইতিমধ্যে কার্টে আছে`);
-      return;
+
+    try {
+      const { data: registered, error } = await (supabase as any)
+        .from("imei_registry").select("imei,status").eq("product_id", product.id)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      const registeredRows = registered || [];
+      let imeiOptions = registeredRows.filter((row: any) => row.status === "in_stock").map((row: any) => row.imei as string);
+      if (registeredRows.length > 0 && imeiOptions.length === 0) {
+        toast.error("এই প্রোডাক্টের কোনো IMEI ডিভাইস বিক্রয়যোগ্য স্টকে নেই");
+        return;
+      }
+      if (imeiOptions.length === 0 && registeredRows.length === 0 && product.imei && /^\\d{15}$/.test(product.imei)) {
+        imeiOptions = [product.imei];
+      }
+      if (requestedImei && !imeiOptions.includes(requestedImei)) {
+        toast.error("এই IMEI ডিভাইসটি বর্তমানে বিক্রয়যোগ্য স্টকে নেই");
+        return;
+      }
+      const selectedImei = requestedImei || imeiOptions.find((value: string) => !cart.some(item => item.imei === value)) || null;
+      if (imeiOptions.length > 0 && !selectedImei) {
+        toast.error("এই প্রোডাক্টের সব IMEI ডিভাইস ইতিমধ্যে কার্টে যোগ করা হয়েছে");
+        return;
+      }
+      const cartKey = selectedImei ? `${product.id}::${selectedImei}` : product.id;
+      if (cart.some(item => (item.cartKey || item.product.id) === cartKey)) {
+        toast.error("এই IMEI ডিভাইসটি ইতিমধ্যে কার্টে রয়েছে");
+        return;
+      }
+      setCart(prev => [...prev, {
+        product, cartKey, quantity: 1, customPrice: Number(product.price),
+        imei: selectedImei, availableImeis: imeiOptions.length ? imeiOptions : undefined,
+      }]);
+      toast.success(`${product.name} কার্টে যোগ হয়েছে${selectedImei ? ` · IMEI ${selectedImei}` : ""}`);
+    } catch (error: any) {
+      toast.error(error.message || "IMEI স্টক যাচাই করা যায়নি");
     }
-    setCart([...cart, { product, quantity: 1, customPrice: Number(product.price) }]);
-    toast.success(`${product.name} কার্টে যোগ হয়েছে`);
   };
 
-  const updatePrice = (productId: string, price: number) => {
+  const selectCartImei = (cartKey: string, value: string) => {
+    const duplicate = cart.some(item =>
+      (item.cartKey || item.product.id) !== cartKey && item.imei === value
+    );
+    if (duplicate) {
+      toast.error("একই IMEI একাধিক কার্ট লাইনে ব্যবহার করা যাবে না");
+      return;
+    }
+    setCart(prev => prev.map(item =>
+      (item.cartKey || item.product.id) === cartKey
+        ? { ...item, imei: value, cartKey: `${item.product.id}::${value}` }
+        : item
+    ));
+  };
+
+  const updatePrice = (cartKey: string, price: number) => {
     setCart(cart.map(item =>
-      item.product.id === productId
+      (item.cartKey || item.product.id) === cartKey
         ? { ...item, customPrice: price }
         : item
     ));
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
+  const updateQuantity = (cartKey: string, quantity: number) => {
     if (quantity <= 0) {
-      setCart(cart.filter(item => item.product.id !== productId));
+      setCart(cart.filter(item => (item.cartKey || item.product.id) !== cartKey));
       return;
     }
     setCart(cart.map(item => {
-      if (item.product.id !== productId) return item;
-      const maxStock = Number(item.product.stock_quantity ?? 1);
+      if ((item.cartKey || item.product.id) !== cartKey) return item;
+      const maxStock = item.availableImeis?.length ? 1 : Number(item.product.stock_quantity ?? 1);
       if (quantity > maxStock) {
         toast.error(`${item.product.name}: স্টকে মাত্র ${maxStock}টি আছে`);
         return { ...item, quantity: maxStock };
@@ -250,8 +302,8 @@ export function POS() {
     }));
   };
 
-  const removeFromCart = (productId: string) => {
-    setCart(cart.filter(item => item.product.id !== productId));
+  const removeFromCart = (cartKey: string) => {
+    setCart(cart.filter(item => (item.cartKey || item.product.id) !== cartKey));
   };
 
   const getTotal = () => {
@@ -326,6 +378,7 @@ export function POS() {
         quantity: item.quantity,
         unit_price: item.customPrice,
         total_price: item.customPrice * item.quantity,
+        imei: item.imei || null,
       })),
     };
 
@@ -333,20 +386,20 @@ export function POS() {
     completeSaleMutation.mutate(saleData);
   };
 
-  const handleBarcodeScanned = (barcode: string) => {
-    const product = products?.find(p => 
-      p.barcode === barcode || p.imei === barcode
-    );
-
-    if (product) {
-      if (product.stock_quantity <= 0) {
-        toast.error(`${product.name} স্টকে নেই`);
-        return;
-      }
-      addToCart(product);
-    } else {
-      toast.error("এই বারকোড দিয়ে পণ্য পাওয়া যায়নি");
+  const handleBarcodeScanned = async (barcode: string) => {
+    const cleanCode = barcode.replace(/\\D/g, "");
+    const { data: device } = await (supabase as any)
+      .from("imei_registry").select("product_id,imei,status").eq("imei", cleanCode).maybeSingle();
+    const product = products?.find(p => p.barcode === barcode || p.imei === barcode || p.id === device?.product_id);
+    if (!product) {
+      toast.error("এই বারকোড / IMEI দিয়ে পণ্য পাওয়া যায়নি");
+      return;
     }
+    if (device?.status && device.status !== "in_stock") {
+      toast.error("এই IMEI ডিভাইসটি বর্তমানে বিক্রয়যোগ্য স্টকে নেই");
+      return;
+    }
+    await addToCart(product, device?.imei || (product.imei === barcode ? barcode : undefined));
   };
 
   const filteredProducts = products?.filter(p => {
@@ -396,6 +449,7 @@ export function POS() {
               isCollapsed={isCartCollapsed}
               onToggleCollapse={() => setIsCartCollapsed(!isCartCollapsed)}
               onUpdatePrice={updatePrice}
+              onSelectImei={selectCartImei}
               onUpdateQuantity={updateQuantity}
               onRemoveItem={removeFromCart}
               onClearCart={clearCart}

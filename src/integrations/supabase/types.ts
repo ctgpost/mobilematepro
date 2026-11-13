@@ -758,6 +758,7 @@ export type Database = {
       }
       returns: {
         Row: {
+          imei: string | null
           cash_refunded: number
           created_at: string
           customer_credit: number
@@ -777,6 +778,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          imei?: string | null
           cash_refunded?: number
           created_at?: string
           customer_credit?: number
@@ -796,6 +798,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          imei?: string | null
           cash_refunded?: number
           created_at?: string
           customer_credit?: number
@@ -840,6 +843,7 @@ export type Database = {
       }
       sale_items: {
         Row: {
+          imei: string | null
           condition: string | null
           created_at: string
           id: string
@@ -850,6 +854,7 @@ export type Database = {
           unit_price: number
         }
         Insert: {
+          imei?: string | null
           condition?: string | null
           created_at?: string
           id?: string
@@ -860,6 +865,7 @@ export type Database = {
           unit_price: number
         }
         Update: {
+          imei?: string | null
           condition?: string | null
           created_at?: string
           id?: string
