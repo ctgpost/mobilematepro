@@ -1,7 +1,7 @@
 export interface CartItem {
   product: any;
   quantity: number;
-  customPrice: number;
+  customPrice: number;\n  imei?: string | null;\n  availableImeis?: string[];
 }
 
 export interface Product {
