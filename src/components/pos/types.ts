@@ -1,5 +1,6 @@
 export interface CartItem {
   product: any;
+  cartKey?: string;
   quantity: number;
   customPrice: number;
   imei?: string | null;
