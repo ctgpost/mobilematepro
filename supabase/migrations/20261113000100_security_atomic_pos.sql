@@ -108,6 +108,10 @@ DECLARE
   v_price numeric;
   v_line_total numeric;
   v_product_price numeric;
+  v_items_total numeric := 0;
+  v_sale_total numeric;
+  v_paid numeric;
+  v_due numeric;
 BEGIN
   IF auth.uid() IS NULL THEN
     RAISE EXCEPTION 'Authentication required';
@@ -148,6 +152,13 @@ BEGIN
     p_idempotency_key
   ) RETURNING id INTO v_sale_id;
 
+  v_sale_total := COALESCE((p_sale->>'total_amount')::numeric,0);
+  v_paid := COALESCE((p_sale->>'paid_amount')::numeric,0);
+  v_due := COALESCE((p_sale->>'due_amount')::numeric,0);
+  IF v_sale_total < 0 OR v_paid < 0 OR v_due < 0 OR abs((v_paid + v_due) - v_sale_total) > 0.01 THEN
+    RAISE EXCEPTION 'Invalid sale payment totals';
+  END IF;
+
   FOR v_item IN SELECT value FROM jsonb_array_elements(p_items)
   LOOP
     v_product_id := (v_item->>'product_id')::uuid;
@@ -158,6 +169,11 @@ BEGIN
     IF v_product_id IS NULL OR v_qty IS NULL OR v_qty <= 0 OR v_price < 0 THEN
       RAISE EXCEPTION 'Invalid sale item';
     END IF;
+
+    IF v_line_total < 0 OR abs(v_line_total - (v_qty * v_price)) > 0.01 THEN
+      RAISE EXCEPTION 'Invalid line total';
+    END IF;
+    v_items_total := v_items_total + v_line_total;
 
     -- Atomic conditional decrement prevents concurrent overselling.
     UPDATE public.products
@@ -172,6 +188,9 @@ BEGIN
     INSERT INTO public.sale_items(sale_id, product_id, quantity, unit_price, total_price)
     VALUES (v_sale_id, v_product_id, v_qty, v_price, v_line_total);
   END LOOP;
+  IF abs(v_items_total - v_sale_total) > 0.01 THEN
+    RAISE EXCEPTION 'Sale total does not equal item totals';
+  END IF;
 
   RETURN v_sale_id;
 EXCEPTION
