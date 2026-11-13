@@ -174,7 +174,7 @@ export function Reports() {
       />
       <div className="space-y-4 pt-3">
 
-        <Card className="p-4 md:p-6">
+        <Card className="p-4 md:p-4">
           <div className="flex items-center justify-between mb-4">
             <button 
               onClick={() => setShowFilters(!showFilters)}
@@ -247,38 +247,38 @@ export function Reports() {
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto pb-6 space-y-4 md:space-y-6">
+      <div className="flex-1 overflow-y-auto pb-6 space-y-4 md:space-y-4">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
-          <Card className="p-4 md:p-6">
+          <Card className="p-4 md:p-4">
             <h3 className="text-xs md:text-sm font-medium text-muted-foreground mb-2">Total Revenue</h3>
             <p className="text-2xl md:text-3xl font-bold text-primary">৳{totalRevenue.toLocaleString('bn-BD')}</p>
           </Card>
-          <Card className="p-4 md:p-6">
+          <Card className="p-4 md:p-4">
             <h3 className="text-xs md:text-sm font-medium text-muted-foreground mb-2">Total Returns</h3>
             <p className="text-2xl md:text-3xl font-bold text-red-600">−৳{totalRefunds.toLocaleString('bn-BD')}</p>
           </Card>
-          <Card className="p-4 md:p-6">
+          <Card className="p-4 md:p-4">
             <h3 className="text-xs md:text-sm font-medium text-muted-foreground mb-2">Net Revenue</h3>
             <p className="text-2xl md:text-3xl font-bold text-emerald-600">৳{netRevenue.toLocaleString('bn-BD')}</p>
           </Card>
-          <Card className="p-4 md:p-6">
+          <Card className="p-4 md:p-4">
             <h3 className="text-xs md:text-sm font-medium text-muted-foreground mb-2">Total Sales</h3>
             <p className="text-2xl md:text-3xl font-bold text-accent">{totalSales}</p>
           </Card>
-          <Card className="p-4 md:p-6">
+          <Card className="p-4 md:p-4">
             <h3 className="text-xs md:text-sm font-medium text-muted-foreground mb-2">Average Sale</h3>
             <p className="text-2xl md:text-3xl font-bold text-foreground">৳{averageSale.toLocaleString('bn-BD', { maximumFractionDigits: 0 })}</p>
           </Card>
         </div>
 
       {/* Investment Analysis Section */}
-      <Card className="p-4 md:p-6 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 border-purple-200">
-        <h2 className="text-lg md:text-xl font-semibold mb-4 md:mb-6 text-foreground flex items-center">
+      <Card className="p-4 md:p-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 border-purple-200">
+        <h2 className="text-lg md:text-xl font-semibold mb-4 md:mb-4 text-foreground flex items-center">
           <span className="text-xl md:text-2xl mr-2">💰</span>
           Total Investment Analysis
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-          <Card className="p-4 md:p-6 bg-green-50 dark:bg-green-950/20 border-green-200">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-4">
+          <Card className="p-4 md:p-4 bg-green-50 dark:bg-green-950/20 border-green-200">
             <div className="flex items-center space-x-2 mb-3">
               <div className="w-3 h-3 rounded-full bg-green-500"></div>
               <p className="text-xs md:text-sm font-medium text-muted-foreground">New Products Investment</p>
@@ -287,7 +287,7 @@ export function Reports() {
             <p className="text-xs text-muted-foreground mt-2">{newProducts} products • {newProductsStock} units</p>
           </Card>
           
-          <Card className="p-4 md:p-6 bg-blue-50 dark:bg-blue-950/20 border-blue-200">
+          <Card className="p-4 md:p-4 bg-blue-50 dark:bg-blue-950/20 border-blue-200">
             <div className="flex items-center space-x-2 mb-3">
               <div className="w-3 h-3 rounded-full bg-blue-500"></div>
               <p className="text-xs md:text-sm font-medium text-muted-foreground">Used Products Investment</p>
@@ -296,7 +296,7 @@ export function Reports() {
             <p className="text-xs text-muted-foreground mt-2">{usedProducts} products • {usedProductsStock} units</p>
           </Card>
           
-          <Card className="p-4 md:p-6 bg-purple-50 dark:bg-purple-950/20 border-purple-200">
+          <Card className="p-4 md:p-4 bg-purple-50 dark:bg-purple-950/20 border-purple-200">
             <div className="flex items-center space-x-2 mb-3">
               <div className="w-3 h-3 rounded-full bg-purple-500"></div>
               <p className="text-xs md:text-sm font-medium text-muted-foreground">Total Investment</p>
@@ -307,7 +307,7 @@ export function Reports() {
         </div>
         
         {/* Investment Breakdown Percentage */}
-        <div className="mt-4 md:mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+        <div className="mt-4 md:mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg">
             <p className="text-sm text-muted-foreground mb-1">New Products Share</p>
             <div className="flex items-center space-x-2">
@@ -341,9 +341,9 @@ export function Reports() {
       </Card>
 
       {/* 360 Degree Report - New vs Used Mobiles */}
-      <Card className="p-4 md:p-6">
-        <h2 className="text-lg md:text-xl font-semibold mb-4 md:mb-6 text-foreground">Product Condition Analysis</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+      <Card className="p-4 md:p-4">
+        <h2 className="text-lg md:text-xl font-semibold mb-4 md:mb-4 text-foreground">Product Condition Analysis</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-4">
           {/* New Products Section */}
           <div className="space-y-3 md:space-y-4">
             <div className="flex items-center space-x-2 mb-3 md:mb-4">
@@ -398,7 +398,7 @@ export function Reports() {
         </div>
       </Card>
 
-      <Card className="p-4 md:p-6">
+      <Card className="p-4 md:p-4">
         <h2 className="text-lg md:text-xl font-semibold mb-4 text-foreground">Top Selling Products</h2>
         <div className="space-y-4">
           {topProducts.map((product, index) => (
@@ -417,7 +417,7 @@ export function Reports() {
         </Card>
 
         <div ref={printRef}>
-          <Card className="p-4 md:p-6">
+          <Card className="p-4 md:p-4">
           <h2 className="text-lg md:text-xl font-semibold mb-4 text-foreground">Recent Sales</h2>
           <div className="space-y-4">
             {filteredSales?.slice(0, 10).map((sale) => (
