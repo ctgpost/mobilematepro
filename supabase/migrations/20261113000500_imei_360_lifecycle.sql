@@ -203,6 +203,9 @@ BEGIN
   END IF;
   SELECT * INTO v_product FROM public.products WHERE id = NEW.product_id;
   IF NOT FOUND THEN RETURN NEW; END IF;
+  IF COALESCE(v_product.stock_quantity,0) < 1 THEN
+    RAISE EXCEPTION 'Product is out of stock; IMEI sale rejected';
+  END IF;
   SELECT * INTO v_sale FROM public.sales WHERE id = NEW.sale_id;
   SELECT * INTO v_registry FROM public.imei_registry
     WHERE imei = regexp_replace(COALESCE(NEW.imei, v_product.imei), '[^0-9]', '', 'g') FOR UPDATE;
