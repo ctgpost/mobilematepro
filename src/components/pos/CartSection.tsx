@@ -93,7 +93,7 @@ export function CartSection({
                       size="sm"
                       variant="outline"
                       aria-label="পরিমাণ বাড়ান"
-                      disabled={item.quantity >= (item.product.stock_quantity ?? 1)}
+                      disabled={item.availableImeis?.length ? true : item.quantity >= (item.product.stock_quantity ?? 1)}
                       onClick={() => onUpdateQuantity(item.product.id, item.quantity + 1)}
                       className="h-7 w-7 p-0 text-xs"
                     >
