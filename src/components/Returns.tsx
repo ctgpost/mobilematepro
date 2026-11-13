@@ -224,7 +224,7 @@ export function Returns() {
   // All return settlement effects are executed by one database transaction.
   const processReturnMutation = useMutation({
     mutationFn: async ({ returnId, status, plan }: { returnId: string; status: string; plan?: SettlementPlan }) => {
-      const { data, error } = await supabase.rpc("process_return_atomic", {
+      const { data, error } = await (supabase.rpc as any)("process_return_atomic", {
         p_return_id: returnId,
         p_status: status,
         p_plan: plan ? {
@@ -255,7 +255,7 @@ export function Returns() {
   // Completed returns are immutable: financial reversal needs a dedicated audited workflow.
   const deleteReturnMutation = useMutation({
     mutationFn: async (returnItem: any) => {
-      const { error } = await supabase.rpc("delete_unprocessed_return_atomic", {
+      const { error } = await (supabase.rpc as any)("delete_unprocessed_return_atomic", {
         p_return_id: returnItem.id,
       });
       if (error) throw error;
