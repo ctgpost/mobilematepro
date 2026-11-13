@@ -83,37 +83,13 @@ Deno.serve(async (req) => {
     const urls: string[] = Array.isArray(body.urls) ? body.urls : [];
     const publicIds: string[] = Array.isArray(body.public_ids) ? body.public_ids : [];
 
-    const ids = [
+    const ids = [...new Set([
       ...publicIds,
       ...urls.map(extractPublicId).filter((x): x is string => !!x),
-    ];
-
-    const results: Array<{ public_id: string; result: string; error?: string }> = [];
-    for (const pid of ids) {
-      const timestamp = Math.floor(Date.now() / 1000);
-      const toSign = `public_id=${pid}&timestamp=${timestamp}${apiSecret}`;
-      const signature = await sha1Hex(toSign);
-      const form = new FormData();
-      form.append("public_id", pid);
-      form.append("timestamp", String(timestamp));
-      form.append("api_key", apiKey);
-      form.append("signature", signature);
-      const r = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`,
-        { method: "POST", body: form },
-      );
-      const j = await r.json().catch(() => ({}));
-      results.push({ public_id: pid, result: j.result || "error", error: j.error?.message });
+    ])];
+    const safePublicId = /^(products|customers|suppliers|avatars|shop)\\/[A-Za-z0-9_./-]{1,180}$/;
+    if (ids.length > 50 || ids.some((pid) => !safePublicId.test(pid) || pid.includes(".."))) {
+      return new Response(JSON.stringify({ error: "Invalid public_id or too many assets" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
-
-    return new Response(JSON.stringify({ ok: true, results }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : "Unknown error";
-    return new Response(JSON.stringify({ ok: false, error: msg }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-});
