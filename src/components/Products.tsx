@@ -68,6 +68,7 @@ export function Products() {
     sku: "",
     barcode: "",
     imei: "",
+    quantity: "1",
     brand: "",
     model: "",
     condition: "new",
@@ -217,6 +218,7 @@ export function Products() {
       sku: "",
       barcode: "",
       imei: "",
+      quantity: "1",
       brand: "",
       model: "",
       condition: "new",
@@ -259,20 +261,33 @@ export function Products() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate IMEI is exactly 15 digits
-    if (!formData.imei || formData.imei.length !== 15) {
-      toast.error("IMEI অবশ্যই ১৫ ডিজিটের হতে হবে");
+    // IMEI is optional for accessories and other non-device products. If supplied, it must be valid.
+    const imei = sanitizeImei(formData.imei);
+    if (imei && imei.length !== 15) {
+      toast.error("IMEI দিলে অবশ্যই ১৫ ডিজিটের হতে হবে");
       return;
     }
 
-    // Check for duplicate IMEI (both add and edit) — works offline using cached products
-    if (formData.imei) {
+    const quantity = Number.parseInt(formData.quantity, 10);
+    if (!editingProduct && (!Number.isInteger(quantity) || quantity < 1)) {
+      toast.error("স্টক পরিমাণ কমপক্ষে ১ হতে হবে");
+      return;
+    }
+    const price = Number(formData.price || 0);
+    const cost = Number(formData.cost || 0);
+    if (!Number.isFinite(price) || price < 0 || !Number.isFinite(cost) || cost < 0) {
+      toast.error("ক্রয় ও বিক্রয় মূল্য সঠিকভাবে দিন");
+      return;
+    }
+
+    // Check duplicate IMEI only when one is supplied. This supports accessories without IMEI.
+    if (imei) {
       let existingProducts: any[] = [];
       if (typeof navigator !== "undefined" && navigator.onLine) {
         let query = supabase
           .from("products")
           .select("id, name, stock_quantity")
-          .eq("imei", formData.imei)
+          .eq("imei", imei)
           .gt("stock_quantity", 0);
 
         if (editingProduct) {
@@ -288,21 +303,19 @@ export function Products() {
       } else {
         // Offline: use cached products list
         existingProducts = (products || []).filter((p: any) =>
-          p.imei === formData.imei &&
+          p.imei === imei &&
           (p.stock_quantity ?? 0) > 0 &&
           (!editingProduct || p.id !== editingProduct.id)
         );
       }
 
       if (existingProducts && existingProducts.length > 0) {
-        toast.error(`এই IMEI (${formData.imei}) দিয়ে "${existingProducts[0].name}" ইতিমধ্যে স্টকে আছে। আগে বিক্রি করুন, তারপর আবার এন্ট্রি করতে পারবেন।`);
+        toast.error(`এই IMEI (${imei}) দিয়ে "${existingProducts[0].name}" ইতিমধ্যে স্টকে আছে। আগে বিক্রি করুন, তারপর আবার এন্ট্রি করতে পারবেন।`);
         return;
       }
     }
 
     // Profit validation warning
-    const price = parseFloat(formData.price) || 0;
-    const cost = parseFloat(formData.cost) || 0;
     if (cost > 0 && price > cost * 3) {
       toast.warning(`⚠️ সতর্কতা: বিক্রয় মূল্য (${price}) ক্রয় মূল্যের (${cost}) ৩ গুণের বেশি। দয়া করে যাচাই করুন।`, {
         duration: 5000,
@@ -311,6 +324,8 @@ export function Products() {
 
     const submitData = {
       ...formData,
+      imei: imei || null,
+      quantity: undefined,
       sku: editingProduct ? formData.sku : generateSKU(),
       barcode: editingProduct ? formData.barcode : generateBarcode(),
       brand: formData.brand || extractBrand(formData.name),
@@ -318,7 +333,7 @@ export function Products() {
       price: price,
       cost: cost,
       // Keep existing stock when editing (a sold unit must not silently return to stock)
-      stock_quantity: editingProduct ? (editingProduct.stock_quantity ?? 1) : 1,
+      stock_quantity: editingProduct ? (editingProduct.stock_quantity ?? 1) : quantity,
       low_stock_threshold: editingProduct ? (editingProduct.low_stock_threshold ?? 0) : 0,
       category_id: formData.category_id || null,
       supplier_id: formData.supplier_id || null,
@@ -339,6 +354,7 @@ export function Products() {
       sku: product.sku || "",
       barcode: product.barcode || "",
       imei: product.imei || "",
+      quantity: String(product.stock_quantity ?? 0),
       brand: product.brand || "",
       model: product.model || "",
       condition: product.condition || "new",
@@ -727,7 +743,7 @@ export function Products() {
                   </Select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">IMEI * (15 digits)</label>
+                  <label className="block text-sm font-medium mb-2">IMEI (ঐচ্ছিক, থাকলে ১৫ ডিজিট)</label>
                   <div className="flex gap-2">
                     <Input
                       value={formData.imei}
@@ -741,11 +757,8 @@ export function Products() {
                         setFormData((prev) => ({ ...prev, imei: sanitizeImei(text) }));
                       }}
                       placeholder="Enter 15-digit IMEI or scan"
-                      required
-                      pattern="[0-9]{15}"
-                      minLength={15}
                       maxLength={15}
-                      title="IMEI must be exactly 15 digits"
+                      title="IMEI দিলে অবশ্যই ১৫ ডিজিট হতে হবে"
                       inputMode="numeric"
                       autoComplete="off"
                       className="flex-1"
@@ -796,7 +809,7 @@ export function Products() {
                   )}
                   {formData.imei && formData.imei.length !== 15 && (
                     <p className="text-xs text-red-500 mt-1">
-                      IMEI অবশ্যই ঠিক ১৫ ডিজিটের হতে হবে (এখন {formData.imei.length} ডিজিট)
+                      IMEI দিলে ঠিক ১৫ ডিজিট হতে হবে (এখন {formData.imei.length} ডিজিট)
                     </p>
                   )}
                 </div>
@@ -834,6 +847,19 @@ export function Products() {
                     value={formData.unit}
                     onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">স্টক পরিমাণ {editingProduct ? "(এডিটে অপরিবর্তিত)" : "*"}</label>
+                  <Input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={formData.quantity}
+                    disabled={!!editingProduct}
+                    onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                    required={!editingProduct}
+                  />
+                  {editingProduct && <p className="text-xs text-muted-foreground mt-1">বিক্রয়/স্টক হিসাব ঠিক রাখতে এখানে স্টক পরিবর্তন করা যাবে না।</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Price</label>
@@ -1057,9 +1083,9 @@ export function Products() {
                 </Button>
                 <Button
                   type="submit"
-                  disabled={formData.imei.length !== 15}
+                  disabled={addMutation.isPending || updateMutation.isPending || (!!formData.imei && sanitizeImei(formData.imei).length !== 15)}
                   className="bg-gradient-to-r from-primary to-accent disabled:opacity-50 disabled:cursor-not-allowed"
-                  title={formData.imei.length !== 15 ? "IMEI অবশ্যই ঠিক ১৫ ডিজিটের হতে হবে" : undefined}
+                  title={formData.imei && sanitizeImei(formData.imei).length !== 15 ? "IMEI দিলে ঠিক ১৫ ডিজিট হতে হবে" : undefined}
                 >
                   {editingProduct ? "Update" : "Add"} Product
                 </Button>
