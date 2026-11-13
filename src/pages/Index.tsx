@@ -387,7 +387,7 @@ export default function Index({ user }: IndexProps) {
       )}
 
       {/* Main Content */}
-      <main className="lg:pl-72">
+      <main className="lg:pl-64">
         <div className="px-3 py-4 sm:px-4 lg:px-6 lg:py-5 pt-[4.25rem] lg:pt-5">
           <div className="flex justify-end mb-2"><ImeiLifecycle /></div>
           {renderContent()}
