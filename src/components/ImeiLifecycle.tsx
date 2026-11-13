@@ -208,9 +208,9 @@ export function ImeiLifecycle() {
               <div className="flex-1 min-h-0 overflow-y-auto space-y-2">
                 {search.trim().length < 2 ? (
                   <Card className="p-5 text-center text-sm text-muted-foreground"><Barcode className="h-8 w-8 mx-auto mb-2 opacity-50"/>সার্চ করতে IMEI, বারকোড, SKU অথবা প্রোডাক্টের নাম লিখুন</Card>
-                ) : searchQuery.isFetching ? <div className="p-8 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto"/></div> :
+                ) : searchQuery.isFetching ? <div className="p-5 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto"/></div> :
                   searchQuery.isError ? <Card className="p-4 text-sm text-destructive">সার্চ করা যায়নি। আবার চেষ্টা করুন।</Card> :
-                  (searchQuery.data || []).length === 0 ? <Card className="p-6 text-center text-sm text-muted-foreground">কোনো প্রোডাক্ট পাওয়া যায়নি</Card> :
+                  (searchQuery.data || []).length === 0 ? <Card className="p-4 text-center text-sm text-muted-foreground">কোনো প্রোডাক্ট পাওয়া যায়নি</Card> :
                   (searchQuery.data || []).map((product: AnyRow) => (
                     <button key={product.id} onClick={()=>setSelected(product)} className={`w-full text-left rounded-xl border p-3 transition-colors hover:bg-muted/60 ${selected?.id===product.id ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border"}`}>
                       <div className="flex items-start justify-between gap-2"><span className="font-semibold text-sm">{product.name}</span><Badge variant="outline">{product.stock_quantity ?? 0} স্টক</Badge></div>
@@ -222,7 +222,7 @@ export function ImeiLifecycle() {
               </div>
             </aside>
 
-            <section className="min-h-0 overflow-y-auto p-4 sm:p-6 space-y-5">
+            <section className="min-h-0 overflow-y-auto p-4 sm:p-4 space-y-5">
               {!selected ? (
                 <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center text-muted-foreground">
                   <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4"><Cpu className="h-8 w-8 text-primary"/></div>
@@ -265,7 +265,7 @@ export function ImeiLifecycle() {
                     <div><h3 className="font-semibold flex items-center gap-2"><History className="h-4 w-4"/> সম্পূর্ণ লেনদেন ও লাইফসাইকেল ইতিহাস</h3><p className="text-xs text-muted-foreground">IMEI event, sale, return, stock movement ও supplier ledger একসাথে</p></div>
                     <Button variant="ghost" size="sm" onClick={()=>{void refetchRegistry();void refetchTimeline();}}>Refresh</Button>
                   </div>
-                  {timelineLoading ? <div className="py-10 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto"/></div> : timeline.length === 0 ? <Card className="p-8 text-center text-sm text-muted-foreground"><Clock3 className="h-7 w-7 mx-auto mb-2 opacity-50"/>এখনো কোনো ইতিহাস পাওয়া যায়নি। নতুন IMEI নিবন্ধন ও লেনদেনের পর ইতিহাস এখানে দেখা যাবে।</Card> :
+                  {timelineLoading ? <div className="py-10 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto"/></div> : timeline.length === 0 ? <Card className="p-5 text-center text-sm text-muted-foreground"><Clock3 className="h-7 w-7 mx-auto mb-2 opacity-50"/>এখনো কোনো ইতিহাস পাওয়া যায়নি। নতুন IMEI নিবন্ধন ও লেনদেনের পর ইতিহাস এখানে দেখা যাবে।</Card> :
                     <div className="relative space-y-3">
                       {timeline.map((row: AnyRow,index:number)=><div key={`${row.source}-${row.id}-${index}`} className="relative pl-7">
                         <span className="absolute left-1.5 top-4 h-2.5 w-2.5 rounded-full bg-primary ring-4 ring-primary/10"/>
