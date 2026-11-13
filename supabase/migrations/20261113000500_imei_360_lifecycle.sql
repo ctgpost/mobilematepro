@@ -265,3 +265,116 @@ FOR EACH ROW EXECUTE FUNCTION public.capture_imei_return_event();
 
 COMMENT ON TABLE public.imei_registry IS 'One row per physical device IMEI, current lifecycle state and commercial metadata.';
 COMMENT ON TABLE public.imei_lifecycle_events IS 'Append-only audit trail of each IMEI lifecycle event.';
+
+
+-- Atomic device registration: registry row and first audit event are one transaction.
+CREATE OR REPLACE FUNCTION public.register_imei_device(
+  p_imei text,
+  p_product_id uuid,
+  p_supplier_id uuid DEFAULT NULL,
+  p_supplier_name text DEFAULT NULL,
+  p_purchase_cost numeric DEFAULT 0,
+  p_purchase_reference text DEFAULT NULL,
+  p_warranty_end date DEFAULT NULL,
+  p_notes text DEFAULT NULL
+) RETURNS uuid
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = public
+AS $$
+DECLARE
+  v_imei text := regexp_replace(COALESCE(p_imei,''), '[^0-9]', '', 'g');
+  v_product public.products%ROWTYPE;
+  v_registry_id uuid;
+BEGIN
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Authentication required'; END IF;
+  IF v_imei !~ '^[0-9]{15}$' THEN RAISE EXCEPTION 'IMEI must contain exactly 15 digits'; END IF;
+  IF COALESCE(p_purchase_cost,0) < 0 THEN RAISE EXCEPTION 'Purchase cost cannot be negative'; END IF;
+  SELECT * INTO v_product FROM public.products WHERE id = p_product_id;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Product not found'; END IF;
+
+  INSERT INTO public.imei_registry
+    (imei, product_id, status, supplier_id, supplier_name, purchase_cost,
+     purchase_reference, warranty_start, warranty_end, notes, created_by)
+  VALUES
+    (v_imei, p_product_id, 'in_stock', p_supplier_id,
+     COALESCE(p_supplier_name,v_product.supplier_name), COALESCE(p_purchase_cost,0),
+     p_purchase_reference, CASE WHEN p_warranty_end IS NOT NULL THEN CURRENT_DATE END,
+     p_warranty_end, p_notes, auth.uid())
+  RETURNING id INTO v_registry_id;
+
+  INSERT INTO public.imei_lifecycle_events
+    (registry_id, imei, product_id, event_type, to_status, reference_type,
+     reference_id, party_type, party_id, party_name, unit_cost, notes, created_by)
+  VALUES
+    (v_registry_id, v_imei, p_product_id, 'registered', 'in_stock', 'product',
+     p_product_id, 'supplier', p_supplier_id,
+     COALESCE(p_supplier_name,v_product.supplier_name),
+     COALESCE(p_purchase_cost,0), p_notes, auth.uid());
+  RETURN v_registry_id;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.record_imei_lifecycle_event(
+  p_imei text,
+  p_event_type text,
+  p_to_status text DEFAULT NULL,
+  p_reference_type text DEFAULT NULL,
+  p_reference_id uuid DEFAULT NULL,
+  p_party_type text DEFAULT NULL,
+  p_party_id uuid DEFAULT NULL,
+  p_party_name text DEFAULT NULL,
+  p_amount numeric DEFAULT NULL,
+  p_payment_method text DEFAULT NULL,
+  p_notes text DEFAULT NULL,
+  p_details jsonb DEFAULT '{}'::jsonb
+) RETURNS uuid
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = public
+AS $$
+DECLARE
+  v_imei text := regexp_replace(COALESCE(p_imei,''), '[^0-9]', '', 'g');
+  v_registry public.imei_registry%ROWTYPE;
+  v_event_id uuid;
+  v_allowed_events text[] := ARRAY['reserved','sold','returned','repair_started','repair_completed','damaged','lost','found','warranty_claim','warranty_replaced','price_adjustment','status_note','retired'];
+  v_allowed_status text[] := ARRAY['in_stock','reserved','sold','returned','repair','damaged','lost','retired'];
+BEGIN
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Authentication required'; END IF;
+  IF p_event_type <> ALL(v_allowed_events) THEN RAISE EXCEPTION 'Unsupported IMEI event type'; END IF;
+  IF p_to_status IS NOT NULL AND p_to_status <> ALL(v_allowed_status) THEN RAISE EXCEPTION 'Unsupported IMEI status'; END IF;
+  IF p_amount IS NOT NULL AND p_amount < 0 THEN RAISE EXCEPTION 'Amount cannot be negative'; END IF;
+
+  SELECT * INTO v_registry FROM public.imei_registry WHERE imei = v_imei FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'IMEI not found in registry'; END IF;
+
+  IF p_to_status IS NOT NULL THEN
+    UPDATE public.imei_registry
+       SET status = p_to_status,
+           sold_reference = CASE WHEN p_to_status = 'sold' AND p_reference_id IS NOT NULL THEN p_reference_id::text ELSE sold_reference END,
+           customer_id = CASE WHEN p_party_type = 'customer' THEN p_party_id ELSE customer_id END,
+           customer_name = CASE WHEN p_party_type = 'customer' THEN p_party_name ELSE customer_name END,
+           customer_phone = CASE WHEN p_party_type = 'customer' THEN p_party_name ELSE customer_phone END,
+           updated_at = now()
+     WHERE id = v_registry.id;
+  END IF;
+
+  INSERT INTO public.imei_lifecycle_events
+    (registry_id, imei, product_id, event_type, from_status, to_status,
+     reference_type, reference_id, party_type, party_id, party_name,
+     unit_cost, amount, payment_method, notes, details, created_by)
+  VALUES
+    (v_registry.id, v_registry.imei, v_registry.product_id, p_event_type,
+     v_registry.status, COALESCE(p_to_status,v_registry.status),
+     p_reference_type, p_reference_id, p_party_type, p_party_id, p_party_name,
+     v_registry.purchase_cost, p_amount, p_payment_method, p_notes,
+     COALESCE(p_details,'{}'::jsonb), auth.uid())
+  RETURNING id INTO v_event_id;
+  RETURN v_event_id;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.register_imei_device(text,uuid,uuid,text,numeric,text,date,text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.record_imei_lifecycle_event(text,text,text,text,uuid,text,uuid,text,numeric,text,text,jsonb) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.register_imei_device(text,uuid,uuid,text,numeric,text,date,text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.record_imei_lifecycle_event(text,text,text,text,uuid,text,uuid,text,numeric,text,text,jsonb) TO authenticated;
