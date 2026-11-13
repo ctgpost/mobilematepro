@@ -188,13 +188,17 @@ export function OfflineDiagnostics() {
   };
 
   const pauseAll = async () => {
-    for (const it of outbox) await setOutboxPaused(it.id!, true);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user?.id) return;
+    for (const it of outbox) await setOutboxPaused(it.id!, true, session.user.id);
     toast.success("সব Queue Pause করা হলো");
     refresh();
   };
 
   const resumeAll = async () => {
-    for (const it of outbox) await setOutboxPaused(it.id!, false);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user?.id) return;
+    for (const it of outbox) await setOutboxPaused(it.id!, false, session.user.id);
     toast.success("সব Queue পুনরায় চালু করা হলো");
     refresh();
   };
