@@ -199,7 +199,7 @@ const TABLE_FINGERPRINTS: { table: TableKey; required: string[]; score?: number 
 function inferTableFromFilename(filename: string): TableKey | null {
   const base = (filename || "").toLowerCase().replace(/\\.json$/, "");
   for (const key of ALL_TABLE_KEYS) {
-    if (base === key || base.endsWith(`/${key}`) || base.endsWith(`_${key}`) || base.includes(key)) return key as TableKey;
+    if (base === key || base.endsWith(`/${key}`) || base.endsWith(`_${key}`)) return key as TableKey;
   }
   return null;
 }
@@ -423,6 +423,7 @@ export async function analyzeJsonFiles(files: File[]): Promise<MultiFileAnalysis
   const perFile: PerFileAnalysis[] = await Promise.all(
     files.map(async (f) => {
       try {
+        if (f.size > 25 * 1024 * 1024) throw new Error("JSON file exceeds 25 MB");
         const txt = await f.text();
         const parsed = JSON.parse(txt);
         return {
