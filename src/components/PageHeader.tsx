@@ -12,14 +12,14 @@ interface PageHeaderProps {
   storageKey?: string;
   /** When true, collapse only affects mobile; desktop always shows everything. */
   mobileOnly?: boolean;
-  /** Extra blocks rendered below (e.g. stats cards); also collapsed on mobile. */
+  /** Extra blocks rendered below the title/actions. These remain scrollable page content. */
   children?: ReactNode;
   className?: string;
 }
 
 /**
- * Sticky, mobile-friendly page header with collapsible subtitle + actions.
- * Use this on every top-level page so headings stay tidy on small screens.
+ * Compact sticky page toolbar shared by top-level screens.
+ * Only the title/subtitle/actions stay pinned; children remain in normal page flow.
  */
 export function PageHeader({
   title,
@@ -35,8 +35,8 @@ export function PageHeader({
   const [open, setOpen] = useState(() => {
     if (!storageKey) return true;
     try {
-      const v = localStorage.getItem(`page-header:${storageKey}`);
-      return v === null ? true : v === "1";
+      const value = localStorage.getItem(`page-header:${storageKey}`);
+      return value === null ? true : value === "1";
     } catch {
       return true;
     }
@@ -46,67 +46,65 @@ export function PageHeader({
     const next = !open;
     setOpen(next);
     if (storageKey) {
-      try { localStorage.setItem(`page-header:${storageKey}`, next ? "1" : "0"); } catch {}
+      try {
+        localStorage.setItem(`page-header:${storageKey}`, next ? "1" : "0");
+      } catch {}
     }
   };
 
   return (
-    <div
-      className={`sticky top-0 z-10 bg-background/85 backdrop-blur-xl border-b border-border/60 pb-3 sm:pb-4 space-y-3 sm:space-y-4 ${className}`}
-    >
-      <div className="flex items-start justify-between gap-2 sm:gap-4">
-        <div className="flex items-start gap-2 min-w-0 flex-1">
-          {icon && <div className="shrink-0 mt-0.5">{icon}</div>}
-          <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground leading-tight truncate">
-              {title}
-            </h1>
-            {subtitle && (
-              <p
-                className={`text-xs sm:text-sm md:text-base text-muted-foreground mt-0.5 sm:mt-1 ${
-                  mobileOnly ? (open ? "block" : "hidden sm:block") : (open ? "block" : "hidden")
-                }`}
-              >
-                {subtitle}
-              </p>
-            )}
+    <>
+      <div
+        className={`sticky top-16 lg:top-0 z-30 -mx-4 sm:-mx-6 lg:-mx-8 mb-3 border-b border-border/60 bg-background/95 px-4 py-2 sm:px-6 lg:px-8 backdrop-blur-xl ${className}`}
+      >
+        <div className="flex min-h-9 items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            {icon && <div className="shrink-0">{icon}</div>}
+            <div className="min-w-0 flex-1">
+              <h1 className="truncate text-lg font-semibold leading-tight text-foreground sm:text-xl lg:text-2xl">
+                {title}
+              </h1>
+              {subtitle && (
+                <p
+                  className={`mt-0.5 truncate text-xs leading-tight text-muted-foreground sm:text-sm ${
+                    mobileOnly ? (open ? "block" : "hidden sm:block") : (open ? "block" : "hidden")
+                  }`}
+                >
+                  {subtitle}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              onClick={toggle}
+              aria-expanded={open}
+              aria-label={open ? "Hide page details" : "Show page details"}
+              className={`h-8 w-8 shrink-0 ${mobileOnly ? "sm:hidden" : ""}`}
+            >
+              {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
+            {cornerControl}
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-        <Button
-          type="button"
-          size="icon"
-          variant="ghost"
-          onClick={toggle}
-          aria-expanded={open}
-          aria-label={open ? "Hide" : "Show"}
-          className={`shrink-0 h-9 w-9 ${mobileOnly ? "sm:hidden" : ""}`}
-        >
-          {open ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-        </Button>
-        {cornerControl}
-        </div>
+        {actions && (
+          <div
+            className={`mt-2 flex flex-wrap items-center gap-1.5 ${
+              mobileOnly ? (open ? "flex" : "hidden sm:flex") : (open ? "flex" : "hidden")
+            }`}
+          >
+            {actions}
+          </div>
+        )}
       </div>
-
-      {actions && (
-        <div
-          className={`flex flex-wrap items-center gap-2 ${
-            mobileOnly ? (open ? "flex" : "hidden sm:flex") : (open ? "flex" : "hidden")
-          }`}
-        >
-          {actions}
-        </div>
-      )}
-
       {children && (
-        <div
-          className={`${
-            mobileOnly ? (open ? "block" : "hidden sm:block") : (open ? "block" : "hidden")
-          }`}
-        >
+        <div className={`mb-3 ${mobileOnly ? (open ? "block" : "hidden sm:block") : (open ? "block" : "hidden")}`}>
           {children}
         </div>
       )}
-    </div>
+    </>
   );
 }
