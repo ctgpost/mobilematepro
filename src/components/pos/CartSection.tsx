@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";\nimport { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { CartItem } from "./types";
 
@@ -7,7 +7,7 @@ interface CartSectionProps {
   cart: CartItem[];
   isCollapsed: boolean;
   onToggleCollapse: () => void;
-  onUpdatePrice: (productId: string, price: number) => void;
+  onUpdatePrice: (productId: string, price: number) => void;\n  onSelectImei: (productId: string, imei: string) => void;
   onUpdateQuantity: (productId: string, quantity: number) => void;
   onRemoveItem: (productId: string) => void;
   onClearCart?: () => void;
@@ -55,7 +55,7 @@ export function CartSection({
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm text-foreground truncate">{item.product.name}</p>
-                    <div className="flex items-center gap-2 mt-1">
+                    {item.availableImeis && item.availableImeis.length > 0 && (\n                      <div className="mt-2 space-y-1">\n                        <span className="text-xs text-muted-foreground">ডিভাইস IMEI নির্বাচন করুন</span>\n                        <Select value={item.imei || ""} onValueChange={(value) => onSelectImei(item.product.id, value)}>\n                          <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="IMEI নির্বাচন করুন"/></SelectTrigger>\n                          <SelectContent>{item.availableImeis.map((value) => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent>\n                        </Select>\n                      </div>\n                    )}\n                    <div className="flex items-center gap-2 mt-1">
                       <span className="text-xs text-muted-foreground">মূল্য:</span>
                       <Input
                         type="number"
