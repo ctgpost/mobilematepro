@@ -83,10 +83,9 @@ Deno.serve(async (req) => {
     const urls: string[] = Array.isArray(body.urls) ? body.urls : [];
     const publicIds: string[] = Array.isArray(body.public_ids) ? body.public_ids : [];
 
-    const ids = [...new Set([
-      ...publicIds,
-      ...urls.map(extractPublicId).filter((x): x is string => !!x),
-    ])];
+    const extracted = urls.map(extractPublicId);
+    if (extracted.some((id) => !id)) throw new Error("A supplied URL is not a valid Cloudinary asset URL");
+    const ids = [...new Set([...publicIds, ...(extracted as string[])])];
     const safePublicId = /^(products|customers|suppliers|avatars|shop)[/][A-Za-z0-9_./-]{1,180}$/;
     if (ids.length > 50 || ids.some((pid) => !safePublicId.test(pid) || pid.includes(".."))) {
       return new Response(JSON.stringify({ error: "Invalid public_id or too many assets" }), {
