@@ -1,9 +1,11 @@
 import { openDB, type IDBPDatabase } from "idb";
+import { supabase } from "@/integrations/supabase/client";
 
 export type OutboxOp = "insert" | "update" | "delete" | "upsert" | "compound_sale";
 
 export interface OutboxItem {
   id?: number;
+  userId: string;
   table: string;
   op: OutboxOp;
   payload: any; // for insert/upsert: row(s); for update: { values, match }; for delete: { match }
