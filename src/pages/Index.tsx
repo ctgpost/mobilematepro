@@ -320,15 +320,15 @@ export default function Index({ user }: IndexProps) {
       {/* Mobile Header - Frosted Glass */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 glass-card border-b border-border/50">
         <div className="flex items-center justify-between h-14 px-3">
-          <div className="flex items-center space-x-3">
+          <div className="flex min-w-0 flex-1 items-center space-x-2 sm:space-x-3">
             <div className="w-9 h-9 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
               <img src={logoSrc} alt={settings.shop_name} className="w-7 h-7 object-contain" />
             </div>
-            <div>
-              <span className="text-sm font-bold text-foreground block leading-tight tracking-tight">
+            <div className="min-w-0 flex-1">
+              <span className="text-sm font-bold text-foreground block leading-tight tracking-tight truncate">
                 {settings.shop_name.split(' ').slice(0, 3).join(' ')}
               </span>
-              <span className="text-[10px] text-muted-foreground">{settings.shop_subtitle}</span>
+              <span className="text-[10px] text-muted-foreground block truncate">{settings.shop_subtitle}</span>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-1">
@@ -355,7 +355,7 @@ export default function Index({ user }: IndexProps) {
       {isMobileMenuOpen && (
         <div className="lg:hidden fixed inset-0 z-40 bg-foreground/20 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)}>
           <div 
-            className="fixed top-16 left-0 right-0 glass-card border-b border-border/50 shadow-xl max-h-[70vh] overflow-y-auto animate-slide-up"
+            className="fixed top-14 left-0 right-0 glass-card border-b border-border/50 shadow-xl max-h-[calc(100dvh-7rem)] overflow-y-auto overscroll-contain animate-slide-up"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-2">
@@ -387,7 +387,7 @@ export default function Index({ user }: IndexProps) {
 
       {/* Main Content */}
       <main className="lg:pl-64">
-        <div className="px-3 py-4 sm:px-4 lg:px-6 lg:pt-0 lg:pb-5 pt-[4.25rem]">
+        <div className="px-3 py-4 pb-[calc(5.25rem+env(safe-area-inset-bottom))] sm:px-4 lg:px-6 lg:pt-0 lg:pb-5 pt-[4.25rem]">
           {renderContent()}
         </div>
       </main>
@@ -408,8 +408,8 @@ export default function Index({ user }: IndexProps) {
       />
 
       {/* Mobile Bottom Navigation - Frosted Glass */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 glass-card border-t border-border/50 z-40">
-        <div className="flex justify-around items-center h-14 px-1">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 glass-card border-t border-border/50 z-40 pb-[env(safe-area-inset-bottom)]">
+        <div className="flex justify-around items-center min-h-14 px-1">
           {menuItems.slice(0, 5).map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -417,14 +417,14 @@ export default function Index({ user }: IndexProps) {
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`flex flex-col items-center justify-center flex-1 h-full transition-all duration-300 rounded-xl mx-0.5 ${
+                className={`flex min-w-0 flex-col items-center justify-center flex-1 min-h-14 py-1 transition-all duration-300 rounded-xl mx-0.5 ${
                   isActive
                     ? "text-accent"
                     : "text-muted-foreground"
                 }`}
               >
                 <Icon className={`w-5 h-5 mb-0.5 transition-transform duration-300 ${isActive ? 'scale-110' : ''}`} strokeWidth={2.5} />
-                <span className="text-[11px] font-medium tracking-normal">{item.label}</span>
+                <span className="max-w-full truncate px-0.5 text-[10px] font-medium tracking-normal sm:text-[11px]">{item.label}</span>
                 {isActive && (
                   <div className="w-1.5 h-1.5 rounded-full bg-accent mt-0.5" />
                 )}

@@ -186,7 +186,7 @@ export function ProductQuickView({ products, initialIndex, isOpen, onClose }: Pr
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg">Specifications</CardTitle>
               </CardHeader>
-              <CardContent className="grid grid-cols-3 gap-4">
+              <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {currentProduct.ram && (
                   <div className="text-center p-3 bg-muted rounded-lg">
                     <p className="text-xs text-muted-foreground mb-1">RAM</p>

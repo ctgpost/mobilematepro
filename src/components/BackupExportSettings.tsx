@@ -255,7 +255,7 @@ export function BackupExportSettings() {
             <Label className="flex items-center gap-2 mb-2">
               <Calendar className="h-4 w-4" /> ডেট রেঞ্জ ফিল্টার (ঐচ্ছিক)
             </Label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <Input
                 type="date"
                 value={settings.dateFrom || ""}

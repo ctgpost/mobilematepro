@@ -130,7 +130,7 @@ function A4Invoice({ sale, settings, invoiceNo, formatDate, getPaymentMethodBn }
         {settings.shop_phone && <p className="text-xs text-gray-600">ফোন: {settings.shop_phone}</p>}
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4">
         <div className="flex items-start gap-3">
           {(sale.customers?.photo_url || sale.customer_photo_url) && (
             <img
@@ -196,7 +196,7 @@ function A4Invoice({ sale, settings, invoiceNo, formatDate, getPaymentMethodBn }
       </table>
 
       <div className="flex justify-end mb-4">
-        <div className="w-64">
+        <div className="w-full sm:w-64">
           <div className="flex justify-between py-2 border-t">
             <span className="font-semibold">সাবটোটাল:</span>
             <span>৳{Number(sale.total_amount).toLocaleString("bn-BD")}</span>
