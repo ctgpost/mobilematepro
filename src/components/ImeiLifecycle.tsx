@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { toast } from "sonner";
-import { Activity, Barcode, Camera, Clock3, Cpu, Download, History, Loader2, Package, Plus, Search, ShieldCheck, Smartphone, Wallet } from "lucide-react";
+import { Activity, Barcode, Camera, Clock3, Cpu, Download, History, Loader2, Package, Plus, Search, Smartphone } from "lucide-react";
 
 type AnyRow = Record<string, any>;
 const db = supabase as any;
