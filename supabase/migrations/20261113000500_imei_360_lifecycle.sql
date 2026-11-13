@@ -354,7 +354,6 @@ BEGIN
            sold_reference = CASE WHEN p_to_status = 'sold' AND p_reference_id IS NOT NULL THEN p_reference_id::text ELSE sold_reference END,
            customer_id = CASE WHEN p_party_type = 'customer' THEN p_party_id ELSE customer_id END,
            customer_name = CASE WHEN p_party_type = 'customer' THEN p_party_name ELSE customer_name END,
-           customer_phone = CASE WHEN p_party_type = 'customer' THEN p_party_name ELSE customer_phone END,
            updated_at = now()
      WHERE id = v_registry.id;
   END IF;
