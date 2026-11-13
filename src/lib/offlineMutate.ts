@@ -113,9 +113,11 @@ export async function drainOutbox(): Promise<{
   failed: number;
   errors: string[];
 }> {
-  if (!isOnline()) return { processed: 0, failed: 0, errors: [] };
+  const { data: { session } } = await supabase.auth.getSession();
+  const userId = session?.user?.id;
+  if (!userId || !isOnline()) return { processed: 0, failed: 0, errors: [] };
 
-  const items = (await listOutbox())
+  const items = (await listOutbox(userId))
     .filter((i) => !i.paused)
     .sort((a, b) => a.createdAt - b.createdAt);
   let processed = 0;
@@ -125,7 +127,7 @@ export async function drainOutbox(): Promise<{
   for (const item of items) {
     try {
       await processOutboxItem(item);
-      await deleteOutbox(item.id!);
+      await deleteOutbox(item.id!, userId);
       processed++;
     } catch (err: any) {
       failed++;
@@ -139,7 +141,7 @@ export async function drainOutbox(): Promise<{
         lastError: err?.message || String(err),
         paused: retryCount >= 5,
       };
-      await updateOutbox(updated);
+      await updateOutbox(updated, userId);
       if (updated.paused) {
         errors.push(`${item.table}/${item.op}: ${updated.lastError} (paused for manual retry)`);
       }
@@ -154,11 +156,14 @@ export async function drainOutbox(): Promise<{
  */
 export async function retryOutboxItem(id: number): Promise<{ ok: boolean; error?: string }> {
   if (!isOnline()) return { ok: false, error: "offline" };
-  const item = await getOutboxItem(id);
+  const { data: { session } } = await supabase.auth.getSession();
+  const userId = session?.user?.id;
+  if (!userId) return { ok: false, error: "not authenticated" };
+  const item = await getOutboxItem(id, userId);
   if (!item) return { ok: false, error: "not found" };
   try {
     await processOutboxItem(item);
-    await deleteOutbox(item.id!);
+    await deleteOutbox(item.id!, userId);
     return { ok: true };
   } catch (err: any) {
     const msg = err?.message || String(err);
@@ -166,7 +171,7 @@ export async function retryOutboxItem(id: number): Promise<{ ok: boolean; error?
       ...item,
       retryCount: (item.retryCount || 0) + 1,
       lastError: msg,
-    });
+    }, userId);
     return { ok: false, error: msg };
   }
 }
@@ -177,6 +182,10 @@ export async function retryOutboxItem(id: number): Promise<{ ok: boolean; error?
  * its sale_items, and decrements stock atomically.
  */
 async function processOutboxItem(item: OutboxItem): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user?.id || item.userId !== session.user.id) {
+    throw new Error("Offline operation belongs to a different or signed-out user");
+  }
   if (item.op === "compound_sale") {
     const p = item.payload || {};
     const { error } = await supabase.rpc("create_sale_atomic", {
