@@ -14,7 +14,7 @@ import { ProductDetailModal } from "./ProductDetailModal";
 import { BarcodeScanner } from "./BarcodeScanner";
 import { ProductQuickView } from "./ProductQuickView";
 import { ProductLabelPrint } from "./ProductLabelPrint";
-import { Eye, ScanBarcode, Download, FileSpreadsheet, FileText, Printer, Loader2, Pencil, History, Trash2 } from "lucide-react";
+import { Eye, ScanBarcode, Download, FileSpreadsheet, FileText, Printer, Loader2, Pencil, History, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { ActivityLogger } from "@/hooks/useActivityLog";
 import { CollapsibleSection } from "./CollapsibleSection";
 import { PageHeader } from "./PageHeader";
@@ -62,6 +62,7 @@ export function Products() {
   const [showImeiScanner, setShowImeiScanner] = useState(false);
   const [imeiScanError, setImeiScanError] = useState<string | null>(null);
   const [showOutOfStock, setShowOutOfStock] = useState(false);
+  const [expandedProductCards, setExpandedProductCards] = useState<Record<string, number>>({});
   const [formData, setFormData] = useState({
     name: "",
     category_id: "",
@@ -1180,149 +1181,200 @@ export function Products() {
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 pt-4 pb-6">
-        {filteredProducts?.map((product) => (
-          <Card key={product.id} className="p-4 card-hover">
-            <div className="space-y-4">
-              <div className="flex items-start justify-between">
-              <div className="flex-1">
-                  <h3 className="font-semibold text-lg text-foreground">{product.name}</h3>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {product.brand && (
-                      <span className="inline-block text-xs bg-accent/10 text-accent px-2 py-1 rounded-full">
-                        {product.brand}
+        {filteredProducts?.map((product) => {
+          const cardLevel = expandedProductCards[product.id] ?? 0;
+          const supplier = suppliersList?.find((item: any) => item.id === product.supplier_id);
+          const supplierName = product.supplier_name || supplier?.name;
+          const supplierPhone = product.supplier_mobile || supplier?.mobile || supplier?.phone;
+          const supplierNid = product.supplier_nid || supplier?.nid;
+          const variations = [
+            product.ram ? `RAM ${product.ram}` : null,
+            product.storage ? `Storage ${product.storage}` : null,
+            product.battery ? `Battery ${product.battery}` : null,
+          ].filter(Boolean);
+
+          return (
+            <Card key={product.id} className="min-w-0 overflow-hidden p-0 card-hover">
+              <div className="divide-y divide-border">
+                {/* Level 1: compact product summary */}
+                <button
+                  type="button"
+                  aria-expanded={cardLevel > 0}
+                  aria-label={`বিস্তারিত ${cardLevel === 0 ? "দেখুন" : "পরিবর্তন করুন"}: ${product.name}`}
+                  onClick={() => setExpandedProductCards((previous) => ({
+                    ...previous,
+                    [product.id]: cardLevel === 2 ? 0 : cardLevel + 1,
+                  }))}
+                  className="flex w-full min-w-0 items-center justify-between gap-3 p-3 sm:p-4 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
+                >
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <div className="flex min-w-0 items-start justify-between gap-2">
+                      <h3 className="min-w-0 break-words font-semibold text-base leading-snug text-foreground">
+                        {product.name}
+                      </h3>
+                      {product.stock_quantity <= (product.low_stock_threshold ?? 0) && (
+                        <span className="shrink-0 text-base" title="Low Stock">⚠️</span>
+                      )}
+                    </div>
+                    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                      <span className="min-w-0 break-all">
+                        <span className="font-medium text-foreground">Model:</span> {product.model || "—"}
                       </span>
+                      {product.imei && (
+                        <span className="min-w-0 break-all font-mono">
+                          <span className="font-sans font-medium text-foreground">IMEI:</span> {product.imei}
+                        </span>
+                      )}
+                    </div>
+                    {variations.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {variations.map((variation) => (
+                          <span key={variation} className="rounded-md bg-muted px-2 py-1 text-[11px] text-muted-foreground">
+                            {variation}
+                          </span>
+                        ))}
+                      </div>
                     )}
-                    {product.condition && (
-                      <span className={`inline-block text-xs px-2 py-1 rounded-full ${
-                        product.condition === 'new' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
-                      }`}>
-                        {product.condition === 'new' ? '✨ New' : '♻️ Used'}
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-muted-foreground">Stock</span>
+                      <span className={`font-semibold tabular-nums ${product.stock_quantity <= (product.low_stock_threshold ?? 0) ? "text-amber-600" : "text-foreground"}`}>
+                        {product.stock_quantity ?? 0} {product.unit || "pcs"}
                       </span>
-                    )}
-                    {product.categories && (
-                      <span className="inline-block text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
-                        {product.categories.name}
-                      </span>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-center gap-1 text-muted-foreground">
+                    {cardLevel === 2 ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                    <span className="text-[10px] tabular-nums">{cardLevel + 1}/3</span>
+                  </div>
+                </button>
+
+                {/* Level 2: brand, condition, SKU and price */}
+                {cardLevel >= 1 && (
+                  <div className="space-y-3 bg-muted/20 p-3 sm:p-4">
+                    <div className="grid min-w-0 grid-cols-2 gap-x-3 gap-y-3 text-sm">
+                      <div className="min-w-0">
+                        <p className="text-xs text-muted-foreground">Company</p>
+                        <p className="break-words font-medium text-foreground">{product.brand || "—"}</p>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs text-muted-foreground">Model</p>
+                        <p className="break-words font-medium text-foreground">{product.model || "—"}</p>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs text-muted-foreground">Condition</p>
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${product.condition === "new" ? "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-300" : "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300"}`}>
+                          {product.condition === "new" ? "✨ নতুন" : "♻️ পুরাতন"}
+                        </span>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs text-muted-foreground">SKU</p>
+                        <p className="break-all font-mono text-xs font-medium text-foreground">{product.sku || "—"}</p>
+                      </div>
+                      <div className="col-span-2 min-w-0 border-t border-border pt-2">
+                        <p className="text-xs text-muted-foreground">Price</p>
+                        <p className="text-lg font-bold tabular-nums text-foreground">
+                          ৳{Number(product.price || 0).toLocaleString("bn-BD")}
+                        </p>
+                      </div>
+                    </div>
+                    {product.description && (
+                      <p className="break-words text-xs text-muted-foreground">{product.description}</p>
                     )}
                   </div>
-                </div>
-                {product.stock_quantity <= product.low_stock_threshold && (
-                  <span className="text-xl" title="Low Stock">⚠️</span>
+                )}
+
+                {/* Level 3: supplier information and existing five actions */}
+                {cardLevel >= 2 && (
+                  <div className="space-y-3 p-3 sm:p-4">
+                    <div className="space-y-2 rounded-lg border border-border bg-background p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Supplier Info</p>
+                      <div className="grid min-w-0 grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+                        <div className="min-w-0">
+                          <p className="text-xs text-muted-foreground">নাম</p>
+                          <p className="break-words font-medium text-foreground">{supplierName || "তথ্য নেই"}</p>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs text-muted-foreground">মোবাইল</p>
+                          <p className="break-all font-medium text-foreground">{supplierPhone || "—"}</p>
+                        </div>
+                        {supplierNid && (
+                          <div className="min-w-0">
+                            <p className="text-xs text-muted-foreground">NID</p>
+                            <p className="break-all font-mono text-xs text-foreground">{supplierNid}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-5 gap-1.5">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        title="দেখুন"
+                        aria-label="প্রোডাক্ট দেখুন"
+                        onClick={() => {
+                          const index = filteredProducts.findIndex((p) => p.id === product.id);
+                          if (window.innerWidth < 1024) {
+                            setQuickViewIndex(index);
+                          } else {
+                            setDetailProduct(product);
+                          }
+                        }}
+                        className="h-9 w-full"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        title="এডিট করুন"
+                        aria-label="প্রোডাক্ট এডিট করুন"
+                        onClick={() => startEdit(product)}
+                        className="h-9 w-full"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setHistoryProduct({ imei: product.imei || "", name: product.name })}
+                        className="h-9 w-full"
+                        disabled={!product.imei}
+                        title="হিস্ট্রি"
+                        aria-label="প্রোডাক্ট হিস্ট্রি"
+                      >
+                        <History className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setLabelProduct(product)}
+                        className="h-9 w-full"
+                        title="বারকোড লেবেল প্রিন্ট"
+                        aria-label="বারকোড লেবেল প্রিন্ট"
+                      >
+                        <Printer className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        title="ডিলিট"
+                        aria-label="প্রোডাক্ট ডিলিট করুন"
+                        onClick={() => {
+                          if (confirm("Are you sure you want to delete this product?")) {
+                            deleteMutation.mutate({ id: product.id, name: product.name });
+                          }
+                        }}
+                        className="h-9 w-full"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 )}
               </div>
-              {product.description && (
-                <p className="text-sm text-muted-foreground line-clamp-2">{product.description}</p>
-              )}
-              <div className="space-y-2 text-sm">
-                {(product.ram || product.storage || product.battery) && (
-                  <div className="flex flex-wrap gap-2 pb-2 border-b border-border">
-                    {product.ram && (
-                      <span className="text-xs bg-muted px-2 py-1 rounded">🧠 {product.ram}</span>
-                    )}
-                    {product.storage && (
-                      <span className="text-xs bg-muted px-2 py-1 rounded">💾 {product.storage}</span>
-                    )}
-                    {product.battery && (
-                      <span className="text-xs bg-muted px-2 py-1 rounded">🔋 {product.battery}</span>
-                    )}
-                  </div>
-                )}
-                {(product.supplier_name || product.supplier_mobile) && (
-                  <div className="pb-2 border-b border-border">
-                    <p className="text-xs text-muted-foreground mb-1">Supplier Info:</p>
-                    {product.supplier_name && (
-                      <p className="text-xs">📦 {product.supplier_name}</p>
-                    )}
-                    {product.supplier_mobile && (
-                      <p className="text-xs">📱 {product.supplier_mobile}</p>
-                    )}
-                  </div>
-                )}
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Price:</span>
-                  <span className="font-semibold text-foreground">৳{Number(product.price || 0).toLocaleString('bn-BD')}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Stock:</span>
-                  <span className={`font-semibold ${product.stock_quantity <= product.low_stock_threshold ? 'text-amber-600' : 'text-foreground'}`}>
-                    {product.stock_quantity} {product.unit}
-                  </span>
-                </div>
-                {product.sku && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">SKU:</span>
-                    <span className="font-mono text-xs text-foreground">{product.sku}</span>
-                  </div>
-                )}
-                {product.imei && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">IMEI:</span>
-                    <span className="font-mono text-xs text-foreground">{product.imei}</span>
-                  </div>
-                )}
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1.5 pt-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  title="দেখুন"
-                  onClick={() => {
-                    const index = filteredProducts.findIndex(p => p.id === product.id);
-                    if (window.innerWidth < 1024) {
-                      setQuickViewIndex(index);
-                    } else {
-                      setDetailProduct(product);
-                    }
-                  }}
-                  className="w-full h-9"
-                >
-                  <Eye className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  title="এডিট করুন"
-                  onClick={() => startEdit(product)}
-                  className="w-full h-9"
-                >
-                  <Pencil className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setHistoryProduct({ imei: product.imei || "", name: product.name })}
-                  className="w-full h-9"
-                  disabled={!product.imei}
-                  title="হিস্ট্রি"
-                >
-                  <History className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setLabelProduct(product)}
-                  className="w-full h-9"
-                  title="বারকোড লেবেল প্রিন্ট"
-                >
-                  <Printer className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  title="ডিলিট"
-                  onClick={() => {
-                    if (confirm("Are you sure you want to delete this product?")) {
-                      deleteMutation.mutate({ id: product.id, name: product.name });
-                    }
-                  }}
-                  className="w-full h-9"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          );
+        })}
         </div>
 
         {productsLoading && (
