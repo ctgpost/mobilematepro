@@ -418,3 +418,49 @@ CREATE TRIGGER trg_validate_imei_return_link
 BEFORE INSERT OR UPDATE OF imei, sale_item_id, product_id, quantity
 ON public.returns
 FOR EACH ROW EXECUTE FUNCTION public.validate_imei_return_link();
+
+
+-- Preserve historical sale/return lineage for legacy products that had one IMEI field.
+INSERT INTO public.imei_lifecycle_events
+  (registry_id, imei, product_id, event_type, from_status, to_status,
+   reference_type, reference_id, party_type, party_id, party_name,
+   quantity, unit_cost, unit_price, amount, payment_method, details, created_at)
+SELECT r.id, r.imei, si.product_id, 'sold', 'in_stock', 'sold',
+       'sale', si.sale_id, 'customer', s.customer_id,
+       COALESCE(s.instant_customer_name,c.name), 1, COALESCE(p.cost,0),
+       si.unit_price, si.total_price, s.payment_method,
+       jsonb_build_object('sale_item_id',si.id,'source','historical_backfill'),
+       si.created_at
+FROM public.sale_items si
+JOIN public.products p ON p.id = si.product_id
+JOIN public.sales s ON s.id = si.sale_id
+LEFT JOIN public.customers c ON c.id = s.customer_id
+JOIN public.imei_registry r
+  ON r.imei = regexp_replace(COALESCE(si.imei,p.imei), '[^0-9]', '', 'g')
+WHERE si.quantity = 1
+  AND COALESCE(si.imei,p.imei) IS NOT NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM public.imei_lifecycle_events e
+    WHERE e.event_type = 'sold' AND e.reference_type = 'sale'
+      AND e.reference_id = si.sale_id
+      AND e.details->>'sale_item_id' = si.id::text
+  );
+
+INSERT INTO public.imei_lifecycle_events
+  (registry_id, imei, product_id, event_type, from_status, to_status,
+   reference_type, reference_id, quantity, amount, details, created_at)
+SELECT r.id, r.imei, rt.product_id, 'returned', 'sold', 'returned',
+       'return', rt.id, rt.quantity, rt.refund_amount,
+       jsonb_build_object('sale_id',rt.sale_id,'source','historical_backfill'),
+       rt.updated_at
+FROM public.returns rt
+JOIN public.products p ON p.id = rt.product_id
+JOIN public.imei_registry r
+  ON r.imei = regexp_replace(COALESCE(rt.imei,p.imei), '[^0-9]', '', 'g')
+WHERE rt.status = 'completed' AND rt.quantity = 1
+  AND COALESCE(rt.imei,p.imei) IS NOT NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM public.imei_lifecycle_events e
+    WHERE e.event_type = 'returned' AND e.reference_type = 'return'
+      AND e.reference_id = rt.id
+  );
