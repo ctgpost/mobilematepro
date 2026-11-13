@@ -11,7 +11,7 @@ const corsHeaders = {
 function extractPublicId(url: string): string | null {
   try {
     const u = new URL(url);
-    if (!u.hostname.includes("res.cloudinary.com")) return null;
+    if (u.protocol !== "https:" || u.hostname !== "res.cloudinary.com") return null;
     // path: /<cloud>/image/upload/(v123/)?<public_id>.<ext>
     const parts = u.pathname.split("/").filter(Boolean);
     const uploadIdx = parts.indexOf("upload");
@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
     const extracted = urls.map(extractPublicId);
     if (extracted.some((id) => !id)) throw new Error("A supplied URL is not a valid Cloudinary asset URL");
     const ids = [...new Set([...publicIds, ...(extracted as string[])])];
-    const safePublicId = /^(products|customers|suppliers|avatars|shop)[/][A-Za-z0-9_./-]{1,180}$/;
+    const safePublicId = /^(uploads|products|customers|suppliers|avatars|shop)[/][A-Za-z0-9_./-]{1,180}$/;
     if (ids.length > 50 || ids.some((pid) => !safePublicId.test(pid) || pid.includes(".."))) {
       return new Response(JSON.stringify({ error: "Invalid public_id or too many assets" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
