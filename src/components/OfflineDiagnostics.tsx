@@ -40,6 +40,7 @@ import {
 } from "@/lib/offlineDB";
 import { drainOutbox, retryOutboxItem } from "@/lib/offlineMutate";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { supabase } from "@/integrations/supabase/client";
 import { CollapsibleSection } from "./CollapsibleSection";
 
 const QUOTA_KEY = "offline:quota_threshold";
@@ -161,7 +162,9 @@ export function OfflineDiagnostics() {
   };
 
   const togglePause = async (it: OutboxItem) => {
-    await setOutboxPaused(it.id!, !it.paused);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user?.id) return;
+    await setOutboxPaused(it.id!, !it.paused, session.user.id);
     toast.success(it.paused ? "▶ পুনরায় চালু" : "⏸ Pause করা হলো");
     refresh();
   };
@@ -176,7 +179,9 @@ export function OfflineDiagnostics() {
 
   const cancelOne = async (it: OutboxItem) => {
     if (!confirm(`${it.table}/${it.op} বাতিল করতে চান?`)) return;
-    await deleteOutbox(it.id!);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user?.id) return;
+    await deleteOutbox(it.id!, session.user.id);
     toast.success("বাতিল করা হলো");
     refresh();
   };
