@@ -42,7 +42,7 @@ export function MobileDashboardWidget({ onNavigateToPOS, onNavigateToProducts }:
   const outOfStockCount = products?.filter(p => p.stock_quantity <= 0).length || 0;
 
   return (
-    <Card className="lg:hidden mb-6 bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
+    <Card className="lg:hidden mb-4 bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-primary" />

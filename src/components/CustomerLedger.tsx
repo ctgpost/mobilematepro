@@ -330,7 +330,7 @@ export function CustomerLedger() {
                         );
                       })}
                       {!entries.length && (
-                        <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">কোনো লেনদেন নেই</td></tr>
+                        <tr><td colSpan={5} className="p-5 text-center text-muted-foreground">কোনো লেনদেন নেই</td></tr>
                       )}
                     </tbody>
                   </table>

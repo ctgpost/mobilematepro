@@ -1155,7 +1155,7 @@ export function Products() {
       <div className="flex-1 overflow-y-auto">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 pt-4 pb-6">
         {filteredProducts?.map((product) => (
-          <Card key={product.id} className="p-6 card-hover">
+          <Card key={product.id} className="p-4 card-hover">
             <div className="space-y-4">
               <div className="flex items-start justify-between">
               <div className="flex-1">

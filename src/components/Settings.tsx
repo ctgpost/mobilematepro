@@ -628,16 +628,16 @@ export function Settings() {
         title="সেটিংস"
         subtitle="অ্যাকাউন্ট ও সিস্টেম ডেটা ব্যবস্থাপনা"
         icon={
-          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl overflow-hidden bg-muted flex items-center justify-center shadow-lg">
+          <div className="w-12 h-10 sm:w-16 sm:h-16 rounded-2xl overflow-hidden bg-muted flex items-center justify-center shadow-lg">
             <img src={logoSrc} alt={settings.shop_name} className="w-10 h-10 sm:w-14 sm:h-14 object-contain" />
           </div>
         }
       />
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto pb-6 space-y-6">
+      <div className="flex-1 overflow-y-auto pb-6 space-y-4">
         {/* Database Statistics */}
-        <Card className="p-6">
+        <Card className="p-4">
         <h2 className="text-xl font-semibold mb-4 text-foreground">📊 Database Statistics</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-primary/5 rounded-lg p-4">
@@ -667,7 +667,7 @@ export function Settings() {
         </div>
 
         {/* Profit Statistics with Date Filter */}
-        <div className="mt-6 pt-6 border-t border-border">
+        <div className="mt-4 pt-6 border-t border-border">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
             <h3 className="text-lg font-semibold text-foreground">💰 Profit Statistics</h3>
             <div className="flex flex-wrap gap-2">
@@ -793,7 +793,7 @@ export function Settings() {
 
       {/* Backup & Restore — admin only */}
       {isAdmin && (
-      <Card className="p-6">
+      <Card className="p-4">
         <h2 className="text-xl font-semibold mb-4 text-foreground">💾 Backup & Restore</h2>
         <div className="space-y-4">
           <div>
@@ -926,7 +926,7 @@ export function Settings() {
       )}
 
       {/* Reset Database */}
-      <Card className="p-6 border-destructive/50">
+      <Card className="p-4 border-destructive/50">
         <h2 className="text-xl font-semibold mb-4 text-destructive">⚠️ Danger Zone</h2>
         <div className="space-y-4">
           {/* Clear Sales Data Only */}
@@ -1108,7 +1108,7 @@ export function Settings() {
       </Card>
 
       {/* Account */}
-      <Card className="p-6">
+      <Card className="p-4">
         <h2 className="text-xl font-semibold mb-4 text-foreground">👤 Account</h2>
         <div className="space-y-4">
           <div>
@@ -1125,7 +1125,7 @@ export function Settings() {
       </Card>
 
       {/* About */}
-      <Card className="p-6">
+      <Card className="p-4">
         <h2 className="text-xl font-semibold mb-4 text-foreground">ℹ️ About</h2>
         <div className="space-y-2 text-sm text-muted-foreground">
           <p className="font-semibold text-lg text-foreground">{settings.shop_name}</p>

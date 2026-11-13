@@ -234,7 +234,7 @@ export function ActivityLog() {
 
   if (roleLoading) {
     return (
-      <Card className="p-6">
+      <Card className="p-4">
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
@@ -244,9 +244,9 @@ export function ActivityLog() {
 
   if (!isAdmin && !isManager) {
     return (
-      <Card className="p-6">
+      <Card className="p-4">
         <div className="flex flex-col items-center justify-center py-8 text-center">
-          <Shield className="w-12 h-12 text-muted-foreground mb-4" />
+          <Shield className="w-12 h-10 text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold text-foreground mb-2">অ্যাক্সেস সীমাবদ্ধ</h3>
           <p className="text-muted-foreground">শুধুমাত্র এডমিন ও ম্যানেজার অ্যাক্টিভিটি লগ দেখতে পারেন।</p>
         </div>
@@ -406,7 +406,7 @@ export function ActivityLog() {
 
         <TabsContent value="users">
           {/* User Activity Summary */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
             {userSummaries.slice(0, 6).map((summary) => (
               <Card key={summary.email} className="p-4 bg-muted/30">
                 <div className="flex items-start justify-between mb-3">

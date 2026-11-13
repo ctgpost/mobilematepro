@@ -210,7 +210,7 @@ export function Customers() {
 
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 pt-4 pb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-4 pt-4 pb-6">
         {customers?.map((customer) => (
           <SwipeableRow
             key={customer.id}
@@ -273,7 +273,7 @@ export function Customers() {
               },
             ]}
           >
-            <Card className="p-6 card-hover rounded-2xl">
+            <Card className="p-4 card-hover rounded-2xl">
               <div className="space-y-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">

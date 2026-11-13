@@ -365,19 +365,19 @@ export function Sales() {
         <div className="overflow-hidden min-h-0">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
         <Card className="card-hover">
-          <CardHeader className="pb-3 p-4 md:p-6">
+          <CardHeader className="pb-3 p-4 md:p-4">
             <CardDescription className="text-xs md:text-sm">Total Sales</CardDescription>
             <CardTitle className="text-2xl md:text-3xl text-primary">{totalSales}</CardTitle>
           </CardHeader>
         </Card>
         <Card className="card-hover hidden lg:block">
-          <CardHeader className="pb-3 p-4 md:p-6">
+          <CardHeader className="pb-3 p-4 md:p-4">
             <CardDescription className="text-xs md:text-sm">Total Revenue</CardDescription>
             <CardTitle className="text-2xl md:text-3xl text-accent">৳{totalRevenue.toLocaleString()}</CardTitle>
           </CardHeader>
         </Card>
         <Card className="card-hover hidden lg:block">
-          <CardHeader className="pb-3 p-4 md:p-6">
+          <CardHeader className="pb-3 p-4 md:p-4">
             <CardDescription className="text-xs md:text-sm">Average Sale</CardDescription>
             <CardTitle className="text-2xl md:text-3xl text-secondary">৳{averageSale.toFixed(0)}</CardTitle>
           </CardHeader>
@@ -388,7 +388,7 @@ export function Sales() {
 
         {/* Filters */}
         <Card className="animate-fade-in">
-        <CardHeader className="p-4 md:p-6">
+        <CardHeader className="p-4 md:p-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <button 
               onClick={() => setShowFilters(!showFilters)}
@@ -415,7 +415,7 @@ export function Sales() {
           </div>
         </CardHeader>
         {showFilters && (
-        <CardContent className="p-4 md:p-6 pt-0">
+        <CardContent className="p-4 md:p-4 pt-0">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
             {/* Search */}
             <div className="sm:col-span-2 lg:col-span-2">
@@ -542,18 +542,18 @@ export function Sales() {
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto pb-6 space-y-4 md:space-y-6">
+      <div className="flex-1 overflow-y-auto pb-6 space-y-4 md:space-y-4">
         {/* Sales List */}
         <Card>
-        <CardHeader className="p-4 md:p-6">
+        <CardHeader className="p-4 md:p-4">
           <CardTitle className="text-base md:text-lg">
             Sales List ({filteredSales.length} {filteredSales.length === 1 ? "sale" : "sales"})
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-4 md:p-6 pt-0">
+        <CardContent className="p-4 md:p-4 pt-0">
           {paginatedSales.length === 0 ? (
             <div className="text-center py-8 md:py-12 text-muted-foreground">
-              <Package className="h-10 w-10 md:h-12 md:w-12 mx-auto mb-3 md:mb-4 opacity-50" />
+              <Package className="h-10 w-10 md:h-10 md:w-12 mx-auto mb-3 md:mb-4 opacity-50" />
               <p className="text-sm md:text-base">No sales found</p>
               {hasActiveFilters && (
                 <Button variant="link" onClick={clearFilters} className="mt-2 text-sm md:text-base">
@@ -642,7 +642,7 @@ export function Sales() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 md:mt-6 pt-4 md:pt-6 border-t">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 md:mt-4 pt-4 md:pt-6 border-t">
               <div className="text-xs md:text-sm text-muted-foreground">
                 Page {currentPage} of {totalPages}
               </div>
@@ -684,17 +684,17 @@ export function Sales() {
           </DialogHeader>
 
           {selectedSale && (
-            <div className="space-y-4 md:space-y-6">
+            <div className="space-y-4 md:space-y-4">
               {/* Sale Info */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                 <Card>
-                  <CardHeader className="pb-3 p-3 md:p-6">
+                  <CardHeader className="pb-3 p-3 md:p-4">
                     <CardDescription className="text-xs md:text-sm">Sale ID</CardDescription>
                     <CardTitle className="text-sm md:text-base font-mono break-all">#{selectedSale.id}</CardTitle>
                   </CardHeader>
                 </Card>
                 <Card>
-                  <CardHeader className="pb-3 p-3 md:p-6">
+                  <CardHeader className="pb-3 p-3 md:p-4">
                     <CardDescription className="text-xs md:text-sm">Date & Time</CardDescription>
                     <CardTitle className="text-sm md:text-base">
                       <span className="hidden sm:inline">{format(new Date(selectedSale.created_at), "dd MMM yyyy, hh:mm a")}</span>
@@ -703,13 +703,13 @@ export function Sales() {
                   </CardHeader>
                 </Card>
                 <Card>
-                  <CardHeader className="pb-3 p-3 md:p-6">
+                  <CardHeader className="pb-3 p-3 md:p-4">
                     <CardDescription className="text-xs md:text-sm">Payment Method</CardDescription>
                     <CardTitle className="text-sm md:text-base capitalize">{selectedSale.payment_method}</CardTitle>
                   </CardHeader>
                 </Card>
                 <Card>
-                  <CardHeader className="pb-3 p-3 md:p-6">
+                  <CardHeader className="pb-3 p-3 md:p-4">
                     <CardDescription className="text-xs md:text-sm">Status</CardDescription>
                     <CardTitle className="text-sm md:text-base">
                       <Badge variant={selectedSale.status === "completed" ? "default" : "secondary"} className="text-xs">
@@ -723,13 +723,13 @@ export function Sales() {
               {/* Customer Info */}
               {(selectedSale.customers || selectedSale.instant_customer_name) && (
                 <Card>
-                  <CardHeader className="p-3 md:p-6">
+                  <CardHeader className="p-3 md:p-4">
                     <CardTitle className="text-base md:text-lg flex items-center gap-2">
                       <User className="h-4 w-4 md:h-5 md:w-5" />
                       Customer Information
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-2 p-3 md:p-6 pt-0">
+                  <CardContent className="space-y-2 p-3 md:p-4 pt-0">
                     <div className="flex items-start gap-4">
                       <PhotoZoom
                         url={selectedSale.customers?.photo_url || selectedSale.customer_photo_url}
@@ -766,13 +766,13 @@ export function Sales() {
 
               {/* Products */}
               <Card>
-                <CardHeader className="p-3 md:p-6">
+                <CardHeader className="p-3 md:p-4">
                   <CardTitle className="text-base md:text-lg flex items-center gap-2">
                     <Package className="h-4 w-4 md:h-5 md:w-5" />
                     Products Sold
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-3 md:p-6 pt-0">
+                <CardContent className="p-3 md:p-4 pt-0">
                   <div className="space-y-3 md:space-y-4">
                     {(selectedSale.sale_items || []).map((item, index) => (
                       <div key={index}>
@@ -846,10 +846,10 @@ export function Sales() {
               {/* Notes */}
               {selectedSale.notes && (
                 <Card>
-                  <CardHeader className="p-3 md:p-6">
+                  <CardHeader className="p-3 md:p-4">
                     <CardTitle className="text-base md:text-lg">Notes</CardTitle>
                   </CardHeader>
-                  <CardContent className="p-3 md:p-6 pt-0">
+                  <CardContent className="p-3 md:p-4 pt-0">
                     <p className="text-xs md:text-sm text-muted-foreground">{selectedSale.notes}</p>
                   </CardContent>
                 </Card>
@@ -861,7 +861,7 @@ export function Sales() {
 
       {/* Hidden Print Component */}
       <div className="hidden">
-        <div ref={printRef} className="p-8 bg-white text-black">
+        <div ref={printRef} className="p-5 bg-white text-black">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold mb-2">Sales Report</h1>
             <p className="text-gray-600">Generated on {format(new Date(), "dd MMMM yyyy, hh:mm a")}</p>

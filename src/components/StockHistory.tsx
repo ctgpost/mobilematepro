@@ -130,7 +130,7 @@ export function StockHistory() {
   };
 
   return (
-    <div className="p-4 lg:p-6 space-y-4 animate-fade-in">
+    <div className="p-4 lg:p-4 space-y-4 animate-fade-in">
       <div className="flex items-center justify-between gap-2">
         <div>
           <h1 className="text-2xl font-bold text-foreground">স্টক ইতিহাস ও মিলকরণ</h1>
@@ -168,7 +168,7 @@ export function StockHistory() {
           {movementsQ.isLoading ? (
             <p className="text-sm text-muted-foreground">লোড হচ্ছে...</p>
           ) : filtered.length === 0 ? (
-            <Card className="p-8 text-center text-muted-foreground text-sm">
+            <Card className="p-5 text-center text-muted-foreground text-sm">
               এখনও কোনো স্টক পরিবর্তন রেকর্ড হয়নি। এখন থেকে যোগ, আপডেট, বিক্রি ও রিটার্ন স্বয়ংক্রিয়ভাবে এখানে দেখাবে।
             </Card>
           ) : (
@@ -216,7 +216,7 @@ export function StockHistory() {
 
         <TabsContent value="recon" className="space-y-3">
           {!trackingStart ? (
-            <Card className="p-8 text-center text-sm text-muted-foreground">
+            <Card className="p-5 text-center text-sm text-muted-foreground">
               ইতিহাস রেকর্ড শুরু হলে মিলকরণ রিপোর্ট দেখাবে।
             </Card>
           ) : !issues ? (
@@ -233,7 +233,7 @@ export function StockHistory() {
               </div>
 
               {issues.saleMismatch.length + issues.ledgerMismatch.length + issues.negative.length === 0 && (
-                <Card className="p-6 text-center text-sm text-primary font-medium">✅ সব বিক্রি ও স্টক মিলে গেছে।</Card>
+                <Card className="p-4 text-center text-sm text-primary font-medium">✅ সব বিক্রি ও স্টক মিলে গেছে।</Card>
               )}
 
               {issues.saleMismatch.length > 0 && (

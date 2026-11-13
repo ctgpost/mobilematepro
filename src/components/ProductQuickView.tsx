@@ -117,7 +117,7 @@ export function ProductQuickView({ products, initialIndex, isOpen, onClose }: Pr
         </div>
 
         {/* Product Content */}
-        <div className="p-6 space-y-4">
+        <div className="p-4 space-y-4">
           {/* Product Header */}
           <div>
             <h2 className="text-2xl font-bold text-foreground mb-2">{currentProduct.name}</h2>

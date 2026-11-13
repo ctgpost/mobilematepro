@@ -28,7 +28,7 @@ export function CartSection({
   total,
 }: CartSectionProps) {
   return (
-    <Card className="p-4 lg:p-6">
+    <Card className="p-4 lg:p-4">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg lg:text-xl font-semibold text-foreground">
           কার্ট {cart.length > 0 && <span className="text-sm text-muted-foreground">({cart.length})</span>}

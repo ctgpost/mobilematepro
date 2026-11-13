@@ -271,7 +271,7 @@ export function Investments() {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6 animate-fade-in">
+    <div className="space-y-4 sm:space-y-4 animate-fade-in">
       <PageHeader
         storageKey="investments"
         title={<span className="flex items-center gap-2"><Wallet className="w-6 h-6 text-primary" /> ইনভেস্টমেন্ট ট্র্যাকার</span>}
