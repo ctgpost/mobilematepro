@@ -49,93 +49,56 @@ export function StockSyncCheck() {
     },
   });
 
-  // Fetch sale items
-  const { data: saleItems } = useQuery({
-    queryKey: ["sale_items_for_sync"],
-    queryFn: async () => {
-      // Unlimited fetch — no 1000-row cap
-      return fetchAll<any>("sale_items", "product_id, quantity");
-    },
-  });
-
-  // Fetch returns
-  const { data: returns } = useQuery({
-    queryKey: ["returns_for_sync"],
-    queryFn: async () => {
-      // Unlimited fetch — no 1000-row cap
-      return fetchAll<any>("returns", "product_id, quantity, status", (q) => q.eq("status", "completed"));
-    },
+  // Reconcile against the stock ledger, never an assumed opening quantity.
+  const { data: movements } = useQuery({
+    queryKey: ["stock_movements_for_reconciliation"],
+    queryFn: async () => fetchAll<any>("stock_movements", "product_id, movement_type, old_quantity, new_quantity, change, created_at", (q) => q.order("created_at", { ascending: true })),
   });
 
   const runStockCheck = () => {
-    if (!products) {
-      toast.error("প্রোডাক্ট ডাটা লোড হয়নি");
+    if (!products || !movements) {
+      toast.error("প্রোডাক্ট বা স্টক লেজার ডাটা লোড হয়নি");
       return;
     }
-
     setIsChecking(true);
+    const grouped = new Map<string, any[]>();
+    for (const movement of movements) {
+      const list = grouped.get(movement.product_id) || [];
+      list.push(movement);
+      grouped.set(movement.product_id, list);
+    }
     const issues: StockDiscrepancy[] = [];
-
-    products.forEach((product) => {
-      // Calculate total sold
-      const totalSold = saleItems
-        ?.filter((item) => item.product_id === product.id)
-        .reduce((sum, item) => sum + item.quantity, 0) || 0;
-
-      // Calculate total returned (completed returns)
-      const totalReturned = returns
-        ?.filter((ret) => ret.product_id === product.id)
-        .reduce((sum, ret) => sum + ret.quantity, 0) || 0;
-
-      // Expected stock = Initial stock (assumed 1 for mobiles) - sold + returned
-      // Since we don't have initial stock, we calculate expected based on current operations
-      // For mobile phones (stock_quantity always starts at 1), we check if:
-      // If sold > 0 and stock > 0, there might be an issue
-      // If sold = 0 and stock = 0, there's an issue (unless manually adjusted)
-
-      // Calculate expected stock: Start with 1 (initial) - sold + returned
-      const initialStock = 1; // Mobile phones start with 1
-      const expectedStock = Math.max(0, initialStock - totalSold + totalReturned);
-      const currentStock = product.stock_quantity;
-
-      // Check for discrepancy
+    for (const product of products) {
+      const ledger = grouped.get(product.id);
+      if (!ledger?.length) continue; // No trustworthy opening balance exists for legacy products.
+      const latestMovement = ledger[ledger.length - 1];
+      const expectedStock = Number(latestMovement.new_quantity);
+      const currentStock = Number(product.stock_quantity);
       if (currentStock !== expectedStock) {
         issues.push({
-          productId: product.id,
-          productName: product.name,
-          imei: product.imei,
-          currentStock,
-          expectedStock,
-          difference: currentStock - expectedStock,
-          totalSold,
-          totalReturned,
+          productId: product.id, productName: product.name, imei: product.imei,
+          currentStock, expectedStock, difference: currentStock - expectedStock,
+          totalSold: ledger.filter(m => m.movement_type === "sale").reduce((sum,m) => sum + Math.abs(Number(m.change)),0),
+          totalReturned: ledger.filter(m => m.movement_type === "return").reduce((sum,m) => sum + Number(m.change),0),
         });
       }
-    });
-
+    }
     setDiscrepancies(issues);
     setHasChecked(true);
     setIsChecking(false);
-
-    if (issues.length === 0) {
-      toast.success("✅ স্টক সিঙ্ক ঠিক আছে! কোনো অসঙ্গতি পাওয়া যায়নি।");
-    } else {
-      toast.warning(`⚠️ ${issues.length}টি প্রোডাক্টে স্টক অসঙ্গতি পাওয়া গেছে।`);
-    }
+    if (!issues.length) toast.success("স্টক লেজারের সাথে বর্তমান স্টক মিলে গেছে");
+    else toast.warning(`${issues.length}টি পণ্যে লেজার ও বর্তমান স্টকের অমিল পাওয়া গেছে`);
   };
 
   const fixDiscrepancy = async (discrepancy: StockDiscrepancy) => {
     try {
-      const { error } = await supabase
-        .from("products")
-        .update({ stock_quantity: discrepancy.expectedStock })
-        .eq("id", discrepancy.productId);
-
+      const { error } = await supabase.from("products").update({
+        stock_quantity: discrepancy.expectedStock,
+        last_stock_reason: "reconciliation",
+        last_stock_ref: `manual-reconciliation-${Date.now()}`,
+      } as any).eq("id", discrepancy.productId);
       if (error) throw error;
-
-      toast.success(`${discrepancy.productName} এর স্টক সংশোধন করা হয়েছে`);
-      
-      // Remove from discrepancies list
+      toast.success(`${discrepancy.productName} এর স্টক লেজার অনুযায়ী সংশোধন হয়েছে`);
       setDiscrepancies(prev => prev.filter(d => d.productId !== discrepancy.productId));
     } catch (error: any) {
       toast.error(error.message || "স্টক সংশোধন করতে ব্যর্থ");
@@ -143,19 +106,7 @@ export function StockSyncCheck() {
   };
 
   const fixAllDiscrepancies = async () => {
-    try {
-      for (const discrepancy of discrepancies) {
-        await supabase
-          .from("products")
-          .update({ stock_quantity: discrepancy.expectedStock })
-          .eq("id", discrepancy.productId);
-      }
-
-      toast.success(`${discrepancies.length}টি প্রোডাক্টের স্টক সংশোধন করা হয়েছে`);
-      setDiscrepancies([]);
-    } catch (error: any) {
-      toast.error(error.message || "স্টক সংশোধন করতে ব্যর্থ");
-    }
+    for (const discrepancy of discrepancies) await fixDiscrepancy(discrepancy);
   };
 
   return (

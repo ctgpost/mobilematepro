@@ -80,19 +80,22 @@ export function StaffPerformanceReport() {
     switch (p) {
       case 'today':
         return { start: startOfDay(now), end: endOfDay(now), label: 'আজ', days: 1 };
-      case 'yesterday':
+      case 'yesterday': {
         const yesterday = subDays(now, 1);
         return { start: startOfDay(yesterday), end: endOfDay(yesterday), label: 'গতকাল', days: 1 };
+      }
       case 'thisWeek':
         return { start: startOfWeek(now, { weekStartsOn: 0 }), end: endOfWeek(now, { weekStartsOn: 0 }), label: 'এই সপ্তাহ', days: 7 };
-      case 'lastWeek':
+      case 'lastWeek': {
         const lastWeek = subWeeks(now, 1);
         return { start: startOfWeek(lastWeek, { weekStartsOn: 0 }), end: endOfWeek(lastWeek, { weekStartsOn: 0 }), label: 'গত সপ্তাহ', days: 7 };
+      }
       case 'thisMonth':
         return { start: startOfMonth(now), end: endOfMonth(now), label: 'এই মাস', days: 30 };
-      case 'lastMonth':
+      case 'lastMonth': {
         const lastMonth = subMonths(now, 1);
         return { start: startOfMonth(lastMonth), end: endOfMonth(lastMonth), label: 'গত মাস', days: 30 };
+      }
       default:
         return { start: startOfWeek(now, { weekStartsOn: 0 }), end: endOfWeek(now, { weekStartsOn: 0 }), label: 'এই সপ্তাহ', days: 7 };
     }

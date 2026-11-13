@@ -46,26 +46,14 @@ export function DueCollection({ saleId, currentDue }: DueCollectionProps) {
 
       const { data: { user } } = await supabase.auth.getUser();
 
-      // Insert payment record
-      const { error: paymentError } = await supabase.from("due_payments").insert({
-        sale_id: saleId,
-        amount: collectAmount,
-        payment_method: paymentMethod,
-        notes: notes || null,
-        collected_by: user?.id,
+      const { data: newDue, error } = await (supabase.rpc as any)("collect_sale_due", {
+        p_sale_id: saleId,
+        p_amount: collectAmount,
+        p_payment_method: paymentMethod,
+        p_notes: notes || null,
       });
-      if (paymentError) throw paymentError;
-
-      // Update sale due_amount and paid_amount
-      const newDue = currentDue - collectAmount;
-      const { data: sale } = await supabase.from("sales").select("paid_amount").eq("id", saleId).single();
-      const newPaid = Number(sale?.paid_amount || 0) + collectAmount;
-
-      const { error: updateError } = await supabase
-        .from("sales")
-        .update({ due_amount: newDue, paid_amount: newPaid })
-        .eq("id", saleId);
-      if (updateError) throw updateError;
+      if (error) throw error;
+      return newDue;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sales"] });

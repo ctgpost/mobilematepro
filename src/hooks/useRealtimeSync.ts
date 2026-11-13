@@ -36,7 +36,6 @@ export function useRealtimeSync() {
 
     Object.entries(TABLE_TO_KEYS).forEach(([table, keys]) => {
       channel.on(
-        // @ts-ignore - postgres_changes type
         "postgres_changes",
         { event: "*", schema: "public", table },
         () => {

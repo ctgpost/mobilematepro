@@ -1,6 +1,7 @@
 import { saveAs } from "file-saver";
 import { getOfflineDB, listOutbox, clearOutbox } from "./offlineDB";
-import { get as kvGet, set as kvSet, keys as kvKeys, del as kvDel } from "idb-keyval";
+import { get as kvGet, set as kvSet, del as kvDel } from "idb-keyval";
+import { supabase } from "@/integrations/supabase/client";
 
 interface OfflineSnapshot {
   version: 1;
@@ -10,8 +11,10 @@ interface OfflineSnapshot {
 }
 
 export async function exportOfflineData() {
-  const outbox = await listOutbox();
-  const cache = (await kvGet("mobile-mate-pro-rq-cache")) as string | null;
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user?.id) throw new Error("Sign in required");
+  const outbox = await listOutbox(session.user.id);
+  const cache = (await kvGet(`mobile-mate-pro-rq-cache:${session.user.id}`)) as string | null;
   const snapshot: OfflineSnapshot = {
     version: 1,
     exportedAt: new Date().toISOString(),
@@ -29,20 +32,39 @@ export async function importOfflineData(file: File): Promise<{
   cacheRestored: boolean;
 }> {
   const text = await file.text();
-  const parsed = JSON.parse(text) as OfflineSnapshot;
-  if (parsed.version !== 1) throw new Error("অসমর্থিত ফাইল ভার্সন");
-
+  let parsed: OfflineSnapshot;
+  try { parsed = JSON.parse(text) as OfflineSnapshot; }
+  catch { throw new Error("অফলাইন ব্যাকআপের JSON সঠিক নয়"); }
+  if (!parsed || parsed.version !== 1 || !Array.isArray(parsed.outbox)) throw new Error("অসমর্থিত বা অসম্পূর্ণ অফলাইন ব্যাকআপ");
+  if (parsed.reactQueryCache != null && (typeof parsed.reactQueryCache !== "string" || parsed.reactQueryCache.length > 25 * 1024 * 1024)) throw new Error("অফলাইন ক্যাশ ডেটা অবৈধ বা অতিরিক্ত বড়");
+  const { data: { session } } = await supabase.auth.getSession();
+  const userId = session?.user?.id;
+  if (!userId) throw new Error("Sign in required");
+  if (parsed.outbox.length > 10000) throw new Error("অফলাইন ব্যাকআপে অতিরিক্ত Queue Item রয়েছে");
+  const allowedOps = new Set(["insert", "update", "delete", "upsert", "compound_sale"]);
+  const allowedTables = new Set(["products","sales","sale_items","customers","suppliers","categories","returns","supplier_returns","due_payments","customer_ledger_entries","investment_entries","investment_incomes","investment_sectors","activity_logs","shop_settings"]);
+  for (const item of parsed.outbox) {
+    if (!item || item.userId !== userId || !allowedOps.has(item.op) || !allowedTables.has(item.table) || !item.payload || typeof item.payload !== "object" || !Number.isFinite(item.createdAt) || !Number.isInteger(item.retryCount) || item.retryCount < 0) {
+      throw new Error("অন্য ব্যবহারকারীর বা অবৈধ Queue Item পাওয়া গেছে। Import বাতিল করা হয়েছে");
+    }
+  }
   const db = await getOfflineDB();
-  // Merge outbox (don't clear existing)
-  for (const item of parsed.outbox || []) {
+  const existing = await listOutbox(userId);
+  const fingerprint = (item: any) => `${item.table}|${item.op}|${item.createdAt}|${JSON.stringify(item.payload)}`;
+  const known = new Set(existing.map(fingerprint));
+  let imported = 0;
+  for (const item of parsed.outbox) {
     const { id, ...rest } = item;
+    const key = fingerprint(item);
+    if (known.has(key)) continue;
     await db.add("outbox", rest as any);
+    known.add(key);
+    imported++;
   }
-  if (parsed.reactQueryCache) {
-    await kvSet("mobile-mate-pro-rq-cache", parsed.reactQueryCache);
-  }
+  if (parsed.reactQueryCache) await kvSet(`mobile-mate-pro-rq-cache:${userId}`, parsed.reactQueryCache);
+
   return {
-    outboxCount: parsed.outbox?.length || 0,
+    outboxCount: imported,
     cacheRestored: !!parsed.reactQueryCache,
   };
 }
@@ -51,20 +73,19 @@ export async function importOfflineData(file: File): Promise<{
  * Clear cached read data but PRESERVE outbox (queued writes).
  */
 export async function clearOfflineCache() {
-  const all = await kvKeys();
-  for (const k of all) {
-    await kvDel(k);
-  }
-  // Clear SW caches
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.user?.id) await kvDel(`mobile-mate-pro-rq-cache:${session.user.id}`);
   if ("caches" in window) {
     const names = await caches.keys();
-    await Promise.all(names.map((n) => caches.delete(n)));
+    await Promise.all(names.map((name) => caches.delete(name)));
   }
 }
 
 export async function clearAllOfflineData() {
   await clearOfflineCache();
-  await clearOutbox();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user?.id) throw new Error("Sign in required");
+  await clearOutbox(session.user.id);
 }
 
 export async function getStorageEstimate(): Promise<{

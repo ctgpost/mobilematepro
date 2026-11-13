@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CollapsibleSection } from "./CollapsibleSection";
 import { listOutbox, getOutboxCount } from "@/lib/offlineDB";
+import { supabase } from "@/integrations/supabase/client";
 import { drainOutbox, isOnline } from "@/lib/offlineMutate";
 import { CheckCircle2, XCircle, Clock, WifiOff, Wifi, PlayCircle, RotateCw } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -35,7 +36,8 @@ export function POSOfflineChecklist() {
   const [running, setRunning] = useState(false);
 
   const refreshOutbox = async () => {
-    setOutboxCount(await getOutboxCount());
+    const { data: { session } } = await supabase.auth.getSession();
+    setOutboxCount(session?.user?.id ? await getOutboxCount(session.user.id) : 0);
   };
 
   useEffect(() => {
@@ -77,7 +79,8 @@ export function POSOfflineChecklist() {
 
       // 3. Outbox ready
       setStep("outbox_ready", "running");
-      const outboxItems = await listOutbox();
+      const { data: { session } } = await supabase.auth.getSession();
+      const outboxItems = session?.user?.id ? await listOutbox(session.user.id) : [];
       setStep("outbox_ready", "pass", `${outboxItems.length}টি কিউ এন্ট্রি`);
 
       // 4. Queued sale check

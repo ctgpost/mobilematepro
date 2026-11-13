@@ -4,6 +4,7 @@ import { drainOutbox } from "@/lib/offlineMutate";
 import { getOutboxCount } from "@/lib/offlineDB";
 import { toast } from "sonner";
 import { useOnlineStatus } from "./useOnlineStatus";
+import { supabase } from "@/integrations/supabase/client";
 
 export function useOfflineSync() {
   const online = useOnlineStatus();
@@ -12,7 +13,8 @@ export function useOfflineSync() {
   const [syncing, setSyncing] = useState(false);
 
   const refreshCount = useCallback(async () => {
-    setPendingCount(await getOutboxCount());
+    const { data: { session } } = await supabase.auth.getSession();
+    setPendingCount(session?.user?.id ? await getOutboxCount(session.user.id) : 0);
   }, []);
 
   const sync = useCallback(async () => {

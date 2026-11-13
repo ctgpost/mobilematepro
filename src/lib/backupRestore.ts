@@ -33,44 +33,81 @@ export async function listBackupTables(zip: JSZip): Promise<TableKey[]> {
   return tables;
 }
 
-async function readTableJson(zip: JSZip, key: TableKey): Promise<any[]> {
-  const f = zip.file(`json/${key}.json`);
-  if (!f) return [];
-  const txt = await f.async("string");
-  try {
-    const arr = JSON.parse(txt);
-    return Array.isArray(arr) ? arr : [];
-  } catch {
-    return [];
-  }
+const REQUIRED_FIELDS: Partial<Record<TableKey, string[]>> = {
+  products: ["name", "price", "stock_quantity"], categories: ["name"],
+  customers: ["name"], suppliers: ["name"], sales: ["user_id", "total_amount"],
+  sale_items: ["sale_id", "product_id", "quantity", "unit_price", "total_price"],
+  due_payments: ["sale_id", "amount"],
+  returns: ["sale_id", "sale_item_id", "product_id", "quantity", "refund_amount", "reason_code"],
+  supplier_returns: ["product_id", "quantity", "return_amount"],
+  customer_ledger_entries: ["customer_id", "amount", "entry_type"],
+  investment_entries: ["sector_id", "amount", "entry_type"],
+  investment_incomes: ["sector_id", "amount"], investment_sectors: ["name"],
+  activity_logs: ["action", "action_type"], shop_settings: ["shop_name"],
+};
+const UUID_FIELDS = new Set(["id", "user_id", "customer_id", "supplier_id", "category_id", "sale_id", "sale_item_id", "product_id", "sector_id", "created_by", "collected_by"]);
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const MAX_ROWS_PER_TABLE = 50000;
+const NUMERIC_FIELDS = new Set([
+  "price","cost","stock_quantity","quantity","unit_price","total_price","total_amount",
+  "paid_amount","due_amount","amount","refund_amount","return_amount","due_adjusted",
+  "cash_refunded","customer_credit",
+]);
+function validateRestoreRows(key: TableKey, rows: any[]): void {
+  if (!Array.isArray(rows)) throw new Error(`${key}: JSON root must be an array`);
+  if (rows.length > MAX_ROWS_PER_TABLE) throw new Error(`${key}: row limit exceeded`);
+  const ids = new Set<string>();
+  rows.forEach((row, index) => {
+    if (!row || typeof row !== "object" || Array.isArray(row)) throw new Error(`${key}: record ${index + 1} is not an object`);
+    for (const field of REQUIRED_FIELDS[key] || []) {
+      if (row[field] === undefined || row[field] === null || row[field] === "") throw new Error(`${key}: record ${index + 1} missing '${field}'`);
+    }
+    for (const field of UUID_FIELDS) {
+      if (row[field] != null && (typeof row[field] !== "string" || !UUID_PATTERN.test(row[field]))) {
+        throw new Error(`${key}: invalid UUID field ${field} at record ${index + 1}`);
+      }
+    }
+    if (row.id != null) {
+      if (ids.has(row.id)) throw new Error(`${key}: duplicate id ${row.id}`);
+      ids.add(row.id);
+    }
+    for (const [field, value] of Object.entries(row)) {
+      if (NUMERIC_FIELDS.has(field) && value != null && (typeof value !== "number" || !Number.isFinite(value))) throw new Error(`${key}: field '${field}' must be a finite number at record ${index + 1}`);
+    }
+  });
 }
-
+async function readTableJson(zip: JSZip, key: TableKey): Promise<any[]> {
+  const file = zip.file(`json/${key}.json`);
+  if (!file) throw new Error(`Backup is missing json/${key}.json`);
+  let parsed: unknown;
+  const jsonText = await file.async("string");
+  if (jsonText.length > 25 * 1024 * 1024) throw new Error(`${key}: backup file exceeds 25 MB`);
+  try { parsed = JSON.parse(jsonText); }
+  catch (error: any) { throw new Error(`${key}: invalid JSON: ${error?.message || "parse error"}`); }
+  if (!Array.isArray(parsed)) throw new Error(`${key}: JSON root must be an array`);
+  validateRestoreRows(key, parsed);
+  return parsed;
+}
 /**
- * Inspect a backup ZIP: returns per-table counts and any missing standard tables.
+ * Inspect a ZIP before allowing a restore. Invalid table files fail the analysis.
  */
 export async function analyzeBackup(zip: JSZip): Promise<BackupAnalysis> {
   const present: { table: TableKey; count: number }[] = [];
   const missing: TableKey[] = [];
-  for (const t of ALL_TABLES) {
-    const f = zip.file(`json/${t.key}.json`);
-    if (!f) {
-      missing.push(t.key);
+  for (const table of ALL_TABLES) {
+    if (!zip.file(`json/${table.key}.json`)) {
+      missing.push(table.key);
       continue;
     }
-    try {
-      const txt = await f.async("string");
-      const arr = JSON.parse(txt);
-      present.push({ table: t.key, count: Array.isArray(arr) ? arr.length : 0 });
-    } catch {
-      present.push({ table: t.key, count: 0 });
-    }
+    const rows = await readTableJson(zip, table.key);
+    present.push({ table: table.key, count: rows.length });
   }
   return { present, missing };
 }
 
 /**
- * Restore selected tables from the ZIP into the database.
- * Tracks inserted vs updated by checking existing ids first.
+ * Restore selected tables only after validating their complete JSON payload.
+ * Existing-ID lookup failures are fatal for that table, never treated as inserts.
  */
 export async function restoreFromZip(
   zip: JSZip,
@@ -81,51 +118,29 @@ export async function restoreFromZip(
   for (const key of tables) {
     opts.onProgress?.(`${key} পুনরুদ্ধার হচ্ছে...`);
     try {
+      if (!ALL_TABLES.some((table) => table.key === key)) throw new Error("Unsupported restore table");
       const rows = await readTableJson(zip, key);
-      if (rows.length === 0) {
+      if (!rows.length) {
         results.push({ table: key, inserted: 0, updated: 0, processed: 0 });
         continue;
       }
-
-      // Determine existing ids to split inserted vs updated
-      const ids = rows.map((r) => r.id).filter(Boolean);
+      const ids = rows.map((row) => row.id).filter(Boolean);
       const existing = new Set<string>();
-      const idChunk = 500;
-      for (let i = 0; i < ids.length; i += idChunk) {
-        const slice = ids.slice(i, i + idChunk);
-        const { data, error } = await supabase
-          .from(key as any)
-          .select("id")
-          .in("id", slice);
-        if (!error && data) {
-          for (const r of data as any[]) existing.add(r.id);
-        }
+      for (let i = 0; i < ids.length; i += 500) {
+        const { data, error } = await supabase.from(key as any).select("id").in("id", ids.slice(i, i + 500));
+        if (error) throw new Error(`Existing ID lookup failed for ${key}: ${error.message}`);
+        for (const row of (data as any[]) || []) existing.add(row.id);
       }
-
-      // Chunked upsert
-      const chunkSize = 200;
       let processed = 0;
-      for (let i = 0; i < rows.length; i += chunkSize) {
-        const chunk = rows.slice(i, i + chunkSize);
-        const { error } = await supabase
-          .from(key as any)
-          .upsert(chunk as any, { onConflict: "id" });
+      for (let i = 0; i < rows.length; i += 200) {
+        const { error } = await supabase.from(key as any).upsert(rows.slice(i, i + 200) as any, { onConflict: "id" });
         if (error) throw error;
-        processed += chunk.length;
+        processed += Math.min(200, rows.length - i);
       }
-
-      const updated = rows.filter((r) => r.id && existing.has(r.id)).length;
-      const inserted = processed - updated;
-      results.push({ table: key, inserted, updated, processed });
-    } catch (e: any) {
-      console.error(`restore ${key} failed`, e);
-      results.push({
-        table: key,
-        inserted: 0,
-        updated: 0,
-        processed: 0,
-        error: e?.message || "ব্যর্থ",
-      });
+      const updated = rows.filter((row) => row.id && existing.has(row.id)).length;
+      results.push({ table: key, inserted: processed - updated, updated, processed });
+    } catch (error: any) {
+      results.push({ table: key, inserted: 0, updated: 0, processed: 0, error: error?.message || "Restore failed" });
     }
   }
   return results;
@@ -142,13 +157,12 @@ export interface LogRestoreArgs {
 
 export async function logRestoreRun(args: LogRestoreArgs): Promise<void> {
   try {
-    const { data: u } = await supabase.auth.getUser();
-    const total = args.results.reduce((s, r) => s + r.processed, 0);
-    const success =
-      args.results.length > 0 && args.results.every((r) => !r.error);
-    await supabase.from("restore_history" as any).insert({
-      user_id: u?.user?.id ?? null,
-      user_email: u?.user?.email ?? null,
+    const { data: { user } } = await supabase.auth.getUser();
+    const total = args.results.reduce((sum, row) => sum + row.processed, 0);
+    const success = args.results.length > 0 && args.results.every((row) => !row.error);
+    const { error } = await supabase.from("restore_history" as any).insert({
+      user_id: user?.id ?? null,
+      user_email: user?.email ?? null,
       source_url: args.source_url,
       source_filename: args.source_filename,
       tables: args.tables as unknown as string[],
@@ -158,52 +172,34 @@ export async function logRestoreRun(args: LogRestoreArgs): Promise<void> {
       success,
       error: args.error ?? null,
     });
-  } catch (e) {
-    console.warn("logRestoreRun failed", e);
+    if (error) console.warn("logRestoreRun failed", error.message);
+  } catch (error) {
+    console.warn("logRestoreRun failed", error);
   }
 }
 
-// ============================================================
-// Arbitrary-JSON restore: detect target table from any JSON shape
-// ============================================================
-
-/**
- * Field "fingerprints" used to infer which table a row belongs to when the
- * JSON doesn't carry table metadata or filename. The most specific markers
- * are listed first.
- */
+const ALL_TABLE_KEYS: string[] = ALL_TABLES.map((table) => table.key);
 const TABLE_FINGERPRINTS: { table: TableKey; required: string[]; score?: number }[] = [
   { table: "sale_items", required: ["sale_id", "product_id", "quantity"], score: 5 },
-  { table: "purchase_items", required: ["purchase_id", "product_id", "quantity"] as any, score: 5 } as any,
   { table: "sales", required: ["total_amount", "paid_amount"], score: 4 },
-  { table: "purchases", required: ["supplier_id", "total_amount"] as any, score: 4 } as any,
-  { table: "returns", required: ["sale_id", "return_amount"], score: 4 },
+  { table: "returns", required: ["sale_id", "refund_amount", "sale_item_id"], score: 4 },
   { table: "supplier_returns", required: ["supplier_id", "return_amount"], score: 4 },
   { table: "due_payments", required: ["sale_id", "amount"], score: 3 },
-  { table: "customer_ledger_entries", required: ["customer_id", "entry_date"], score: 3 },
+  { table: "customer_ledger_entries", required: ["customer_id", "amount", "entry_type"], score: 3 },
   { table: "investment_incomes", required: ["sector_id", "income_date"], score: 4 },
   { table: "investment_entries", required: ["sector_id", "entry_date"], score: 4 },
-  { table: "investment_sectors", required: ["name", "target_amount"] as any, score: 2 } as any,
+  { table: "investment_sectors", required: ["name"], score: 2 },
   { table: "products", required: ["name", "price", "stock_quantity"], score: 3 },
   { table: "customers", required: ["name", "phone"], score: 2 },
   { table: "suppliers", required: ["name", "phone"], score: 2 },
   { table: "categories", required: ["name"], score: 1 },
-  { table: "activity_logs", required: ["action", "entity_type"], score: 3 },
+  { table: "activity_logs", required: ["action", "action_type"], score: 3 },
   { table: "shop_settings", required: ["shop_name"], score: 3 },
-  { table: "profiles", required: ["email", "full_name"] as any, score: 2 } as any,
 ];
-
-const ALL_TABLE_KEYS: string[] = ALL_TABLES.map((t) => t.key);
-
 function inferTableFromFilename(filename: string): TableKey | null {
-  const base = (filename || "").toLowerCase().replace(/\.json$/, "");
-  // Exact match
-  for (const k of ALL_TABLE_KEYS) {
-    if (base === k || base.endsWith(`/${k}`) || base.endsWith(`_${k}`)) return k as TableKey;
-  }
-  // Contains
-  for (const k of ALL_TABLE_KEYS) {
-    if (base.includes(k)) return k as TableKey;
+  const base = (filename || "").toLowerCase().replace(/\\.json$/, "");
+  for (const key of ALL_TABLE_KEYS) {
+    if (base === key || base.endsWith(`/${key}`) || base.endsWith(`_${key}`)) return key as TableKey;
   }
   return null;
 }
@@ -355,6 +351,7 @@ export async function restoreFromJsonGroups(
     opts.onProgress?.(`${g.table} পুনরুদ্ধার হচ্ছে... (${g.rows.length})`);
     try {
       const rows = g.rows;
+      validateRestoreRows(g.table, rows);
       if (!rows.length) {
         results.push({ table: g.table, inserted: 0, updated: 0, processed: 0 });
         continue;
@@ -370,9 +367,8 @@ export async function restoreFromJsonGroups(
           .from(g.table as any)
           .select("id")
           .in("id", slice);
-        if (!error && data) {
-          for (const r of data as any[]) existing.add(r.id);
-        }
+        if (error) throw new Error(`Existing ID lookup failed for ${g.table}: ${error.message}`);
+        for (const r of (data as any[]) || []) existing.add(r.id);
       }
 
       const chunkSize = 200;
@@ -427,6 +423,7 @@ export async function analyzeJsonFiles(files: File[]): Promise<MultiFileAnalysis
   const perFile: PerFileAnalysis[] = await Promise.all(
     files.map(async (f) => {
       try {
+        if (f.size > 25 * 1024 * 1024) throw new Error("JSON file exceeds 25 MB");
         const txt = await f.text();
         const parsed = JSON.parse(txt);
         return {
@@ -460,11 +457,7 @@ export async function analyzeJsonFiles(files: File[]): Promise<MultiFileAnalysis
         for (const r of g.rows) {
           if (r?.id && existingIds.has(r.id)) existing.duplicateIds += 1;
         }
-        // last-file-wins: replace prior rows that share id with new ones
-        if (g.rows.some((r) => r?.id)) {
-          const incomingIds = new Set(g.rows.map((r) => r?.id).filter(Boolean));
-          existing.rows = existing.rows.filter((r) => !(r?.id && incomingIds.has(r.id)));
-        }
+        // Preserve duplicates so restore validation rejects ambiguous conflicting records.
         existing.rows.push(...g.rows);
         if (!existing.sources.includes(pf.file)) existing.sources.push(pf.file);
         existing.confidences.push(g.confidence);
@@ -509,10 +502,7 @@ export async function analyzeJsonFiles(files: File[]): Promise<MultiFileAnalysis
         .from(m.table as any)
         .select("id")
         .in("id", slice);
-      if (error) {
-        warnings.push(`${m.table}: পূর্ববর্তী id চেক ব্যর্থ — ${error.message}`);
-        continue;
-      }
+      if (error) throw new Error(`Existing ID lookup failed for ${m.table}: ${error.message}`);
       for (const r of (data as any[]) || []) existing.add(r.id);
     }
     m.willUpdate = m.rows.filter((r) => r?.id && existing.has(r.id)).length;

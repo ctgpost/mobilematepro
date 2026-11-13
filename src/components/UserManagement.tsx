@@ -116,71 +116,26 @@ export function UserManagement() {
       toast.error("ইমেইল ও পাসওয়ার্ড দিতে হবে");
       return;
     }
-
-    if (newUserPassword.length < 6) {
-      toast.error("পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে");
+    if (newUserPassword.length < 8) {
+      toast.error("পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে");
       return;
     }
-
     setAddingUser(true);
-
     try {
-      // Create user via Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: newUserEmail,
-        password: newUserPassword,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            full_name: newUserName || newUserEmail
-          }
-        }
+      const { data, error } = await supabase.functions.invoke("admin-users", {
+        body: { action: "create", email: newUserEmail, password: newUserPassword, full_name: newUserName, role: newUserRole },
       });
-
-      if (authError) throw authError;
-
-      if (authData.user) {
-        // Wait a bit for the trigger to create profile and role
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        // Update the role if not staff (default)
-        if (newUserRole !== 'staff') {
-          const { error: roleError } = await supabase
-            .from('user_roles')
-            .update({ role: newUserRole })
-            .eq('user_id', authData.user.id);
-
-          if (roleError) {
-            console.error('Role update error:', roleError);
-          }
-        }
-
-        // Update the full_name in profiles
-        if (newUserName) {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .update({ full_name: newUserName })
-            .eq('id', authData.user.id);
-
-          if (profileError) {
-            console.error('Profile update error:', profileError);
-          }
-        }
-
-        toast.success(`নতুন ${newUserRole === 'manager' ? 'ম্যানেজার' : 'স্টাফ'} যুক্ত হয়েছে: ${newUserEmail}`);
-        queryClient.invalidateQueries({ queryKey: ['users-with-roles'] });
-        setShowAddDialog(false);
-        setNewUserEmail('');
-        setNewUserPassword('');
-        setNewUserName('');
-        setNewUserRole('staff');
-      }
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`ব্যবহারকারী যুক্ত হয়েছে: ${newUserEmail}`);
+      queryClient.invalidateQueries({ queryKey: ['users-with-roles'] });
+      setShowAddDialog(false);
+      setNewUserEmail('');
+      setNewUserPassword('');
+      setNewUserName('');
+      setNewUserRole('staff');
     } catch (error: any) {
-      if (error.message?.includes('already registered')) {
-        toast.error("এই ইমেইল দিয়ে ইতিমধ্যে একাউন্ট আছে");
-      } else {
-        toast.error('ব্যবহারকারী যুক্ত করতে ব্যর্থ: ' + error.message);
-      }
+      toast.error('ব্যবহারকারী যুক্ত করতে ব্যর্থ: ' + (error.message || "Unknown error"));
     } finally {
       setAddingUser(false);
     }
@@ -188,67 +143,35 @@ export function UserManagement() {
 
   const handleUpdateRole = async () => {
     if (!selectedUser) return;
-
     try {
-      // First check if role exists
-      const { data: existingRole } = await supabase
-        .from('user_roles')
-        .select('id')
-        .eq('user_id', selectedUser.user_id)
-        .maybeSingle();
-
-      if (existingRole) {
-        // Update existing role
-        const { error } = await supabase
-          .from('user_roles')
-          .update({ role: newRole })
-          .eq('user_id', selectedUser.user_id);
-
-        if (error) throw error;
-      } else {
-        // Insert new role
-        const { error } = await supabase
-          .from('user_roles')
-          .insert({ user_id: selectedUser.user_id, role: newRole });
-
-        if (error) throw error;
-      }
-
-      toast.success(`রোল আপডেট হয়েছে: ${selectedUser.email} → ${newRole === 'admin' ? 'এডমিন' : newRole === 'manager' ? 'ম্যানেজার' : 'স্টাফ'}`);
+      const { data, error } = await supabase.functions.invoke("admin-users", {
+        body: { action: "role", user_id: selectedUser.user_id, role: newRole },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`রোল আপডেট হয়েছে: ${selectedUser.email}`);
       queryClient.invalidateQueries({ queryKey: ['users-with-roles'] });
       setShowEditDialog(false);
       setSelectedUser(null);
     } catch (error: any) {
-      toast.error('রোল আপডেট করতে ব্যর্থ: ' + error.message);
+      toast.error('রোল আপডেট করতে ব্যর্থ: ' + (error.message || "Unknown error"));
     }
   };
 
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
-
     try {
-      // Delete user role first
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', selectedUser.user_id);
-
-      if (roleError) throw roleError;
-
-      // Delete profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', selectedUser.user_id);
-
-      if (profileError) throw profileError;
-
+      const { data, error } = await supabase.functions.invoke("admin-users", {
+        body: { action: "delete", user_id: selectedUser.user_id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       toast.success(`ব্যবহারকারী সরানো হয়েছে: ${selectedUser.email}`);
       queryClient.invalidateQueries({ queryKey: ['users-with-roles'] });
       setShowDeleteDialog(false);
       setSelectedUser(null);
     } catch (error: any) {
-      toast.error('ব্যবহারকারী সরাতে ব্যর্থ: ' + error.message);
+      toast.error('ব্যবহারকারী সরাতে ব্যর্থ: ' + (error.message || "Unknown error"));
     }
   };
 

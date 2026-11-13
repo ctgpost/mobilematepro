@@ -40,6 +40,7 @@ import {
 } from "@/lib/offlineDB";
 import { drainOutbox, retryOutboxItem } from "@/lib/offlineMutate";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { supabase } from "@/integrations/supabase/client";
 import { CollapsibleSection } from "./CollapsibleSection";
 
 const QUOTA_KEY = "offline:quota_threshold";
@@ -69,7 +70,8 @@ export function OfflineDiagnostics() {
   const refresh = async () => {
     setStorage(await getStorageEstimate());
     setSw(await getServiceWorkerStatus());
-    setOutbox(await listOutbox());
+    const { data: { session } } = await supabase.auth.getSession();
+    setOutbox(session?.user?.id ? await listOutbox(session.user.id) : []);
   };
 
   useEffect(() => {
@@ -161,7 +163,9 @@ export function OfflineDiagnostics() {
   };
 
   const togglePause = async (it: OutboxItem) => {
-    await setOutboxPaused(it.id!, !it.paused);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user?.id) return;
+    await setOutboxPaused(it.id!, !it.paused, session.user.id);
     toast.success(it.paused ? "▶ পুনরায় চালু" : "⏸ Pause করা হলো");
     refresh();
   };
@@ -176,19 +180,25 @@ export function OfflineDiagnostics() {
 
   const cancelOne = async (it: OutboxItem) => {
     if (!confirm(`${it.table}/${it.op} বাতিল করতে চান?`)) return;
-    await deleteOutbox(it.id!);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user?.id) return;
+    await deleteOutbox(it.id!, session.user.id);
     toast.success("বাতিল করা হলো");
     refresh();
   };
 
   const pauseAll = async () => {
-    for (const it of outbox) await setOutboxPaused(it.id!, true);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user?.id) return;
+    for (const it of outbox) await setOutboxPaused(it.id!, true, session.user.id);
     toast.success("সব Queue Pause করা হলো");
     refresh();
   };
 
   const resumeAll = async () => {
-    for (const it of outbox) await setOutboxPaused(it.id!, false);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user?.id) return;
+    for (const it of outbox) await setOutboxPaused(it.id!, false, session.user.id);
     toast.success("সব Queue পুনরায় চালু করা হলো");
     refresh();
   };

@@ -221,136 +221,51 @@ export function Returns() {
     },
   });
 
-  // Process return mutation (update inventory + settlement)
+  // All return settlement effects are executed by one database transaction.
   const processReturnMutation = useMutation({
     mutationFn: async ({ returnId, status, plan }: { returnId: string; status: string; plan?: SettlementPlan }) => {
-      const { data: returnData, error: fetchError } = await supabase
-        .from("returns")
-        .select("*, products(stock_quantity), sales(id, due_amount, paid_amount, customer_id)")
-        .eq("id", returnId)
-        .single();
-      if (fetchError) throw fetchError;
-
-      const prevStatus = returnData.status;
-      const sale = returnData.sales;
-
-      // Build update payload
-      const updatePayload: any = { status, updated_at: new Date().toISOString() };
-      if (status === "completed" && plan) {
-        updatePayload.refund_mode = plan.mode;
-        updatePayload.due_adjusted = plan.due_adjusted;
-        updatePayload.cash_refunded = plan.cash_refunded;
-        updatePayload.customer_credit = plan.customer_credit;
-      }
-      const { error: updateError } = await supabase.from("returns").update(updatePayload).eq("id", returnId);
-      if (updateError) throw updateError;
-
-      let stockDelta = 0;
-      if (status === "completed") {
-        // 1) Stock restore
-        const newStock = (returnData.products?.stock_quantity || 0) + returnData.quantity;
-        const { error: inventoryError } = await supabase
-          .from("products").update({ stock_quantity: newStock, last_stock_reason: "return", last_stock_ref: String(returnData.id ?? "") } as any).eq("id", returnData.product_id);
-        if (inventoryError) throw inventoryError;
-        stockDelta = returnData.quantity;
-
-        // 2) Adjust original sale due
-        if (plan && plan.due_adjusted > 0 && sale?.id) {
-          const newDue = Math.max(0, Number(sale.due_amount || 0) - plan.due_adjusted);
-          const newPaid = Number(sale.paid_amount || 0) + plan.due_adjusted; // counted as settled via refund
-          await supabase.from("sales").update({
-            due_amount: newDue,
-            paid_amount: newPaid,
-            updated_at: new Date().toISOString(),
-          }).eq("id", sale.id);
-
-          // Record as a due payment for traceability
-          await supabase.from("due_payments").insert({
-            sale_id: sale.id,
-            amount: plan.due_adjusted,
-            payment_method: "return_adjustment",
-            notes: `রিটার্ন #${returnId.slice(0,8)} থেকে বাকি সমন্বয়`,
-          });
-        }
-
-        // 3) Store credit → customer ledger
-        if (plan && plan.customer_credit > 0 && sale?.customer_id) {
-          await supabase.from("customer_ledger_entries").insert({
-            customer_id: sale.customer_id,
-            amount: plan.customer_credit,
-            entry_type: "credit",
-            description: plan.mode === "exchange"
-              ? `বিনিময় ক্রেডিট — রিটার্ন #${returnId.slice(0,8)}`
-              : `স্টোর ক্রেডিট — রিটার্ন #${returnId.slice(0,8)}`,
-          });
-        }
-      }
-
-      await logReturnAudit({
-        return_type: "sales",
-        return_id: returnId,
-        action: status === "completed" ? "completed" : status === "rejected" ? "rejected" : "updated",
-        product_id: returnData.product_id,
-        quantity: returnData.quantity,
-        stock_delta: stockDelta,
-        amount_delta: Number(returnData.refund_amount || 0),
-        previous_status: prevStatus,
-        new_status: status,
-        notes: plan ? { plan } : undefined,
+      const { data, error } = await (supabase.rpc as any)("process_return_atomic", {
+        p_return_id: returnId,
+        p_status: status,
+        p_plan: plan ? {
+          mode: plan.mode,
+          due_adjusted: plan.due_adjusted,
+          cash_refunded: plan.cash_refunded,
+          customer_credit: plan.customer_credit,
+        } : null,
       });
-
-      return { plan, mode: plan?.mode };
+      if (error) throw error;
+      return { ...(data as any), mode: plan?.mode };
     },
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ["returns"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["sales"] });
+      queryClient.invalidateQueries({ queryKey: ["due_payments"] });
       queryClient.invalidateQueries({ queryKey: ["customer_ledger_entries"] });
       queryClient.invalidateQueries({ queryKey: ["return-audit"] });
-      if (res?.mode === "exchange") {
-        toast.success("রিটার্ন সম্পন্ন — POS এ গিয়ে গ্রাহকের জন্য নতুন পণ্য যোগ করুন (ক্রেডিট ব্যবহার করুন)");
-      } else if (res?.mode === "due_adjust" || res?.mode === "mixed") {
-        toast.success("রিটার্ন সম্পন্ন — বাকি সমন্বয় হয়েছে");
-      } else if (res?.mode === "credit") {
-        toast.success("রিটার্ন সম্পন্ন — গ্রাহকের ক্রেডিটে যোগ হয়েছে");
-      } else {
-        toast.success("রিটার্ন প্রসেস সফল হয়েছে!");
-      }
+      if (res?.mode === "exchange") toast.success("রিটার্ন সম্পন্ন। POS থেকে নতুন পণ্য যোগ করে ক্রেডিট ব্যবহার করুন");
+      else if (res?.mode === "due_adjust" || res?.mode === "mixed") toast.success("রিটার্ন সম্পন্ন, বাকি সমন্বয় হয়েছে");
+      else if (res?.mode === "credit") toast.success("রিটার্ন সম্পন্ন, গ্রাহকের ক্রেডিটে যোগ হয়েছে");
+      else toast.success("রিটার্ন প্রসেস সফল হয়েছে!");
     },
-    onError: (error: any) => {
-      toast.error(error.message || "রিটার্ন প্রসেস করতে ব্যর্থ");
-    },
+    onError: (error: any) => toast.error(error.message || "রিটার্ন প্রসেস করতে ব্যর্থ"),
   });
+
+  // Completed returns are immutable: financial reversal needs a dedicated audited workflow.
   const deleteReturnMutation = useMutation({
     mutationFn: async (returnItem: any) => {
-      let stockDelta = 0;
-      if (returnItem.status === "completed") {
-        const { data: prod } = await supabase.from("products").select("stock_quantity").eq("id", returnItem.product_id).single();
-        if (prod) {
-          await supabase.from("products").update({ stock_quantity: Math.max(0, prod.stock_quantity - returnItem.quantity) }).eq("id", returnItem.product_id);
-          stockDelta = -returnItem.quantity;
-        }
-      }
-      const { error } = await supabase.from("returns").delete().eq("id", returnItem.id);
-      if (error) throw error;
-      await logReturnAudit({
-        return_type: "sales",
-        return_id: returnItem.id,
-        action: "deleted",
-        product_id: returnItem.product_id,
-        quantity: returnItem.quantity,
-        stock_delta: stockDelta,
-        amount_delta: -Number(returnItem.refund_amount || 0),
-        previous_status: returnItem.status,
+      const { error } = await (supabase.rpc as any)("delete_unprocessed_return_atomic", {
+        p_return_id: returnItem.id,
       });
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["returns"] });
-      queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["return-audit"] });
       toast.success("রিটার্ন মুছে ফেলা হয়েছে");
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(e.message || "রিটার্ন মুছতে ব্যর্থ"),
   });
 
   const handleSubmitReturn = () => {

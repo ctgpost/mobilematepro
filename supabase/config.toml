@@ -1,1 +1,13 @@
 project_id = "nncjhkezylfeafbvaoua"
+
+[functions.admin-users]
+verify_jwt = true
+
+[functions.cloudinary-delete]
+verify_jwt = true
+
+[functions.cloudinary-list-backups]
+verify_jwt = true
+
+[functions.cloudinary-sign-upload]
+verify_jwt = true

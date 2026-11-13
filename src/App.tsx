@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -46,11 +46,7 @@ const idbStorage = {
   },
 };
 
-const persister = createAsyncStoragePersister({
-  storage: idbStorage,
-  key: "mobile-mate-pro-rq-cache",
-  throttleTime: 1000,
-});
+
 
 function OfflineGuardLayer() {
   useOfflineRefreshGuard();
@@ -60,16 +56,28 @@ function OfflineGuardLayer() {
 const App = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const activeUserId = useRef<string | null>(null);
+  const persister = useMemo(() => createAsyncStoragePersister({
+    storage: idbStorage,
+    key: `mobile-mate-pro-rq-cache:${user?.id ?? "anonymous"}`,
+    throttleTime: 1000,
+  }), [user?.id]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (event, session) => {
+        if (event === "SIGNED_OUT" || (activeUserId.current && session?.user?.id !== activeUserId.current)) {
+          queryClient.clear();
+          if (activeUserId.current) void del(`mobile-mate-pro-rq-cache:${activeUserId.current}`);
+        }
+        activeUserId.current = session?.user?.id ?? null;
         setUser(session?.user ?? null);
         setLoading(false);
       }
     );
 
     supabase.auth.getSession().then(({ data: { session } }) => {
+      activeUserId.current = session?.user?.id ?? null;
       setUser(session?.user ?? null);
       setLoading(false);
     });
@@ -112,7 +120,7 @@ const App = () => {
       persistOptions={{
         persister,
         maxAge: 1000 * 60 * 60 * 24 * 7,
-        buster: "v1",
+        buster: `v1:${user?.id ?? "anonymous"}`,
       }}
     >
       <LanguageProvider>
