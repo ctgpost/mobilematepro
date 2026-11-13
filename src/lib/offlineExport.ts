@@ -11,7 +11,9 @@ interface OfflineSnapshot {
 }
 
 export async function exportOfflineData() {
-  const outbox = await listOutbox();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user?.id) throw new Error("Sign in required");
+  const outbox = await listOutbox(session.user.id);
   const cache = (await kvGet("mobile-mate-pro-rq-cache")) as string | null;
   const snapshot: OfflineSnapshot = {
     version: 1,
@@ -72,7 +74,9 @@ export async function clearOfflineCache() {
 
 export async function clearAllOfflineData() {
   await clearOfflineCache();
-  await clearOutbox();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user?.id) throw new Error("Sign in required");
+  await clearOutbox(session.user.id);
 }
 
 export async function getStorageEstimate(): Promise<{
