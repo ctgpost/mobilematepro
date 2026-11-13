@@ -52,7 +52,7 @@ export function StockSyncCheck() {
   // Reconcile against the stock ledger, never an assumed opening quantity.
   const { data: movements } = useQuery({
     queryKey: ["stock_movements_for_reconciliation"],
-    queryFn: async () => fetchAll<any>("stock_movements", "product_id, old_quantity, new_quantity, change, created_at", (q) => q.order("created_at", { ascending: true })),
+    queryFn: async () => fetchAll<any>("stock_movements", "product_id, movement_type, old_quantity, new_quantity, change, created_at", (q) => q.order("created_at", { ascending: true })),
   });
 
   const runStockCheck = () => {
