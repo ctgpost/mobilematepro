@@ -36,7 +36,7 @@ export function useRealtimeSync() {
 
     Object.entries(TABLE_TO_KEYS).forEach(([table, keys]) => {
       channel.on(
-        // @ts-ignore - postgres_changes type
+        // @ts-expect-error Supabase channel event overload does not expose the generic table name here.
         "postgres_changes",
         { event: "*", schema: "public", table },
         () => {
