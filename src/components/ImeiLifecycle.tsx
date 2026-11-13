@@ -59,17 +59,24 @@ export function ImeiLifecycle() {
     queryFn: async () => {
       const term = search.trim();
       const safe = term.replace(/[,%()]/g, " ").trim();
-      const [byImei, byBarcode, bySku, byName, byModel] = await Promise.all([
+      const [byImei, byBarcode, bySku, byName, byModel, byRegistry] = await Promise.all([
         db.from("products").select("*, categories(name)").eq("imei", digits(term) || term).limit(20),
         db.from("products").select("*, categories(name)").eq("barcode", term).limit(20),
         db.from("products").select("*, categories(name)").ilike("sku", `%${safe}%`).limit(20),
         db.from("products").select("*, categories(name)").ilike("name", `%${safe}%`).limit(20),
         db.from("products").select("*, categories(name)").ilike("model", `%${safe}%`).limit(20),
+        db.from("imei_registry").select("product_id,imei").eq("imei", digits(term)).limit(20),
       ]);
-      for (const result of [byImei, byBarcode, bySku, byName, byModel]) if (result.error) throw result.error;
+      for (const result of [byImei, byBarcode, bySku, byName, byModel, byRegistry]) if (result.error) throw result.error;
       const map = new Map<string, AnyRow>();
       for (const result of [byImei, byBarcode, bySku, byName, byModel]) {
         for (const row of result.data || []) map.set(row.id, row);
+      }
+      const registeredProductIds = [...new Set((byRegistry.data || []).map((row: AnyRow) => row.product_id))];
+      if (registeredProductIds.length) {
+        const { data: registeredProducts, error: registeredError } = await db.from("products").select("*, categories(name)").in("id", registeredProductIds);
+        if (registeredError) throw registeredError;
+        for (const row of registeredProducts || []) map.set(row.id, row);
       }
       return [...map.values()].slice(0, 50);
     },
