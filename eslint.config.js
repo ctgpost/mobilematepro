@@ -23,6 +23,7 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": "off",
       // Existing application modules use broad Supabase row shapes; keep this rule off until generated DB types are complete.
       "@typescript-eslint/no-explicit-any": "off",
+      "no-empty": ["error", { allowEmptyCatch: true }],
     },
   },
 );
