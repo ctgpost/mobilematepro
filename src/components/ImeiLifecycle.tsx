@@ -119,8 +119,6 @@ export function ImeiLifecycle() {
     },
   });
 
-  const selectedImeis = useMemo(() => new Set(registry.map((r: AnyRow) => r.imei)), [registry]);
-
   const resetRegister = () => {
     setImei(""); setPurchaseCost(""); setPurchaseRef(""); setWarrantyEnd(""); setSupplierName(""); setRegisterNotes("");
   };
