@@ -13,6 +13,8 @@ test("IMEI lifecycle migration creates a unique per-device registry and append-o
   assert.match(sql, /REVOKE UPDATE, DELETE ON public\.imei_lifecycle_events FROM authenticated/i);
   assert.match(sql, /register_imei_device/i);
   assert.match(sql, /record_imei_lifecycle_event/i);
+  assert.match(sql, /ALTER TABLE public\.sale_items ADD COLUMN IF NOT EXISTS imei/i);
+  assert.match(sql, /ALTER TABLE public\.returns ADD COLUMN IF NOT EXISTS imei/i);
 });
 
 test("IMEI lifecycle captures sale and completed return references without guessing bulk IMEIs", async () => {
@@ -34,4 +36,7 @@ test("IMEI lifecycle popup is available from the application header and searches
   assert.match(component, /imei-lifecycle-timeline/);
   assert.match(component, /purchase_items/);
   assert.match(component, /from\("returns"\)/);
+  const pos = await read("../src/components/POS.tsx");
+  assert.match(pos, /imei: item\.imei \|\| null/);
+  assert.match(pos, /IMEI ট্র্যাক করা ডিভাইস বিক্রির জন্য অনলাইন সংযোগ/);
 });
