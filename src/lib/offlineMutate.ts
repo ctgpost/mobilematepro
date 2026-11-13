@@ -188,7 +188,7 @@ async function processOutboxItem(item: OutboxItem): Promise<void> {
   }
   if (item.op === "compound_sale") {
     const p = item.payload || {};
-    const { error } = await supabase.rpc("create_sale_atomic", {
+    const { error } = await (supabase.rpc as any)("create_sale_atomic", {
       p_idempotency_key: p.idempotencyKey,
       p_sale: {
         user_id: p.user_id,
