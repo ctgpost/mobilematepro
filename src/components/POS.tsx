@@ -57,6 +57,11 @@ export function POS() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      // Offline path: IMEI device sales need the online atomic registry lock.
+      if (!isOnline() && saleData.items.some((item: any) => item.imei)) {
+        throw new Error("IMEI ট্র্যাক করা ডিভাইস বিক্রির জন্য অনলাইন সংযোগ প্রয়োজন। সংযোগ ফিরে এলে বিক্রয় সম্পন্ন করুন।");
+      }
+
       // Offline path: queue compound sale + optimistically update caches
       if (!isOnline()) {
         const { tempSaleId, queuedAt } = await enqueueCompoundSale({
