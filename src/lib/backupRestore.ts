@@ -168,6 +168,32 @@ export async function logRestoreRun(args: LogRestoreArgs): Promise<void> {
   }
 }
 
+const ALL_TABLE_KEYS: string[] = ALL_TABLES.map((table) => table.key);
+const TABLE_FINGERPRINTS: { table: TableKey; required: string[]; score?: number }[] = [
+  { table: "sale_items", required: ["sale_id", "product_id", "quantity"], score: 5 },
+  { table: "sales", required: ["total_amount", "paid_amount"], score: 4 },
+  { table: "returns", required: ["sale_id", "refund_amount", "sale_item_id"], score: 4 },
+  { table: "supplier_returns", required: ["supplier_id", "return_amount"], score: 4 },
+  { table: "due_payments", required: ["sale_id", "amount"], score: 3 },
+  { table: "customer_ledger_entries", required: ["customer_id", "amount", "entry_type"], score: 3 },
+  { table: "investment_incomes", required: ["sector_id", "income_date"], score: 4 },
+  { table: "investment_entries", required: ["sector_id", "entry_date"], score: 4 },
+  { table: "investment_sectors", required: ["name"], score: 2 },
+  { table: "products", required: ["name", "price", "stock_quantity"], score: 3 },
+  { table: "customers", required: ["name", "phone"], score: 2 },
+  { table: "suppliers", required: ["name", "phone"], score: 2 },
+  { table: "categories", required: ["name"], score: 1 },
+  { table: "activity_logs", required: ["action", "action_type"], score: 3 },
+  { table: "shop_settings", required: ["shop_name"], score: 3 },
+];
+function inferTableFromFilename(filename: string): TableKey | null {
+  const base = (filename || "").toLowerCase().replace(/\\.json$/, "");
+  for (const key of ALL_TABLE_KEYS) {
+    if (base === key || base.endsWith(`/${key}`) || base.endsWith(`_${key}`) || base.includes(key)) return key as TableKey;
+  }
+  return null;
+}
+
 function inferTableFromRow(row: any): TableKey | null {
   if (!row || typeof row !== "object") return null;
   const keys = new Set(Object.keys(row));
