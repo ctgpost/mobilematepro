@@ -436,14 +436,14 @@ export function POS() {
 
       <div className="flex-1 flex lg:flex-row flex-col overflow-y-auto lg:overflow-hidden">
         {/* Products Section */}
-        <div className="flex-1 lg:flex-[2] lg:overflow-y-auto p-3 lg:p-6 order-2 lg:order-1 space-y-3">
+        <div className="flex-1 lg:flex-[2] lg:overflow-y-auto p-3 lg:p-4 order-2 lg:order-1 space-y-3">
           <POSOfflineChecklist />
           <ProductGrid products={filteredProducts} onAddToCart={addToCart} />
         </div>
 
         {/* Cart Section */}
         <div className="lg:w-96 lg:flex-shrink-0 lg:border-l border-border lg:overflow-y-auto order-1 lg:order-2">
-          <div className="p-4 lg:p-6">
+          <div className="p-4 lg:p-4">
             <CartSection
               cart={cart}
               isCollapsed={isCartCollapsed}
