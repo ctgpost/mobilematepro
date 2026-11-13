@@ -1,6 +1,7 @@
 import { saveAs } from "file-saver";
 import { getOfflineDB, listOutbox, clearOutbox } from "./offlineDB";
-import { get as kvGet, set as kvSet, keys as kvKeys, del as kvDel } from "idb-keyval";
+import { get as kvGet, set as kvSet, del as kvDel } from "idb-keyval";
+import { supabase } from "@/integrations/supabase/client";
 
 interface OfflineSnapshot {
   version: 1;
@@ -29,18 +30,28 @@ export async function importOfflineData(file: File): Promise<{
   cacheRestored: boolean;
 }> {
   const text = await file.text();
-  const parsed = JSON.parse(text) as OfflineSnapshot;
-  if (parsed.version !== 1) throw new Error("অসমর্থিত ফাইল ভার্সন");
-
+  let parsed: OfflineSnapshot;
+  try { parsed = JSON.parse(text) as OfflineSnapshot; }
+  catch { throw new Error("অফলাইন ব্যাকআপের JSON সঠিক নয়"); }
+  if (!parsed || parsed.version !== 1 || !Array.isArray(parsed.outbox)) throw new Error("অসমর্থিত বা অসম্পূর্ণ অফলাইন ব্যাকআপ");
+  const { data: { session } } = await supabase.auth.getSession();
+  const userId = session?.user?.id;
+  if (!userId) throw new Error("Sign in required");
+  if (parsed.outbox.length > 10000) throw new Error("অফলাইন ব্যাকআপে অতিরিক্ত Queue Item রয়েছে");
+  const allowedOps = new Set(["insert", "update", "delete", "upsert", "compound_sale"]);
+  const allowedTables = new Set(["products","sales","sale_items","customers","suppliers","categories","returns","supplier_returns","due_payments","customer_ledger_entries","investment_entries","investment_incomes","investment_sectors","activity_logs","shop_settings"]);
+  for (const item of parsed.outbox) {
+    if (!item || item.userId !== userId || !allowedOps.has(item.op) || !allowedTables.has(item.table) || !item.payload || typeof item.payload !== "object") {
+      throw new Error("অন্য ব্যবহারকারীর বা অবৈধ Queue Item পাওয়া গেছে। Import বাতিল করা হয়েছে");
+    }
+  }
   const db = await getOfflineDB();
-  // Merge outbox (don't clear existing)
-  for (const item of parsed.outbox || []) {
+  for (const item of parsed.outbox) {
     const { id, ...rest } = item;
     await db.add("outbox", rest as any);
   }
-  if (parsed.reactQueryCache) {
-    await kvSet("mobile-mate-pro-rq-cache", parsed.reactQueryCache);
-  }
+  if (parsed.reactQueryCache) await kvSet(`mobile-mate-pro-rq-cache:${userId}`, parsed.reactQueryCache);
+
   return {
     outboxCount: parsed.outbox?.length || 0,
     cacheRestored: !!parsed.reactQueryCache,
