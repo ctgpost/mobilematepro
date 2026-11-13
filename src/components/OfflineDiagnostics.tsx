@@ -70,7 +70,8 @@ export function OfflineDiagnostics() {
   const refresh = async () => {
     setStorage(await getStorageEstimate());
     setSw(await getServiceWorkerStatus());
-    setOutbox(await listOutbox());
+    const { data: { session } } = await supabase.auth.getSession();
+    setOutbox(session?.user?.id ? await listOutbox(session.user.id) : []);
   };
 
   useEffect(() => {
