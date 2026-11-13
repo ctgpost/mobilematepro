@@ -290,6 +290,7 @@ export function Returns() {
       sale_id: selectedSale.id,
       sale_item_id: selectedItem.id,
       product_id: selectedItem.product_id,
+      imei: selectedItem.imei || null,
       quantity: returnQuantity,
       refund_amount: refundAmount,
       reason_code: reasonCode,
