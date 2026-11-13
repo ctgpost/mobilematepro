@@ -45,6 +45,9 @@ const REQUIRED_FIELDS: Partial<Record<TableKey, string[]>> = {
   investment_incomes: ["sector_id", "amount"], investment_sectors: ["name"],
   activity_logs: ["action", "action_type"], shop_settings: ["shop_name"],
 };
+const UUID_FIELDS = new Set(["id", "user_id", "customer_id", "supplier_id", "category_id", "sale_id", "sale_item_id", "product_id", "sector_id", "created_by", "collected_by"]);
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const MAX_ROWS_PER_TABLE = 50000;
 const NUMERIC_FIELDS = new Set([
   "price","cost","stock_quantity","quantity","unit_price","total_price","total_amount",
   "paid_amount","due_amount","amount","refund_amount","return_amount","due_adjusted",
@@ -52,14 +55,19 @@ const NUMERIC_FIELDS = new Set([
 ]);
 function validateRestoreRows(key: TableKey, rows: any[]): void {
   if (!Array.isArray(rows)) throw new Error(`${key}: JSON root must be an array`);
+  if (rows.length > MAX_ROWS_PER_TABLE) throw new Error(`${key}: row limit exceeded`);
   const ids = new Set<string>();
   rows.forEach((row, index) => {
     if (!row || typeof row !== "object" || Array.isArray(row)) throw new Error(`${key}: record ${index + 1} is not an object`);
     for (const field of REQUIRED_FIELDS[key] || []) {
       if (row[field] === undefined || row[field] === null || row[field] === "") throw new Error(`${key}: record ${index + 1} missing '${field}'`);
     }
+    for (const field of UUID_FIELDS) {
+      if (row[field] != null && (typeof row[field] !== "string" || !UUID_PATTERN.test(row[field]))) {
+        throw new Error(`${key}: invalid UUID field ${field} at record ${index + 1}`);
+      }
+    }
     if (row.id != null) {
-      if (typeof row.id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(row.id)) throw new Error(`${key}: invalid UUID at record ${index + 1}`);
       if (ids.has(row.id)) throw new Error(`${key}: duplicate id ${row.id}`);
       ids.add(row.id);
     }
@@ -72,7 +80,9 @@ async function readTableJson(zip: JSZip, key: TableKey): Promise<any[]> {
   const file = zip.file(`json/${key}.json`);
   if (!file) throw new Error(`Backup is missing json/${key}.json`);
   let parsed: unknown;
-  try { parsed = JSON.parse(await file.async("string")); }
+  const jsonText = await file.async("string");
+  if (jsonText.length > 25 * 1024 * 1024) throw new Error(`${key}: backup file exceeds 25 MB`);
+  try { parsed = JSON.parse(jsonText); }
   catch (error: any) { throw new Error(`${key}: invalid JSON: ${error?.message || "parse error"}`); }
   if (!Array.isArray(parsed)) throw new Error(`${key}: JSON root must be an array`);
   validateRestoreRows(key, parsed);
