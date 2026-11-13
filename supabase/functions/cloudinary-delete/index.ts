@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
       ...publicIds,
       ...urls.map(extractPublicId).filter((x): x is string => !!x),
     ])];
-    const safePublicId = /^(products|customers|suppliers|avatars|shop)\\/[A-Za-z0-9_./-]{1,180}$/;
+    const safePublicId = /^(products|customers|suppliers|avatars|shop)[/][A-Za-z0-9_./-]{1,180}$/;
     if (ids.length > 50 || ids.some((pid) => !safePublicId.test(pid) || pid.includes(".."))) {
       return new Response(JSON.stringify({ error: "Invalid public_id or too many assets" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
