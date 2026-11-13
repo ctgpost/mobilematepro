@@ -47,8 +47,11 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const folder: string = typeof body.folder === "string" ? body.folder : "uploads";
     const publicId: string | undefined = typeof body.public_id === "string" ? body.public_id : undefined;
-    const allowedFolder = /^(products|customers|suppliers|avatars|shop|mobile-mate-pro-backups)(\\/[A-Za-z0-9_-]+)*$/;
-    if (!allowedFolder.test(folder) || folder.includes("..")) throw new Error("Invalid upload folder");
+    const folderParts = folder.split("/");
+    const allowedRoots = new Set(["products", "customers", "suppliers", "avatars", "shop", "mobile-mate-pro-backups"]);
+    if (folder.length > 160 || !allowedRoots.has(folderParts[0]) || folderParts.some((part) => !/^[A-Za-z0-9_-]+$/.test(part))) {
+      throw new Error("Invalid upload folder");
+    }
     if (body.public_id !== undefined && (!publicId || !/^[A-Za-z0-9_-]{1,120}$/.test(publicId))) throw new Error("Invalid public_id");
 
     const timestamp = Math.floor(Date.now() / 1000);
