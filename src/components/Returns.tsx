@@ -799,7 +799,7 @@ export function Returns() {
 
           <TabsContent value="supplier" className="space-y-3">
             {(supplierReturns || []).length === 0 ? (
-              <Card className="p-8 text-center text-muted-foreground">কোনো সাপ্লায়ার রিটার্ন নেই</Card>
+              <Card className="p-5 text-center text-muted-foreground">কোনো সাপ্লায়ার রিটার্ন নেই</Card>
             ) : (
               (supplierReturns || []).map((sr: any) => (
                 <Card key={sr.id} className="p-4">
