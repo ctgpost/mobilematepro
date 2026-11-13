@@ -441,7 +441,7 @@ export function Suppliers() {
               {filteredReturns.map(r => (
                 <Card key={r.id} className="p-4">
                   <div className="flex flex-wrap justify-between gap-3">
-                    <div className="flex-1 min-w-[200px]">
+                    <div className="w-full min-w-0 sm:flex-1 sm:min-w-[200px]">
                       <div className="flex items-center gap-2">
                         <h3 className="font-semibold">{productNameById(r.product_id)}</h3>
                         <Badge variant="outline" className="text-[10px]">{r.reason}</Badge>
