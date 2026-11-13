@@ -90,6 +90,11 @@ REVOKE UPDATE, DELETE ON public.imei_lifecycle_events FROM authenticated;
 GRANT SELECT, INSERT ON public.imei_lifecycle_events TO authenticated;
 GRANT SELECT, INSERT, UPDATE ON public.imei_registry TO authenticated;
 
+ALTER TABLE public.sale_items ADD COLUMN IF NOT EXISTS imei text;
+ALTER TABLE public.returns ADD COLUMN IF NOT EXISTS imei text;
+CREATE INDEX IF NOT EXISTS sale_items_imei_idx ON public.sale_items(imei) WHERE imei IS NOT NULL;
+CREATE INDEX IF NOT EXISTS returns_imei_idx ON public.returns(imei) WHERE imei IS NOT NULL;
+
 -- Backfill one IMEI per existing product. Products without an IMEI remain searchable
 -- by SKU/barcode and can be registered when a device-level IMEI is supplied.
 INSERT INTO public.imei_registry (imei, product_id, status, supplier_id, supplier_name,
@@ -193,7 +198,7 @@ BEGIN
   IF NOT FOUND OR v_product.imei IS NULL THEN RETURN NEW; END IF;
   SELECT * INTO v_sale FROM public.sales WHERE id = NEW.sale_id;
   SELECT * INTO v_registry FROM public.imei_registry
-    WHERE imei = regexp_replace(v_product.imei, '[^0-9]', '', 'g') FOR UPDATE;
+    WHERE imei = regexp_replace(COALESCE(NEW.imei, v_product.imei), '[^0-9]', '', 'g') FOR UPDATE;
   IF NOT FOUND THEN RETURN NEW; END IF;
 
   UPDATE public.imei_registry
