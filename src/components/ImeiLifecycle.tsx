@@ -106,6 +106,8 @@ export function ImeiLifecycle() {
       for (const row of stock.data || []) rows.push({ ...row, source: "stock", title: row.movement_type || "স্টক পরিবর্তন", amount: null, notes: row.reason || `${row.old_quantity} → ${row.new_quantity}` });
       for (const row of supplier.data || []) rows.push({ ...row, source: "supplier", title: `সাপ্লায়ার: ${row.transaction_type}`, amount: row.amount, notes: row.notes || row.supplier_name });
       for (const row of saleItems.data || []) rows.push({ ...row, source: "sale", title: "বিক্রয় রেকর্ড", amount: row.total_price, notes: row.sales ? `Sale #${String(row.sales.id).slice(0,8)} · ${row.sales.instant_customer_name || row.sales.customers?.name || "Walk-in"}` : "Sale item" });
+      for (const row of returns.data || []) rows.push({ ...row, source: "return", title: `রিটার্ন: ${row.status}`, amount: row.refund_amount, notes: row.reason_notes || row.reason_code });
+      for (const row of purchaseItems.data || []) rows.push({ ...row, source: "purchase", title: "ক্রয় / Stock In", amount: row.total_cost, notes: row.purchases ? `Purchase #${row.purchases.purchase_number} · ${row.purchases.suppliers?.name || "Supplier"} · Received ${row.received_quantity ?? row.quantity}` : "Purchase item" });
       return rows.sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     },
   });
