@@ -421,10 +421,10 @@ export function Reports() {
           <h2 className="text-lg md:text-xl font-semibold mb-4 text-foreground">Recent Sales</h2>
           <div className="space-y-4">
             {filteredSales?.slice(0, 10).map((sale) => (
-            <Card key={sale.id} className="p-4 hover:bg-muted/50">
+            <Card key={sale.id} className="min-w-0 overflow-hidden p-3 sm:p-4 hover:bg-muted/50">
               <div className="flex min-w-0 flex-wrap items-start justify-between gap-3 mb-3">
                 <div>
-                  <p className="font-semibold text-foreground">
+                  <p className="min-w-0 break-words [overflow-wrap:anywhere] font-semibold tabular-nums text-foreground">
                     {sale.customers?.name || "Walk-in Customer"}
                   </p>
                   <p className="text-sm text-muted-foreground">
@@ -443,9 +443,9 @@ export function Reports() {
               <div className="space-y-2">
                 <p className="text-sm font-medium text-foreground">Items:</p>
                 {sale.sale_items?.map((item: any, index: number) => (
-                  <div key={index} className="flex justify-between items-center text-sm bg-muted/30 p-2 rounded">
+                  <div key={index} className="flex min-w-0 flex-wrap justify-between items-center gap-2 text-sm bg-muted/30 p-2 rounded">
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-foreground">{item.products?.name || "Product"}</p>
+                      <p className="break-words [overflow-wrap:anywhere] font-medium text-foreground">{item.products?.name || "Product"}</p>
                       <p className="text-xs text-muted-foreground">
                         Qty: {item.quantity} × ${Number(item.unit_price).toFixed(2)}
                         {item.condition && <span className="ml-2">• {item.condition}</span>}
