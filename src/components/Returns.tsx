@@ -682,7 +682,7 @@ export function Returns() {
           </div>
           <div className="flex flex-wrap gap-2 items-center mt-3">
             <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">সকল স্ট্যাটাস</SelectItem>
                 <SelectItem value="pending">অপেক্ষমাণ</SelectItem>
@@ -708,7 +708,7 @@ export function Returns() {
       {/* Tabbed Content */}
       <div className="flex-1 overflow-y-auto pb-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="mb-3">
+          <TabsList className="mb-3 flex h-auto w-full flex-wrap justify-start gap-1">
             <TabsTrigger value="sales" className="gap-1"><RotateCcw className="h-4 w-4" /> বিক্রয় রিটার্ন</TabsTrigger>
             <TabsTrigger value="supplier" className="gap-1"><Truck className="h-4 w-4" /> সাপ্লায়ার রিটার্ন</TabsTrigger>
             <TabsTrigger value="recon" className="gap-1"><FileText className="h-4 w-4" /> রিকনসিলিয়েশন</TabsTrigger>
