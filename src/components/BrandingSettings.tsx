@@ -163,8 +163,8 @@ export function BrandingSettings() {
   };
 
   return (
-    <Card className="p-6 border border-accent/20 bg-gradient-to-br from-accent/5 to-transparent">
-      <div className="flex items-center gap-3 mb-6">
+    <Card className="p-4 border border-accent/20 bg-gradient-to-br from-accent/5 to-transparent">
+      <div className="flex items-center gap-3 mb-4">
         <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
           <Palette className="w-5 h-5 text-accent" />
         </div>
@@ -176,9 +176,9 @@ export function BrandingSettings() {
         </div>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Logo Preview & Upload */}
-        <div className="flex items-center gap-6 p-4 rounded-xl bg-muted/50">
+        <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/50">
           <div className="w-24 h-24 rounded-2xl border-2 border-dashed border-accent/30 flex items-center justify-center overflow-hidden bg-card shadow-sm">
             <img src={logoSrc} alt="Shop Logo" className="w-20 h-20 object-cover" />
           </div>
@@ -196,10 +196,10 @@ export function BrandingSettings() {
         </div>
 
         {/* Favicon Upload */}
-        <div className="flex items-center gap-6 p-4 rounded-xl bg-muted/50">
+        <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/50">
           <div className="w-16 h-16 rounded-xl border-2 border-dashed border-accent/30 flex items-center justify-center overflow-hidden bg-card shadow-sm">
             {settings.favicon_url ? (
-              <img src={settings.favicon_url} alt="Favicon" className="w-12 h-12 object-cover" />
+              <img src={settings.favicon_url} alt="Favicon" className="w-12 h-10 object-cover" />
             ) : (
               <span className="text-2xl">🌐</span>
             )}
