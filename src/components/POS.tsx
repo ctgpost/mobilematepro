@@ -226,10 +226,14 @@ export function POS() {
     try {
       const { data: registered, error } = await (supabase as any)
         .from("imei_registry").select("imei,status").eq("product_id", product.id)
-        .eq("status", "in_stock").order("created_at", { ascending: true });
+        .order("created_at", { ascending: true });
       if (error) throw error;
       const registeredRows = registered || [];
-      let imeiOptions = registeredRows.map((row: any) => row.imei as string);
+      let imeiOptions = registeredRows.filter((row: any) => row.status === "in_stock").map((row: any) => row.imei as string);
+      if (registeredRows.length > 0 && imeiOptions.length === 0) {
+        toast.error("এই প্রোডাক্টের কোনো IMEI ডিভাইস বিক্রয়যোগ্য স্টকে নেই");
+        return;
+      }
       if (imeiOptions.length === 0 && registeredRows.length === 0 && product.imei && /^\\d{15}$/.test(product.imei)) {
         imeiOptions = [product.imei];
       }
