@@ -256,7 +256,7 @@ export function StaffPerformanceReport() {
 
   if (roleLoading) {
     return (
-      <Card className="p-6">
+      <Card className="p-4">
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
@@ -266,9 +266,9 @@ export function StaffPerformanceReport() {
 
   if (!isAdmin && !isManager) {
     return (
-      <Card className="p-6">
+      <Card className="p-4">
         <div className="flex flex-col items-center justify-center py-8 text-center">
-          <Shield className="w-12 h-12 text-muted-foreground mb-4" />
+          <Shield className="w-12 h-10 text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold text-foreground mb-2">অ্যাক্সেস সীমাবদ্ধ</h3>
           <p className="text-muted-foreground">শুধুমাত্র এডমিন ও ম্যানেজার এই রিপোর্ট দেখতে পারেন।</p>
         </div>
@@ -312,7 +312,7 @@ export function StaffPerformanceReport() {
     >
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
         <Card className="p-3 bg-blue-50 dark:bg-blue-950">
           <div className="flex items-center gap-2 mb-1">
             <User className="w-4 h-4 text-blue-600" />
@@ -416,9 +416,9 @@ export function StaffPerformanceReport() {
 
       {/* Print Template */}
       <div className="hidden">
-        <div ref={printRef} className="p-8 bg-white">
+        <div ref={printRef} className="p-5 bg-white">
           {/* Header */}
-          <div className="flex items-center justify-between mb-6 border-b pb-4">
+          <div className="flex items-center justify-between mb-4 border-b pb-4">
             <div className="flex items-center gap-3">
               <img src={shopLogo} alt="MOBILE MATE PRO" className="w-16 h-16" />
               <div>
@@ -434,7 +434,7 @@ export function StaffPerformanceReport() {
           </div>
 
           {/* Summary */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-3 gap-4 mb-4">
             <div className="border rounded p-3 text-center">
               <p className="text-gray-600 text-sm">মোট স্টাফ</p>
               <p className="text-2xl font-bold">{summaryStats.totalStaff}</p>
@@ -478,7 +478,7 @@ export function StaffPerformanceReport() {
           </table>
 
           {/* Footer */}
-          <div className="mt-6 pt-4 border-t text-center text-xs text-gray-500">
+          <div className="mt-4 pt-4 border-t text-center text-xs text-gray-500">
             <p>এই রিপোর্টটি MOBILE MATE PRO সিস্টেম থেকে স্বয়ংক্রিয়ভাবে তৈরি হয়েছে</p>
           </div>
         </div>
