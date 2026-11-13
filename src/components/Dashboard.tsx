@@ -161,15 +161,15 @@ export function Dashboard({ onNavigateToPOS, onNavigateToProducts }: DashboardPr
           onNavigateToPOS={onNavigateToPOS}
           onNavigateToProducts={onNavigateToProducts}
         />
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid min-w-0 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
         {stats.map((stat, index) => (
-          <Card key={index} className="p-3 sm:p-4 card-hover border-border bg-card">
-            <div className="flex items-start justify-between">
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
-                <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">{stat.value}</p>
+          <Card key={index} className="min-w-0 overflow-hidden p-3 sm:p-4 card-hover border-border bg-card">
+            <div className="flex min-w-0 items-center justify-between gap-3">
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <p className="break-words text-xs sm:text-sm font-medium leading-snug text-muted-foreground">{stat.label}</p>
+                <p className="min-w-0 break-words [overflow-wrap:anywhere] text-[clamp(1rem,1.45vw,1.5rem)] font-bold leading-tight tabular-nums text-foreground">{stat.value}</p>
               </div>
-              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center text-xl`}>
+              <div className={`h-10 w-10 sm:h-11 sm:w-11 shrink-0 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center text-lg sm:text-xl`}>
                 {stat.icon}
               </div>
             </div>
@@ -202,7 +202,7 @@ export function Dashboard({ onNavigateToPOS, onNavigateToProducts }: DashboardPr
               <div className="w-3 h-3 rounded-full bg-green-500"></div>
               <p className="text-sm font-medium text-muted-foreground">নতুন প্রোডাক্ট বিনিয়োগ</p>
             </div>
-            <p className="text-xl sm:text-2xl md:text-3xl font-bold text-green-600">৳{newProductsInvestment.toLocaleString('bn-BD')}</p>
+            <p className="min-w-0 break-words [overflow-wrap:anywhere] text-xl sm:text-2xl md:text-3xl font-bold leading-tight tabular-nums text-green-600">৳{newProductsInvestment.toLocaleString('bn-BD')}</p>
             <p className="text-xs text-muted-foreground mt-2">{newProducts}টি প্রোডাক্ট • {newProductsStock}টি ইউনিট</p>
           </Card>
           
@@ -211,7 +211,7 @@ export function Dashboard({ onNavigateToPOS, onNavigateToProducts }: DashboardPr
               <div className="w-3 h-3 rounded-full bg-blue-500"></div>
               <p className="text-sm font-medium text-muted-foreground">ব্যবহৃত প্রোডাক্ট বিনিয়োগ</p>
             </div>
-            <p className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600">৳{usedProductsInvestment.toLocaleString('bn-BD')}</p>
+            <p className="min-w-0 break-words [overflow-wrap:anywhere] text-xl sm:text-2xl md:text-3xl font-bold leading-tight tabular-nums text-blue-600">৳{usedProductsInvestment.toLocaleString('bn-BD')}</p>
             <p className="text-xs text-muted-foreground mt-2">{usedProducts}টি প্রোডাক্ট • {usedProductsStock}টি ইউনিট</p>
           </Card>
           
@@ -220,7 +220,7 @@ export function Dashboard({ onNavigateToPOS, onNavigateToProducts }: DashboardPr
               <div className="w-3 h-3 rounded-full bg-amber-500"></div>
               <p className="text-sm font-medium text-muted-foreground">সর্বমোট বিনিয়োগ</p>
             </div>
-            <p className="text-xl sm:text-2xl md:text-3xl font-bold text-amber-600">৳{totalInvestment.toLocaleString('bn-BD')}</p>
+            <p className="min-w-0 break-words [overflow-wrap:anywhere] text-xl sm:text-2xl md:text-3xl font-bold leading-tight tabular-nums text-amber-600">৳{totalInvestment.toLocaleString('bn-BD')}</p>
             <p className="text-xs text-muted-foreground mt-2">{newProducts + usedProducts}টি প্রোডাক্ট • {newProductsStock + usedProductsStock}টি ইউনিট</p>
           </Card>
         </div>
@@ -269,7 +269,7 @@ export function Dashboard({ onNavigateToPOS, onNavigateToProducts }: DashboardPr
             <div className="grid grid-cols-2 gap-4">
               <Card className="p-4 bg-green-50 dark:bg-green-950/20 border-green-200">
                 <p className="text-sm text-muted-foreground">প্রোডাক্ট</p>
-                <p className="text-2xl font-bold text-green-600">{newProducts}</p>
+                <p className="min-w-0 break-words [overflow-wrap:anywhere] text-2xl font-bold leading-tight tabular-nums text-green-600">{newProducts}</p>
               </Card>
               <Card className="p-4 bg-green-50 dark:bg-green-950/20 border-green-200">
                 <p className="text-sm text-muted-foreground">মোট স্টক</p>
@@ -294,7 +294,7 @@ export function Dashboard({ onNavigateToPOS, onNavigateToProducts }: DashboardPr
             <div className="grid grid-cols-2 gap-4">
               <Card className="p-4 bg-blue-50 dark:bg-blue-950/20 border-blue-200">
                 <p className="text-sm text-muted-foreground">প্রোডাক্ট</p>
-                <p className="text-2xl font-bold text-blue-600">{usedProducts}</p>
+                <p className="min-w-0 break-words [overflow-wrap:anywhere] text-2xl font-bold leading-tight tabular-nums text-blue-600">{usedProducts}</p>
               </Card>
               <Card className="p-4 bg-blue-50 dark:bg-blue-950/20 border-blue-200">
                 <p className="text-sm text-muted-foreground">মোট স্টক</p>
