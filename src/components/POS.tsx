@@ -263,6 +263,21 @@ export function POS() {
     }
   };
 
+  const selectCartImei = (cartKey: string, value: string) => {
+    const duplicate = cart.some(item =>
+      (item.cartKey || item.product.id) !== cartKey && item.imei === value
+    );
+    if (duplicate) {
+      toast.error("একই IMEI একাধিক কার্ট লাইনে ব্যবহার করা যাবে না");
+      return;
+    }
+    setCart(prev => prev.map(item =>
+      (item.cartKey || item.product.id) === cartKey
+        ? { ...item, imei: value, cartKey: `${item.product.id}::${value}` }
+        : item
+    ));
+  };
+
   const updatePrice = (cartKey: string, price: number) => {
     setCart(cart.map(item =>
       (item.cartKey || item.product.id) === cartKey
@@ -434,7 +449,7 @@ export function POS() {
               isCollapsed={isCartCollapsed}
               onToggleCollapse={() => setIsCartCollapsed(!isCartCollapsed)}
               onUpdatePrice={updatePrice}
-              onSelectImei={(cartKey, value) => setCart(prev => prev.map(item => (item.cartKey || item.product.id) === cartKey ? { ...item, imei: value, cartKey: `${item.product.id}::${value}` } : item))}
+              onSelectImei={selectCartImei}
               onUpdateQuantity={updateQuantity}
               onRemoveItem={removeFromCart}
               onClearCart={clearCart}
