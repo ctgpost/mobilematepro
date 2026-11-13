@@ -2,14 +2,13 @@ import { openDB, type IDBPDatabase } from "idb";
 import { supabase } from "@/integrations/supabase/client";
 
 export type OutboxOp = "insert" | "update" | "delete" | "upsert" | "compound_sale";
-
 export interface OutboxItem {
   id?: number;
   userId: string;
   table: string;
   op: OutboxOp;
-  payload: any; // for insert/upsert: row(s); for update: { values, match }; for delete: { match }
-  tempId?: string; // optimistic temp id for inserts
+  payload: any;
+  tempId?: string;
   createdAt: number;
   retryCount: number;
   lastError?: string;
@@ -17,71 +16,70 @@ export interface OutboxItem {
 }
 
 let dbPromise: Promise<IDBPDatabase> | null = null;
-
 export function getOfflineDB() {
   if (!dbPromise) {
     dbPromise = openDB("mobile-mate-pro-offline", 1, {
       upgrade(db) {
-        if (!db.objectStoreNames.contains("outbox")) {
-          db.createObjectStore("outbox", {
-            keyPath: "id",
-            autoIncrement: true,
-          });
-        }
-        if (!db.objectStoreNames.contains("kv")) {
-          db.createObjectStore("kv");
-        }
+        if (!db.objectStoreNames.contains("outbox")) db.createObjectStore("outbox", { keyPath: "id", autoIncrement: true });
+        if (!db.objectStoreNames.contains("kv")) db.createObjectStore("kv");
       },
     });
   }
   return dbPromise;
 }
 
-export async function enqueueOutbox(item: Omit<OutboxItem, "id" | "createdAt" | "retryCount">) {
+export async function enqueueOutbox(item: Omit<OutboxItem, "id" | "createdAt" | "retryCount" | "userId">) {
+  const { data: { session } } = await supabase.auth.getSession();
+  const userId = session?.user?.id;
+  if (!userId) throw new Error("Sign in is required before saving offline changes");
   const db = await getOfflineDB();
-  const fullItem: Omit<OutboxItem, "id"> = {
-    ...item,
-    createdAt: Date.now(),
-    retryCount: 0,
-  };
-  const id = await db.add("outbox", fullItem as any);
-  return id as number;
+  return await db.add("outbox", { ...item, userId, createdAt: Date.now(), retryCount: 0 } as any) as number;
 }
 
-export async function listOutbox(): Promise<OutboxItem[]> {
+export async function listOutbox(userId: string): Promise<OutboxItem[]> {
+  if (!userId) return [];
   const db = await getOfflineDB();
-  return (await db.getAll("outbox")) as OutboxItem[];
+  return ((await db.getAll("outbox")) as OutboxItem[]).filter((item) => item.userId === userId);
 }
 
-export async function deleteOutbox(id: number) {
+export async function deleteOutbox(id: number, userId: string) {
   const db = await getOfflineDB();
-  await db.delete("outbox", id);
+  const item = await db.get("outbox", id) as OutboxItem | undefined;
+  if (item?.userId === userId) await db.delete("outbox", id);
 }
 
-export async function updateOutbox(item: OutboxItem) {
+export async function updateOutbox(item: OutboxItem, userId: string) {
   const db = await getOfflineDB();
+  const current = item.id ? await db.get("outbox", item.id) as OutboxItem | undefined : undefined;
+  if (!current || current.userId !== userId || item.userId !== userId) throw new Error("Offline queue ownership mismatch");
   await db.put("outbox", item);
 }
 
-export async function clearOutbox() {
+export async function clearOutbox(userId: string) {
+  if (!userId) throw new Error("User scope is required");
   const db = await getOfflineDB();
-  await db.clear("outbox");
+  const tx = db.transaction("outbox", "readwrite");
+  let cursor = await tx.store.openCursor();
+  while (cursor) {
+    if ((cursor.value as OutboxItem).userId === userId) await cursor.delete();
+    cursor = await cursor.continue();
+  }
+  await tx.done;
 }
 
-export async function getOutboxCount(): Promise<number> {
-  const db = await getOfflineDB();
-  return await db.count("outbox");
+export async function getOutboxCount(userId: string): Promise<number> {
+  return (await listOutbox(userId)).length;
 }
 
-export async function getOutboxItem(id: number): Promise<OutboxItem | undefined> {
+export async function getOutboxItem(id: number, userId: string): Promise<OutboxItem | undefined> {
   const db = await getOfflineDB();
-  return (await db.get("outbox", id)) as OutboxItem | undefined;
+  const item = await db.get("outbox", id) as OutboxItem | undefined;
+  return item?.userId === userId ? item : undefined;
 }
 
-export async function setOutboxPaused(id: number, paused: boolean) {
-  const item = await getOutboxItem(id);
-  if (!item) return;
-  await updateOutbox({ ...item, paused });
+export async function setOutboxPaused(id: number, paused: boolean, userId: string) {
+  const item = await getOutboxItem(id, userId);
+  if (item) await updateOutbox({ ...item, paused }, userId);
 }
 
 export async function setKV(key: string, value: any) {
@@ -91,5 +89,5 @@ export async function setKV(key: string, value: any) {
 
 export async function getKV<T = any>(key: string): Promise<T | undefined> {
   const db = await getOfflineDB();
-  return (await db.get("kv", key)) as T | undefined;
+  return await db.get("kv", key) as T | undefined;
 }
