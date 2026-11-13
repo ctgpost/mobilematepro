@@ -108,6 +108,7 @@ export function POS() {
             quantity: it.quantity,
             unit_price: it.unit_price,
             total_price: it.total_price,
+            imei: it.imei || null,
             products: productMap.get(it.product_id) || { id: it.product_id, name: "(offline)" },
           })),
         };
@@ -149,6 +150,7 @@ export function POS() {
             quantity: item.quantity,
             unit_price: item.unit_price,
             total_price: item.total_price,
+            imei: item.imei || null,
           }]);
 
         if (itemError) throw itemError;
@@ -346,6 +348,7 @@ export function POS() {
         quantity: item.quantity,
         unit_price: item.customPrice,
         total_price: item.customPrice * item.quantity,
+        imei: item.imei || null,
       })),
     };
 
@@ -416,6 +419,7 @@ export function POS() {
               isCollapsed={isCartCollapsed}
               onToggleCollapse={() => setIsCartCollapsed(!isCartCollapsed)}
               onUpdatePrice={updatePrice}
+              onSelectImei={(productId, value) => setCart(prev => prev.map(item => item.product.id === productId ? { ...item, imei: value } : item))}
               onUpdateQuantity={updateQuantity}
               onRemoveItem={removeFromCart}
               onClearCart={clearCart}
