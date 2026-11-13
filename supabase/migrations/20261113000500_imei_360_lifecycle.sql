@@ -197,9 +197,12 @@ DECLARE
   v_sale public.sales%ROWTYPE;
   v_registry public.imei_registry%ROWTYPE;
 BEGIN
-  IF NEW.quantity <> 1 THEN RETURN NEW; END IF;
+  IF NEW.quantity <> 1 THEN
+    IF NEW.imei IS NOT NULL THEN RAISE EXCEPTION 'An IMEI sale line must have quantity 1'; END IF;
+    RETURN NEW;
+  END IF;
   SELECT * INTO v_product FROM public.products WHERE id = NEW.product_id;
-  IF NOT FOUND OR v_product.imei IS NULL THEN RETURN NEW; END IF;
+  IF NOT FOUND THEN RETURN NEW; END IF;
   SELECT * INTO v_sale FROM public.sales WHERE id = NEW.sale_id;
   SELECT * INTO v_registry FROM public.imei_registry
     WHERE imei = regexp_replace(COALESCE(NEW.imei, v_product.imei), '[^0-9]', '', 'g') FOR UPDATE;
@@ -250,9 +253,9 @@ DECLARE
 BEGIN
   IF NEW.status <> 'completed' OR OLD.status = 'completed' THEN RETURN NEW; END IF;
   SELECT * INTO v_product FROM public.products WHERE id = NEW.product_id;
-  IF NOT FOUND OR v_product.imei IS NULL OR NEW.quantity <> 1 THEN RETURN NEW; END IF;
+  IF NOT FOUND OR NEW.quantity <> 1 THEN RETURN NEW; END IF;
   SELECT * INTO v_registry FROM public.imei_registry
-    WHERE imei = regexp_replace(v_product.imei, '[^0-9]', '', 'g') FOR UPDATE;
+    WHERE imei = regexp_replace(COALESCE(NEW.imei, v_product.imei), '[^0-9]', '', 'g') FOR UPDATE;
   IF NOT FOUND THEN RETURN NEW; END IF;
 
   UPDATE public.imei_registry
