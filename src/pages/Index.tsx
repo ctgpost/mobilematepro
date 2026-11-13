@@ -19,7 +19,6 @@ import { StockSyncCheck } from "@/components/StockSyncCheck";
 import { StockHistory } from "@/components/StockHistory";
 import { DueCollectionPage } from "@/components/DueCollectionPage";
 import { CustomerLedger } from "@/components/CustomerLedger";
-import { ImeiLifecycle } from "@/components/ImeiLifecycle";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -388,8 +387,7 @@ export default function Index({ user }: IndexProps) {
 
       {/* Main Content */}
       <main className="lg:pl-64">
-        <div className="px-3 py-4 sm:px-4 lg:px-6 lg:py-5 pt-[4.25rem] lg:pt-5">
-          <div className="flex justify-end mb-2"><ImeiLifecycle /></div>
+        <div className="px-3 py-4 sm:px-4 lg:px-6 lg:pt-0 lg:pb-5 pt-[4.25rem]">
           {renderContent()}
         </div>
       </main>
