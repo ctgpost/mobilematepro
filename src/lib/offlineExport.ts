@@ -62,14 +62,11 @@ export async function importOfflineData(file: File): Promise<{
  * Clear cached read data but PRESERVE outbox (queued writes).
  */
 export async function clearOfflineCache() {
-  const all = await kvKeys();
-  for (const k of all) {
-    await kvDel(k);
-  }
-  // Clear SW caches
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.user?.id) await kvDel(`mobile-mate-pro-rq-cache:${session.user.id}`);
   if ("caches" in window) {
     const names = await caches.keys();
-    await Promise.all(names.map((n) => caches.delete(n)));
+    await Promise.all(names.map((name) => caches.delete(name)));
   }
 }
 
