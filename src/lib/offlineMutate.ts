@@ -91,14 +91,15 @@ export async function enqueueCompoundSale(saleData: {
   }>;
   customer_snapshot?: any;
 }): Promise<{ tempSaleId: string; queuedAt: number }> {
-  const tempSaleId = `tmp_sale_${Date.now()}_${Math.random()
-    .toString(36)
-    .slice(2, 8)}`;
+  const tempSaleId = `tmp_sale_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const queuedAt = Date.now();
+  const idempotencyKey = typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
   await enqueueOutbox({
     table: "sales",
     op: "compound_sale",
-    payload: { tempSaleId, queuedAt, ...saleData },
+    payload: { tempSaleId, queuedAt, idempotencyKey, ...saleData },
     tempId: tempSaleId,
   });
   return { tempSaleId, queuedAt };
@@ -178,48 +179,28 @@ export async function retryOutboxItem(id: number): Promise<{ ok: boolean; error?
 async function processOutboxItem(item: OutboxItem): Promise<void> {
   if (item.op === "compound_sale") {
     const p = item.payload || {};
-    const { data: sale, error: saleErr } = await supabase
-      .from("sales")
-      .insert([{
+    const { error } = await supabase.rpc("create_sale_atomic", {
+      p_idempotency_key: p.idempotencyKey,
+      p_sale: {
         user_id: p.user_id,
         customer_id: p.customer_id,
         total_amount: p.total_amount,
         payment_method: p.payment_method,
-        status: "completed",
         instant_customer_name: p.instant_customer_name,
         instant_customer_phone: p.instant_customer_phone,
+        customer_photo_url: p.customer_photo_url,
         paid_amount: p.paid_amount,
         due_amount: p.due_amount,
-        customer_photo_url: p.customer_photo_url,
         created_at: new Date(p.queuedAt || Date.now()).toISOString(),
-      }])
-      .select()
-      .single();
-    if (saleErr) throw saleErr;
-
-    for (const it of (p.items || [])) {
-      const { error: itemErr } = await supabase.from("sale_items").insert([{
-        sale_id: sale.id,
+      },
+      p_items: (p.items || []).map((it: any) => ({
         product_id: it.product_id,
         quantity: it.quantity,
         unit_price: it.unit_price,
         total_price: it.total_price,
-      }]);
-      if (itemErr) throw itemErr;
-
-      const { data: prod, error: pErr } = await supabase
-        .from("products")
-        .select("stock_quantity")
-        .eq("id", it.product_id)
-        .single();
-      if (pErr) throw pErr;
-      const next = Math.max(0, (prod?.stock_quantity ?? 0) - it.quantity);
-      const { error: uErr } = await supabase
-        .from("products")
-        .update({ stock_quantity: next, last_stock_reason: "sale", last_stock_ref: sale.id } as any)
-        .eq("id", it.product_id);
-      if (uErr) throw uErr;
-    }
+      })),
+    });
+    if (error) throw error;
     return;
   }
 
