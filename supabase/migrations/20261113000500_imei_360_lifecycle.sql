@@ -298,12 +298,17 @@ DECLARE
   v_imei text := regexp_replace(COALESCE(p_imei,''), '[^0-9]', '', 'g');
   v_product public.products%ROWTYPE;
   v_registry_id uuid;
+  v_active_count integer;
 BEGIN
   IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Authentication required'; END IF;
   IF v_imei !~ '^[0-9]{15}$' THEN RAISE EXCEPTION 'IMEI must contain exactly 15 digits'; END IF;
   IF COALESCE(p_purchase_cost,0) < 0 THEN RAISE EXCEPTION 'Purchase cost cannot be negative'; END IF;
   SELECT * INTO v_product FROM public.products WHERE id = p_product_id;
   IF NOT FOUND THEN RAISE EXCEPTION 'Product not found'; END IF;
+  SELECT COUNT(*) INTO v_active_count FROM public.imei_registry WHERE product_id = p_product_id AND status = 'in_stock';
+  IF v_active_count >= COALESCE(v_product.stock_quantity,0) THEN
+    RAISE EXCEPTION 'Registered in-stock IMEIs cannot exceed the product stock quantity';
+  END IF;
 
   INSERT INTO public.imei_registry
     (imei, product_id, status, supplier_id, supplier_name, purchase_cost,
