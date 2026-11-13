@@ -281,7 +281,7 @@ export function CustomerLedger() {
                     <Button size="sm" variant="outline" onClick={printLedger}><Printer className="w-3 h-3 mr-1" /> প্রিন্ট</Button>
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-3 mt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
                   <div className="p-3 rounded-lg bg-muted text-center">
                     <p className="text-xs text-muted-foreground">মোট কেনা</p>
                     <p className="text-lg font-bold">৳{totals.debit.toLocaleString('bn-BD')}</p>
