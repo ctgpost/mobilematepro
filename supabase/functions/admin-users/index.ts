@@ -1,13 +1,25 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const cors = {
-  "Access-Control-Allow-Origin": Deno.env.get("APP_ALLOWED_ORIGIN") ?? "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+function buildCors(req: Request) {
+  const origin = req.headers.get("Origin");
+  const allowed = (Deno.env.get("APP_ALLOWED_ORIGINS") || Deno.env.get("APP_ALLOWED_ORIGIN") || "")
+    .split(",").map((value) => value.trim()).filter(Boolean);
+  const headers: Record<string, string> = {
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin",
+  };
+  if (origin && allowed.includes(origin)) headers["Access-Control-Allow-Origin"] = origin;
+  return headers;
+}
+
 
 Deno.serve(async (req) => {
+  const cors = buildCors(req);
+  const origin = req.headers.get("Origin");
+  if (origin && !cors["Access-Control-Allow-Origin"]) return new Response("Origin not allowed", { status: 403 });
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  if (req.method !== "POST") return new Response("Method not allowed", { status: 405, headers: cors });
   if (req.method !== "POST") return reply({ error: "Method not allowed" }, 405);
 
   const url = Deno.env.get("SUPABASE_URL")!;
