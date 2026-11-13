@@ -53,6 +53,14 @@ BEGIN
     v_cash := COALESCE((p_plan->>'cash_refunded')::numeric,0);
     v_credit := COALESCE((p_plan->>'customer_credit')::numeric,0);
     v_mode := COALESCE(p_plan->>'mode','cash');
+    IF v_mode NOT IN ('cash','due_adjust','mixed','credit','exchange') THEN
+      RAISE EXCEPTION 'Invalid settlement mode';
+    END IF;
+    IF v_return.refund_amount < 0 THEN RAISE EXCEPTION 'Return amount cannot be negative'; END IF;
+    IF v_mode = 'cash' AND (v_due <> 0 OR v_credit <> 0) THEN RAISE EXCEPTION 'Cash settlement must be fully refunded in cash'; END IF;
+    IF v_mode = 'due_adjust' AND (v_cash <> 0 OR v_credit <> 0) THEN RAISE EXCEPTION 'Due adjustment settlement has invalid components'; END IF;
+    IF v_mode = 'credit' AND (v_due <> 0 OR v_cash <> 0) THEN RAISE EXCEPTION 'Credit settlement must be fully credited'; END IF;
+    IF v_mode = 'exchange' AND (v_due <> 0 OR v_cash <> 0 OR abs(v_credit - v_return.refund_amount) > 0.01) THEN RAISE EXCEPTION 'Exchange must create full store credit'; END IF;
     IF v_due < 0 OR v_cash < 0 OR v_credit < 0 THEN
       RAISE EXCEPTION 'Settlement values cannot be negative';
     END IF;
