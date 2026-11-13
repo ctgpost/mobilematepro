@@ -158,14 +158,14 @@ export function BackupExportSettings() {
 
   return (
     <>
-    <Card className="p-6">
+    <Card className="p-4">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
           <Cloud className="h-5 w-5" /> সম্পূর্ণ ব্যাকআপ ও অটোমেশন
         </h2>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* One-click export */}
         <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
           <p className="text-sm text-muted-foreground">
