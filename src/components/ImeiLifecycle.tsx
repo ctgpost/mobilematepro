@@ -90,7 +90,7 @@ export function ImeiLifecycle() {
     enabled: open && !!selected?.id,
     queryFn: async () => {
       const imeis = registry.map((r: AnyRow) => r.imei);
-      const [events, transactions, stock, supplier, saleItems] = await Promise.all([
+      const [events, transactions, stock, supplier, saleItems, returns, purchaseItems] = await Promise.all([
         db.from("imei_lifecycle_events").select("*").eq("product_id", selected.id).order("created_at", { ascending: false }).limit(500),
         db.from("product_transaction_history").select("*").eq("product_id", selected.id).order("created_at", { ascending: false }).limit(300),
         db.from("stock_movements").select("*").eq("product_id", selected.id).order("created_at", { ascending: false }).limit(300),
@@ -262,7 +262,7 @@ export function ImeiLifecycle() {
                         <span className="absolute left-1.5 top-4 h-2.5 w-2.5 rounded-full bg-primary ring-4 ring-primary/10"/>
                         <Card className="p-3 sm:p-4">
                           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                            <div><p className="font-semibold text-sm">{row.title || eventLabels[row.event_type] || row.event_type || "লেনদেন"}</p><p className="text-xs text-muted-foreground mt-1">{dateTime(row.created_at)} · {row.source==="imei"?"IMEI Audit":row.source==="sale"?"Sales":row.source==="stock"?"Stock Ledger":row.source==="supplier"?"Supplier Ledger":"Transaction History"}</p></div>
+                            <div><p className="font-semibold text-sm">{row.title || eventLabels[row.event_type] || row.event_type || "লেনদেন"}</p><p className="text-xs text-muted-foreground mt-1">{dateTime(row.created_at)} · {row.source==="imei"?"IMEI Audit":row.source==="sale"?"Sales":row.source==="stock"?"Stock Ledger":row.source==="supplier"?"Supplier Ledger":row.source==="purchase"?"Purchase":row.source==="return"?"Returns":"Transaction History"}</p></div>
                             {row.amount !== null && row.amount !== undefined && <b className="text-sm whitespace-nowrap">{money(row.amount)}</b>}
                           </div>
                           {(row.imei || row.product_imei) && <p className="font-mono text-xs mt-2">{row.imei || row.product_imei}</p>}
