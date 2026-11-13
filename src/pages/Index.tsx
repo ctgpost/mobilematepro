@@ -266,8 +266,8 @@ export default function Index({ user }: IndexProps) {
       <aside className="hidden lg:block fixed left-0 top-0 h-screen w-64 glass-sidebar border-r border-sidebar-border z-40">
         <div className="flex flex-col h-full p-3">
           {/* Logo Section */}
-          <div className="flex items-center gap-3 mb-8 pb-6 border-b border-sidebar-border">
-            <div className="w-14 h-14 rounded-2xl bg-sidebar-accent flex items-center justify-center overflow-hidden shadow-lg">
+          <div className="flex items-center gap-2 mb-4 pb-4 border-b border-sidebar-border">
+            <div className="w-11 h-11 rounded-xl bg-sidebar-accent flex items-center justify-center overflow-hidden shadow-lg">
               <img src={logoSrc} alt={settings.shop_name} className="w-9 h-9 object-contain" />
             </div>
             <div className="flex-1 min-w-0">
@@ -309,9 +309,9 @@ export default function Index({ user }: IndexProps) {
                 toast.success("সফলভাবে লগআউট হয়েছে");
                 window.location.href = "/auth";
               }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-destructive/80 hover:text-destructive hover:bg-destructive/5 transition-all duration-300 text-[20px] font-bold"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-destructive/80 hover:text-destructive hover:bg-destructive/5 transition-all duration-300 text-sm font-medium"
             >
-              <LogOut className="w-8 h-8 shrink-0" strokeWidth={2.5} />
+              <LogOut className="w-5 h-5 shrink-0" strokeWidth={2} />
               <span className="tracking-tight">লগআউট</span>
             </button>
           </div>
