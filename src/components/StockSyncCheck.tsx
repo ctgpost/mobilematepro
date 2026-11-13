@@ -71,8 +71,8 @@ export function StockSyncCheck() {
     for (const product of products) {
       const ledger = grouped.get(product.id);
       if (!ledger?.length) continue; // No trustworthy opening balance exists for legacy products.
-      const first = ledger[0];
-      const expectedStock = Number(first.old_quantity) + ledger.reduce((sum, movement) => sum + Number(movement.change || 0), 0);
+      const latestMovement = ledger[ledger.length - 1];
+      const expectedStock = Number(latestMovement.new_quantity);
       const currentStock = Number(product.stock_quantity);
       if (currentStock !== expectedStock) {
         issues.push({
