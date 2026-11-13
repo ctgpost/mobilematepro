@@ -165,9 +165,9 @@ export default function Index({ user }: IndexProps) {
   if (roleLoading) {
     return (
       <div className="min-h-screen bg-background flex">
-        <aside className="hidden lg:block fixed left-0 top-0 h-screen w-72 glass-sidebar p-6">
-          <div className="flex items-center gap-3 mb-8 pb-6 border-b border-sidebar-border">
-            <Skeleton className="w-14 h-14 rounded-2xl bg-sidebar-accent" />
+        <aside className="hidden lg:block fixed left-0 top-0 h-screen w-64 glass-sidebar p-4">
+          <div className="flex items-center gap-2 mb-4 pb-4 border-b border-sidebar-border">
+            <Skeleton className="w-11 h-11 rounded-xl bg-sidebar-accent" />
             <div className="space-y-2">
               <Skeleton className="h-5 w-24 bg-sidebar-accent" />
               <Skeleton className="h-3 w-20 bg-sidebar-accent" />
@@ -179,7 +179,7 @@ export default function Index({ user }: IndexProps) {
             ))}
           </div>
         </aside>
-        <main className="lg:pl-72 flex-1 p-8">
+        <main className="lg:pl-64 flex-1 p-5">
           <div className="space-y-6">
             <Skeleton className="h-10 w-48" />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -263,12 +263,12 @@ export default function Index({ user }: IndexProps) {
   return (
     <div className="min-h-screen bg-background">
       {/* Desktop Sidebar - MOBILE MATE PRO Style */}
-      <aside className="hidden lg:block fixed left-0 top-0 h-screen w-72 glass-sidebar border-r border-sidebar-border z-40">
-        <div className="flex flex-col h-full p-5">
+      <aside className="hidden lg:block fixed left-0 top-0 h-screen w-64 glass-sidebar border-r border-sidebar-border z-40">
+        <div className="flex flex-col h-full p-3">
           {/* Logo Section */}
-          <div className="flex items-center gap-3 mb-8 pb-6 border-b border-sidebar-border">
-            <div className="w-14 h-14 rounded-2xl bg-sidebar-accent flex items-center justify-center overflow-hidden shadow-lg">
-              <img src={logoSrc} alt={settings.shop_name} className="w-12 h-12 object-contain" />
+          <div className="flex items-center gap-2 mb-4 pb-4 border-b border-sidebar-border">
+            <div className="w-11 h-11 rounded-xl bg-sidebar-accent flex items-center justify-center overflow-hidden shadow-lg">
+              <img src={logoSrc} alt={settings.shop_name} className="w-9 h-9 object-contain" />
             </div>
             <div className="flex-1 min-w-0">
               <h1 className="text-base font-bold text-sidebar-foreground leading-tight tracking-tight truncate">
@@ -279,7 +279,7 @@ export default function Index({ user }: IndexProps) {
           </div>
           
           {/* Navigation */}
-          <nav className="flex-1 space-y-2 overflow-y-auto">
+          <nav className="flex-1 space-y-1 overflow-y-auto">
             {menuItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -287,13 +287,13 @@ export default function Index({ user }: IndexProps) {
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center gap-4 px-4 py-4 rounded-xl text-left transition-all duration-300 text-[20px] font-bold ${
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors duration-150 text-sm font-medium ${
                     isActive
                       ? "sidebar-active text-sidebar-foreground"
                       : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
                   }`}
                 >
-                  <Icon className={`w-8 h-8 shrink-0 transition-colors ${isActive ? 'text-accent' : ''}`} strokeWidth={2.5} />
+                  <Icon className={`w-5 h-5 shrink-0 transition-colors ${isActive ? 'text-accent' : ''}`} strokeWidth={2} />
                   <span className="tracking-tight">{item.label}</span>
                 </button>
               );
@@ -301,7 +301,7 @@ export default function Index({ user }: IndexProps) {
           </nav>
           
           {/* Logout */}
-          <div className="pt-4 border-t border-sidebar-border">
+          <div className="pt-3 border-t border-sidebar-border">
             <button
               onClick={async () => {
                 await ActivityLogger.logout();
@@ -309,9 +309,9 @@ export default function Index({ user }: IndexProps) {
                 toast.success("সফলভাবে লগআউট হয়েছে");
                 window.location.href = "/auth";
               }}
-              className="w-full flex items-center gap-4 px-4 py-4 rounded-xl text-left text-destructive/80 hover:text-destructive hover:bg-destructive/5 transition-all duration-300 text-[20px] font-bold"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-destructive/80 hover:text-destructive hover:bg-destructive/5 transition-all duration-300 text-sm font-medium"
             >
-              <LogOut className="w-8 h-8 shrink-0" strokeWidth={2.5} />
+              <LogOut className="w-5 h-5 shrink-0" strokeWidth={2} />
               <span className="tracking-tight">লগআউট</span>
             </button>
           </div>
@@ -320,10 +320,10 @@ export default function Index({ user }: IndexProps) {
 
       {/* Mobile Header - Frosted Glass */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 glass-card border-b border-border/50">
-        <div className="flex items-center justify-between h-16 px-4">
+        <div className="flex items-center justify-between h-14 px-3">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl overflow-hidden bg-muted flex items-center justify-center">
-              <img src={logoSrc} alt={settings.shop_name} className="w-8 h-8 object-contain" />
+            <div className="w-9 h-9 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+              <img src={logoSrc} alt={settings.shop_name} className="w-7 h-7 object-contain" />
             </div>
             <div>
               <span className="text-sm font-bold text-foreground block leading-tight tracking-tight">
@@ -370,14 +370,14 @@ export default function Index({ user }: IndexProps) {
                       setActiveTab(item.id);
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`w-full flex items-center gap-4 px-4 py-4 rounded-xl text-left transition-all font-bold ${
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors font-medium ${
                       isActive
                         ? "bg-accent/10 text-accent"
                         : "text-foreground/80 hover:bg-muted hover:text-foreground"
                     }`}
                   >
-                    <Icon className={`w-8 h-8 shrink-0 ${isActive ? 'text-accent' : ''}`} strokeWidth={2.5} />
-                    <span className="text-[20px] tracking-tight">{item.label}</span>
+                    <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-accent' : ''}`} strokeWidth={2.5} />
+                    <span className="text-sm tracking-normal">{item.label}</span>
                   </button>
                 );
               })}
@@ -387,9 +387,9 @@ export default function Index({ user }: IndexProps) {
       )}
 
       {/* Main Content */}
-      <main className="lg:pl-72">
-        <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8 pt-20 lg:pt-8">
-          <div className="flex justify-end mb-3"><ImeiLifecycle /></div>
+      <main className="lg:pl-64">
+        <div className="px-3 py-4 sm:px-4 lg:px-6 lg:py-5 pt-[4.25rem] lg:pt-5">
+          <div className="flex justify-end mb-2"><ImeiLifecycle /></div>
           {renderContent()}
         </div>
       </main>
@@ -411,7 +411,7 @@ export default function Index({ user }: IndexProps) {
 
       {/* Mobile Bottom Navigation - Frosted Glass */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 glass-card border-t border-border/50 z-40">
-        <div className="flex justify-around items-center h-16 px-1">
+        <div className="flex justify-around items-center h-14 px-1">
           {menuItems.slice(0, 5).map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -425,8 +425,8 @@ export default function Index({ user }: IndexProps) {
                     : "text-muted-foreground"
                 }`}
               >
-                <Icon className={`w-8 h-8 mb-1 transition-transform duration-300 ${isActive ? 'scale-110' : ''}`} strokeWidth={2.5} />
-                <span className="text-[14px] font-bold tracking-tight">{item.label}</span>
+                <Icon className={`w-5 h-5 mb-0.5 transition-transform duration-300 ${isActive ? 'scale-110' : ''}`} strokeWidth={2.5} />
+                <span className="text-[11px] font-medium tracking-normal">{item.label}</span>
                 {isActive && (
                   <div className="w-1.5 h-1.5 rounded-full bg-accent mt-0.5" />
                 )}
