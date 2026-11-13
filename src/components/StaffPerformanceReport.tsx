@@ -434,7 +434,7 @@ export function StaffPerformanceReport() {
           </div>
 
           {/* Summary */}
-          <div className="grid grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4">
             <div className="border rounded p-3 text-center">
               <p className="text-gray-600 text-sm">মোট স্টাফ</p>
               <p className="text-2xl font-bold">{summaryStats.totalStaff}</p>
