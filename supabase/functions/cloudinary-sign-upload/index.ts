@@ -39,6 +39,11 @@ Deno.serve(async (req) => {
       });
     }
 
+    const { data: roleRow } = await supa.from("user_roles").select("role").eq("user_id", userRes.user.id).maybeSingle();
+    if (!roleRow || !["admin", "manager", "staff"].includes(roleRow.role)) {
+      return new Response(JSON.stringify({ error: "Permission denied" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     const body = await req.json().catch(() => ({}));
     const folder: string = typeof body.folder === "string" ? body.folder : "uploads";
     const publicId: string | undefined =
