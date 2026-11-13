@@ -123,14 +123,14 @@ const INVOICE_BRAND = "MOBILE MATE PRO";
 function A4Invoice({ sale, settings, invoiceNo, formatDate, getPaymentMethodBn }: any) {
   return (
     <>
-      <div className="text-center mb-6 border-b pb-4">
+      <div className="text-center mb-4 border-b pb-4">
         <h1 className="text-3xl font-bold mb-1">{INVOICE_BRAND}</h1>
         <p className="text-sm text-gray-600">{settings.shop_subtitle || "Sales & Stock Management System"}</p>
         {settings.shop_address && <p className="text-xs text-gray-600 mt-1">ঠিকানা: {settings.shop_address}</p>}
         {settings.shop_phone && <p className="text-xs text-gray-600">ফোন: {settings.shop_phone}</p>}
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-2 gap-4 mb-4">
         <div className="flex items-start gap-3">
           {(sale.customers?.photo_url || sale.customer_photo_url) && (
             <img
@@ -160,7 +160,7 @@ function A4Invoice({ sale, settings, invoiceNo, formatDate, getPaymentMethodBn }
         </div>
       </div>
 
-      <table className="w-full mb-6 text-sm">
+      <table className="w-full mb-4 text-sm">
         <thead>
           <tr className="border-b-2 border-gray-300">
             <th className="text-left py-2">পণ্য</th>
@@ -195,7 +195,7 @@ function A4Invoice({ sale, settings, invoiceNo, formatDate, getPaymentMethodBn }
         </tbody>
       </table>
 
-      <div className="flex justify-end mb-6">
+      <div className="flex justify-end mb-4">
         <div className="w-64">
           <div className="flex justify-between py-2 border-t">
             <span className="font-semibold">সাবটোটাল:</span>
