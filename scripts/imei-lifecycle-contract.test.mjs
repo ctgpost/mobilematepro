@@ -19,11 +19,13 @@ test("IMEI lifecycle migration creates a unique per-device registry and append-o
 
 test("IMEI lifecycle captures sale and completed return references without guessing bulk IMEIs", async () => {
   const sql = await read("../supabase/migrations/20261113000500_imei_360_lifecycle.sql");
-  assert.match(sql, /IF NEW\.quantity <> 1 THEN RETURN NEW/i);
+  assert.match(sql, /IF NEW\.quantity <> 1 THEN[\s\S]*?RETURN NEW/i);
   assert.match(sql, /AFTER INSERT ON public\.sale_items/i);
   assert.match(sql, /AFTER UPDATE OF status ON public\.returns/i);
   assert.match(sql, /'sale', NEW\.sale_id/i);
   assert.match(sql, /'return', NEW\.id/i);
+  assert.match(sql, /IMEI belongs to a different product/i);
+  assert.match(sql, /COALESCE\(NEW\.imei, v_product\.imei\)/i);
 });
 
 test("IMEI lifecycle popup is available from the application header and searches barcode/IMEI", async () => {
