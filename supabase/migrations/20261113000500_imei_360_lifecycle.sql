@@ -143,12 +143,16 @@ BEGIN
   VALUES
     (v_imei, NEW.id, v_status, NEW.supplier_id, NEW.supplier_name, COALESCE(NEW.cost,0), auth.uid())
   ON CONFLICT (imei) DO UPDATE SET
-    product_id = EXCLUDED.product_id,
     supplier_id = COALESCE(EXCLUDED.supplier_id, imei_registry.supplier_id),
     supplier_name = COALESCE(EXCLUDED.supplier_name, imei_registry.supplier_name),
     purchase_cost = CASE WHEN EXCLUDED.purchase_cost > 0 THEN EXCLUDED.purchase_cost ELSE imei_registry.purchase_cost END,
     updated_at = now()
+  WHERE imei_registry.product_id = EXCLUDED.product_id
   RETURNING id INTO v_registry_id;
+
+  IF v_registry_id IS NULL THEN
+    RAISE EXCEPTION 'IMEI is already registered to a different product';
+  END IF;
 
   IF TG_OP = 'INSERT' OR OLD.imei IS DISTINCT FROM NEW.imei THEN
     INSERT INTO public.imei_lifecycle_events
