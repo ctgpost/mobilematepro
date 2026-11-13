@@ -8,10 +8,10 @@ interface CartSectionProps {
   cart: CartItem[];
   isCollapsed: boolean;
   onToggleCollapse: () => void;
-  onUpdatePrice: (productId: string, price: number) => void;
-  onSelectImei: (productId: string, imei: string) => void;
-  onUpdateQuantity: (productId: string, quantity: number) => void;
-  onRemoveItem: (productId: string) => void;
+  onUpdatePrice: (cartKey: string, price: number) => void;
+  onSelectImei: (cartKey: string, imei: string) => void;
+  onUpdateQuantity: (cartKey: string, quantity: number) => void;
+  onRemoveItem: (cartKey: string) => void;
   onClearCart?: () => void;
   total: number;
 }
@@ -54,14 +54,14 @@ export function CartSection({
         <>
           <div className="space-y-3 lg:space-y-4 mb-4">
             {cart.map((item) => (
-              <div key={item.product.id} className="space-y-2 py-3 border-b border-border">
+              <div key={item.cartKey || item.product.id} className="space-y-2 py-3 border-b border-border">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm text-foreground truncate">{item.product.name}</p>
                     {item.availableImeis && item.availableImeis.length > 0 && (
                       <div className="mt-2 space-y-1">
                         <span className="text-xs text-muted-foreground">ডিভাইস IMEI নির্বাচন করুন</span>
-                        <Select value={item.imei || ""} onValueChange={(value) => onSelectImei(item.product.id, value)}>
+                        <Select value={item.imei || ""} onValueChange={(value) => onSelectImei(item.cartKey || item.product.id, value)}>
                           <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="IMEI নির্বাচন করুন"/></SelectTrigger>
                           <SelectContent>{item.availableImeis.map((value) => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent>
                         </Select>
@@ -73,7 +73,7 @@ export function CartSection({
                         type="number"
                         step="0.01"
                         value={item.customPrice}
-                        onChange={(e) => onUpdatePrice(item.product.id, parseFloat(e.target.value) || 0)}
+                        onChange={(e) => onUpdatePrice(item.cartKey || item.product.id, parseFloat(e.target.value) || 0)}
                         className="w-20 lg:w-24 h-7 text-xs"
                       />
                     </div>
@@ -83,7 +83,7 @@ export function CartSection({
                       size="sm"
                       variant="outline"
                       aria-label="পরিমাণ কমান"
-                      onClick={() => onUpdateQuantity(item.product.id, item.quantity - 1)}
+                      onClick={() => onUpdateQuantity(item.cartKey || item.product.id, item.quantity - 1)}
                       className="h-7 w-7 p-0 text-xs"
                     >
                       −
@@ -103,7 +103,7 @@ export function CartSection({
                       size="sm"
                       variant="destructive"
                       aria-label="বাদ দিন"
-                      onClick={() => onRemoveItem(item.product.id)}
+                      onClick={() => onRemoveItem(item.cartKey || item.product.id)}
                       className="h-7 w-7 p-0 text-xs"
                     >
                       ✕
