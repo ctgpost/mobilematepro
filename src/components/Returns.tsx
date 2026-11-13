@@ -274,7 +274,7 @@ export function Returns() {
       return;
     }
 
-    if (returnQuantity < 1 || returnQuantity > selectedItem.quantity) {
+    if (selectedItem.imei && returnQuantity !== 1) {\n      toast.error("IMEI ট্র্যাক করা ডিভাইস একবারে একটি করে রিটার্ন করতে হবে");\n      return;\n    }\n\n    if (returnQuantity < 1 || returnQuantity > selectedItem.quantity) {
       toast.error(`রিটার্ন পরিমাণ ১ থেকে ${selectedItem.quantity} এর মধ্যে হতে হবে`);
       return;
     }
