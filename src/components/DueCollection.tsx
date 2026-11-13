@@ -46,7 +46,7 @@ export function DueCollection({ saleId, currentDue }: DueCollectionProps) {
 
       const { data: { user } } = await supabase.auth.getUser();
 
-      const { data: newDue, error } = await supabase.rpc("collect_sale_due", {
+      const { data: newDue, error } = await (supabase.rpc as any)("collect_sale_due", {
         p_sale_id: saleId,
         p_amount: collectAmount,
         p_payment_method: paymentMethod,
