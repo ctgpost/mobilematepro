@@ -244,7 +244,7 @@ export function Suppliers() {
   const productImeiById = (id: string) => products?.find((p: any) => p.id === id)?.imei || "";
 
   return (
-    <div className="space-y-4 sm:space-y-6 animate-fade-in">
+    <div className="space-y-4 sm:space-y-4 animate-fade-in">
       <PageHeader
         storageKey="suppliers"
         title={<span className="flex items-center gap-2"><Building2 className="w-6 h-6 text-primary" /> সাপ্লায়ার ম্যানেজমেন্ট</span>}
