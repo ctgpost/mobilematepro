@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
         return reply({ error: "Valid email, password (8+ chars), and role are required" }, 400);
       }
       const { data, error } = await admin.auth.admin.createUser({
-        email, password, email_confirm: false, user_metadata: { full_name: fullName || email },
+        email, password, email_confirm: true, user_metadata: { full_name: fullName || email },
       });
       if (error) throw error;
       const { error: updateError } = await admin.from("user_roles")
