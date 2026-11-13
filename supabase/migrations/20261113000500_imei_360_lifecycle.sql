@@ -204,6 +204,9 @@ BEGIN
   SELECT * INTO v_registry FROM public.imei_registry
     WHERE imei = regexp_replace(COALESCE(NEW.imei, v_product.imei), '[^0-9]', '', 'g') FOR UPDATE;
   IF NOT FOUND THEN RETURN NEW; END IF;
+  IF v_registry.status NOT IN ('in_stock','returned') THEN
+    RAISE EXCEPTION 'IMEI is not available for sale (current status: %)', v_registry.status;
+  END IF;
 
   UPDATE public.imei_registry
      SET status = 'sold', sold_reference = NEW.sale_id::text,
@@ -386,3 +389,32 @@ REVOKE ALL ON FUNCTION public.register_imei_device(text,uuid,uuid,text,numeric,t
 REVOKE ALL ON FUNCTION public.record_imei_lifecycle_event(text,text,text,text,uuid,text,uuid,text,numeric,text,text,jsonb) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.register_imei_device(text,uuid,uuid,text,numeric,text,date,text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.record_imei_lifecycle_event(text,text,text,text,uuid,text,uuid,text,numeric,text,text,jsonb) TO authenticated;
+
+
+-- Enforce that a returned IMEI belongs to the selected original sale line.
+CREATE OR REPLACE FUNCTION public.validate_imei_return_link()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = public
+AS $$
+DECLARE
+  v_sale_item public.sale_items%ROWTYPE;
+BEGIN
+  IF NEW.imei IS NULL THEN RETURN NEW; END IF;
+  IF NEW.quantity <> 1 THEN RAISE EXCEPTION 'An IMEI return must have quantity 1'; END IF;
+  SELECT * INTO v_sale_item FROM public.sale_items WHERE id = NEW.sale_item_id;
+  IF NOT FOUND OR v_sale_item.product_id <> NEW.product_id OR
+     regexp_replace(COALESCE(v_sale_item.imei,''), '[^0-9]', '', 'g') <>
+     regexp_replace(NEW.imei, '[^0-9]', '', 'g') THEN
+    RAISE EXCEPTION 'Return IMEI does not match the original sale item';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_validate_imei_return_link ON public.returns;
+CREATE TRIGGER trg_validate_imei_return_link
+BEFORE INSERT OR UPDATE OF imei, sale_item_id, product_id, quantity
+ON public.returns
+FOR EACH ROW EXECUTE FUNCTION public.validate_imei_return_link();
