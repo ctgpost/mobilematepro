@@ -99,7 +99,7 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
           {/* Basic Information */}
           <Card className="p-4">
             <h3 className="text-lg font-semibold mb-3">Basic Information</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
               <div>
                 <p className="text-muted-foreground">Brand</p>
                 <p className="font-medium">{product.brand || "N/A"}</p>
@@ -156,7 +156,7 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
           {(product.ram || product.storage || product.battery) && (
             <Card className="p-4">
               <h3 className="text-lg font-semibold mb-3">Specifications</h3>
-              <div className="grid grid-cols-3 gap-4 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-sm">
                 {product.ram && (
                   <div>
                     <p className="text-muted-foreground">RAM</p>
@@ -264,7 +264,7 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
                       <Badge variant="outline">{item.condition}</Badge>
                     </div>
                     <Separator className="my-2" />
-                    <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                       <div>
                         <p className="text-muted-foreground">Customer</p>
                         <p className="font-medium">
