@@ -14,7 +14,7 @@ import { ProductDetailModal } from "./ProductDetailModal";
 import { BarcodeScanner } from "./BarcodeScanner";
 import { ProductQuickView } from "./ProductQuickView";
 import { ProductLabelPrint } from "./ProductLabelPrint";
-import { Eye, ScanBarcode, Download, FileSpreadsheet, FileText, Printer, Loader2, Pencil, History, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { Eye, ScanBarcode, Download, FileSpreadsheet, FileText, Printer, Loader2, Pencil, History, Trash2, ChevronDown, ChevronUp, Copy } from "lucide-react";
 import { ActivityLogger } from "@/hooks/useActivityLog";
 import { CollapsibleSection } from "./CollapsibleSection";
 import { PageHeader } from "./PageHeader";
@@ -1262,7 +1262,10 @@ export function Products() {
                       </div>
                       <div className="min-w-0">
                         <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">SKU</p>
-                        <p className="break-all font-mono text-xs font-medium text-foreground">{product.sku || "—"}</p>
+                        <div className="flex min-w-0 items-center gap-1.5">
+                          <p className="min-w-0 break-all font-mono text-xs font-medium text-foreground select-text">{product.sku || "—"}</p>
+                          {product.sku && <button type="button" title="SKU কপি" aria-label="SKU কপি" onClick={() => { void navigator.clipboard.writeText(product.sku).then(() => toast.success("SKU কপি হয়েছে")).catch(() => toast.error("কপি করা যায়নি")); }} className="shrink-0 rounded-md p-1 text-slate-500 hover:bg-slate-200 hover:text-slate-900 dark:hover:bg-slate-700"><Copy className="h-3.5 w-3.5" /></button>}
+                        </div>
                       </div>
                       <div className="sm:col-span-2 min-w-0 rounded-lg border border-emerald-100 bg-emerald-50/70 px-3 py-2 dark:border-emerald-900/60 dark:bg-emerald-950/20">
                         <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Price</p>
@@ -1289,12 +1292,18 @@ export function Products() {
                         </div>
                         <div className="min-w-0">
                           <p className="text-xs text-muted-foreground">মোবাইল</p>
-                          <p className="break-all font-medium text-foreground">{supplierPhone || "—"}</p>
+                          <div className="flex min-w-0 items-center gap-1.5">
+                            <p className="min-w-0 break-all font-medium text-foreground select-text">{supplierPhone || "—"}</p>
+                            {supplierPhone && <button type="button" title="মোবাইল কপি" aria-label="সাপ্লায়ার মোবাইল কপি" onClick={() => { void navigator.clipboard.writeText(supplierPhone).then(() => toast.success("মোবাইল নম্বর কপি হয়েছে")).catch(() => toast.error("কপি করা যায়নি")); }} className="shrink-0 rounded-md p-1 text-slate-500 hover:bg-slate-200 hover:text-slate-900 dark:hover:bg-slate-700"><Copy className="h-3.5 w-3.5" /></button>}
+                          </div>
                         </div>
                         {supplierNid && (
                           <div className="min-w-0">
                             <p className="text-xs text-muted-foreground">NID</p>
-                            <p className="break-all font-mono text-xs text-foreground">{supplierNid}</p>
+                            <div className="flex min-w-0 items-center gap-1.5">
+                            <p className="min-w-0 break-all font-mono text-xs text-foreground select-text">{supplierNid}</p>
+                            <button type="button" title="NID কপি" aria-label="NID কপি" onClick={() => { void navigator.clipboard.writeText(supplierNid).then(() => toast.success("NID কপি হয়েছে")).catch(() => toast.error("কপি করা যায়নি")); }} className="shrink-0 rounded-md p-1 text-slate-500 hover:bg-slate-200 hover:text-slate-900 dark:hover:bg-slate-700"><Copy className="h-3.5 w-3.5" /></button>
+                          </div>
                           </div>
                         )}
                       </div>
