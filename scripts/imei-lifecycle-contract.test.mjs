@@ -42,3 +42,11 @@ test("IMEI lifecycle popup is available from the application header and searches
   assert.match(pos, /imei: item\.imei \|\| null/);
   assert.match(pos, /IMEI ট্র্যাক করা ডিভাইস বিক্রির জন্য অনলাইন সংযোগ/);
 });
+
+
+test("product create payload omits the form-only quantity column and writes stock_quantity", async () => {
+  const products = await read("../src/components/Products.tsx");
+  assert.match(products, /const \{ quantity: _formQuantity, \.\.\.productFormData \} = formData/);
+  assert.match(products, /\.\.\.productFormData,[\s\S]*?stock_quantity: editingProduct \? \(editingProduct\.stock_quantity \?\? 1\) : quantity/);
+  assert.doesNotMatch(products, /\.\.\.formData,[\s\S]{0,100}quantity: undefined/);
+});
