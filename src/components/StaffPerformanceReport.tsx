@@ -116,7 +116,7 @@ export function StaffPerformanceReport() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return filterSalesWithActiveProducts(data || []);
+      return data;
     },
     enabled: isAdmin || isManager,
   });
@@ -132,7 +132,7 @@ export function StaffPerformanceReport() {
         .lte('created_at', dateRange.end.toISOString());
 
       if (error) throw error;
-      return data;
+      return filterSalesWithActiveProducts(data || []);
     },
     enabled: isAdmin || isManager,
   });
