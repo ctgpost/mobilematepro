@@ -237,7 +237,14 @@ export function POS() {
         return;
       }
       if (imeiOptions.length === 0 && registeredRows.length === 0 && product.imei && /^\\d{15}$/.test(product.imei)) {
-        imeiOptions = [product.imei];
+        // Legacy products.imei is only usable when registry confirms ownership.
+        // A stale IMEI copied from another product must not reach the sale trigger.
+        const { data: legacyDevice, error: legacyError } = await (supabase as any)
+          .from("imei_registry").select("imei,product_id,status").eq("imei", product.imei).maybeSingle();
+        if (legacyError) throw legacyError;
+        if (legacyDevice?.product_id === product.id && legacyDevice.status === "in_stock") {
+          imeiOptions = [legacyDevice.imei];
+        }
       }
       if (requestedImei && !imeiOptions.includes(requestedImei)) {
         toast.error("এই IMEI ডিভাইসটি বর্তমানে বিক্রয়যোগ্য স্টকে নেই");
