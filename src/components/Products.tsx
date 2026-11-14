@@ -784,7 +784,7 @@ export function Products() {
                     </Button>
                   </div>
                   {showImeiScanner && (
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
                       স্ক্যানার চলছে... ক্যামেরার সামনে বারকোড/IMEI লেবেল ধরুন
                     </p>
                   )}
@@ -1155,7 +1155,7 @@ export function Products() {
         </div>
         {(searchTerm || filterCondition !== "all" || filterCategory !== "all") && (
           <div className="mt-3 flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-slate-600 dark:text-slate-300">
               Found {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}
               {isSearching && !showOutOfStock && (
                 <span className="ml-1">(স্টক শূন্য পণ্যসহ)</span>
@@ -1194,7 +1194,7 @@ export function Products() {
           ].filter(Boolean);
 
           return (
-            <Card key={product.id} className="min-w-0 overflow-hidden p-0 card-hover">
+            <Card key={product.id} className="min-w-0 overflow-hidden border-slate-200 bg-white text-slate-900 shadow-sm transition-shadow hover:shadow-md dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 p-0 card-hover">
               <div className="divide-y divide-border">
                 {/* Level 1: compact product summary */}
                 <button
@@ -1229,7 +1229,7 @@ export function Products() {
                     {variations.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {variations.map((variation) => (
-                          <span key={variation} className="rounded-md bg-muted px-2 py-1 text-[11px] text-muted-foreground">
+                          <span key={variation} className="rounded-md border border-slate-200 bg-slate-100 px-2 py-1 dark:border-slate-700 dark:bg-slate-800 text-[11px] font-medium text-slate-700 dark:text-slate-200">
                             {variation}
                           </span>
                         ))}
@@ -1242,7 +1242,7 @@ export function Products() {
                       </span>
                     </div>
                   </div>
-                  <div className="flex shrink-0 flex-col items-center gap-1 text-muted-foreground">
+                  <div className="flex shrink-0 flex-col items-center gap-1 text-slate-600 dark:text-slate-300">
                     {cardLevel === 2 ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
                     <span className="text-[10px] tabular-nums">{cardLevel + 1}/3</span>
                   </div>
@@ -1250,7 +1250,7 @@ export function Products() {
 
                 {/* Level 2: brand, condition, SKU and price */}
                 {cardLevel >= 1 && (
-                  <div className="space-y-3 bg-muted/20 p-3 sm:p-4">
+                  <div className="space-y-3 bg-slate-50 p-3 sm:p-4 dark:bg-slate-800/70">
                     <div className="grid min-w-0 grid-cols-2 gap-x-3 gap-y-3 text-sm">
                       <div className="min-w-0">
                         <p className="text-xs text-muted-foreground">Company</p>
@@ -1286,8 +1286,8 @@ export function Products() {
                 {/* Level 3: supplier information and existing five actions */}
                 {cardLevel >= 2 && (
                   <div className="space-y-3 p-3 sm:p-4">
-                    <div className="space-y-2 rounded-lg border border-border bg-background p-3">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Supplier Info</p>
+                    <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-200">Supplier Info</p>
                       <div className="grid min-w-0 grid-cols-1 gap-2 text-sm sm:grid-cols-2">
                         <div className="min-w-0">
                           <p className="text-xs text-muted-foreground">নাম</p>
@@ -1319,9 +1319,9 @@ export function Products() {
                             setDetailProduct(product);
                           }
                         }}
-                        className="h-9 w-full"
+                        className="h-10 w-full border-slate-300 text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
                       >
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                       </Button>
                       <Button
                         variant="outline"
@@ -1329,9 +1329,10 @@ export function Products() {
                         title="এডিট করুন"
                         aria-label="প্রোডাক্ট এডিট করুন"
                         onClick={() => startEdit(product)}
+                        disabled={updateMutation.isPending || deleteMutation.isPending}
                         className="h-9 w-full"
                       >
-                        <Pencil className="h-4 w-4" />
+                        <Pencil className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                       </Button>
                       <Button
                         variant="outline"
@@ -1342,31 +1343,33 @@ export function Products() {
                         title="হিস্ট্রি"
                         aria-label="প্রোডাক্ট হিস্ট্রি"
                       >
-                        <History className="h-4 w-4" />
+                        <History className="h-4 w-4 text-violet-600 dark:text-violet-400" />
                       </Button>
                       <Button
                         variant="outline"
                         size="icon"
                         onClick={() => setLabelProduct(product)}
+                        disabled={deleteMutation.isPending}
                         className="h-9 w-full"
                         title="বারকোড লেবেল প্রিন্ট"
                         aria-label="বারকোড লেবেল প্রিন্ট"
                       >
-                        <Printer className="h-4 w-4" />
+                        <Printer className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                       </Button>
                       <Button
                         variant="destructive"
                         size="icon"
                         title="ডিলিট"
                         aria-label="প্রোডাক্ট ডিলিট করুন"
+                        disabled={deleteMutation.isPending || updateMutation.isPending}
                         onClick={() => {
-                          if (confirm("Are you sure you want to delete this product?")) {
+                          if (confirm(`আপনি কি “${product.name}” প্রোডাক্টটি স্থায়ীভাবে ডিলিট করতে চান?`)) {
                             deleteMutation.mutate({ id: product.id, name: product.name });
                           }
                         }}
                         className="h-9 w-full"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        {deleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 text-red-600 dark:text-red-400" />}
                       </Button>
                     </div>
                   </div>
