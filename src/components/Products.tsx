@@ -1194,7 +1194,7 @@ export function Products() {
           ].filter(Boolean);
 
           return (
-            <Card key={product.id} className={`group relative min-w-0 overflow-visible rounded-xl border border-slate-200/90 bg-white text-slate-900 shadow-sm transition-[border-color,box-shadow] duration-150 hover:border-indigo-300 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 p-0 card-hover ${cardLevel > 0 ? "z-[60] shadow-xl ring-1 ring-indigo-300/70 dark:ring-indigo-700/70" : "z-0"}`}>
+            <Card key={product.id} className={`group relative self-start min-w-0 overflow-visible rounded-xl border border-slate-200/90 bg-white text-slate-900 shadow-sm transition-[border-color,box-shadow] duration-150 hover:border-indigo-300 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 p-0 card-hover ${cardLevel > 0 ? "z-[60] shadow-xl ring-1 ring-indigo-300/70 dark:ring-indigo-700/70" : "z-0"}`}>
               <div className="relative">
                 {/* Level 1: compact product summary */}
                 <button
