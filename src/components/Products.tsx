@@ -1375,7 +1375,8 @@ export function Products() {
                         {deleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin text-white" /> : <Trash2 className="h-4 w-4 text-white opacity-100" strokeWidth={2.5} />}
                       </Button>
                     </div>
-                    </div>
+                  </div>
+                )}
                   </div>
                 )}
               </div>
