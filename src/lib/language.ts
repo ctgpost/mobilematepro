@@ -7,19 +7,38 @@ export function getLanguage(): Language {
   catch { return "en"; }
 }
 
-// Keep business data, form values, and currency untouched. Only translate interface copy.
+// Translate complete phrases first, then known UI fragments around dynamic values.
+const orderedEntries = {
+  en: Object.entries(bengaliToEnglish).filter(([key]) => key.length > 1).sort((a, b) => b[0].length - a[0].length),
+  bn: Object.entries(englishToBengali).filter(([key]) => key.length > 1).sort((a, b) => b[0].length - a[0].length),
+} as const;
+
+const normalizeDigits = (value: string, lang: Language, source: string): string => {
+  if (lang === "en") return value.replace(/[০-৯]/g, digit => String("০১২৩৪৫৬৭৮৯".indexOf(digit)));
+  // Keep pure numbers and technical identifiers intact; localize digits in Bengali UI copy.
+  if (/[\u0980-\u09FF]/.test(value) || /[০-৯]/.test(source)) {
+    return value.replace(/[0-9]/g, digit => "০১২৩৪৫৬৭৮৯"[Number(digit)]);
+  }
+  return value;
+};
+
 const translate = (source: string, lang: Language): string => {
   const table = lang === "en" ? bengaliToEnglish : englishToBengali;
   const exact = table[source];
-  if (exact) return exact;
+  if (exact) return normalizeDigits(exact, lang, source);
   const trimmed = source.trim();
-  if (table[trimmed]) return source.replace(trimmed, table[trimmed]);
-  // Labels alongside a changing count, e.g. "Sales List (25)".
-  if (lang === "bn") {
-    const match = trimmed.match(/^(Sales List|In Stock|Found|Page)\s*([(:].*)$/);
-    if (match && table[match[1]]) return source.replace(match[1], table[match[1]]);
+  if (table[trimmed]) return normalizeDigits(source.replace(trimmed, table[trimmed]), lang, source);
+
+  let result = source;
+  for (const [key, value] of orderedEntries[lang]) {
+    if (result.includes(key)) result = result.split(key).join(value);
   }
-  return source;
+  // Labels alongside a changing count, e.g. "Sales List (25)".
+  if (result === source && lang === "bn") {
+    const match = trimmed.match(/^(Sales List|In Stock|Found|Page)\s*([(:].*)$/);
+    if (match && table[match[1]]) result = source.replace(match[1], table[match[1]]);
+  }
+  return normalizeDigits(result, lang, source);
 };
 
 const originalText = new WeakMap<Text, string>();
