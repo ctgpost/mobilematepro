@@ -323,10 +323,13 @@ export function Products() {
       });
     }
 
+    // The products table stores inventory in stock_quantity, not quantity.
+    // Omit the form-only quantity key entirely: PostgREST derives its columns
+    // query parameter from object keys, even when a value is undefined.
+    const { quantity: _formQuantity, ...productFormData } = formData;
     const submitData = {
-      ...formData,
+      ...productFormData,
       imei: imei || null,
-      quantity: undefined,
       sku: editingProduct ? formData.sku : generateSKU(),
       barcode: editingProduct ? formData.barcode : generateBarcode(),
       brand: formData.brand || extractBrand(formData.name),
