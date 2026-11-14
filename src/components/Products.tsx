@@ -63,7 +63,6 @@ export function Products() {
   const [imeiScanError, setImeiScanError] = useState<string | null>(null);
   const [showOutOfStock, setShowOutOfStock] = useState(false);
   const [expandedProductCards, setExpandedProductCards] = useState<Record<string, number>>({});
-  const [viewportWidth, setViewportWidth] = useState(() => typeof window === "undefined" ? 1280 : window.innerWidth);
   const [formData, setFormData] = useState({
     name: "",
     category_id: "",
@@ -93,12 +92,6 @@ export function Products() {
   const [showInstantSupplier, setShowInstantSupplier] = useState(false);
   const [instantSupplierName, setInstantSupplierName] = useState("");
   const [instantSupplierPhone, setInstantSupplierPhone] = useState("");
-
-  useEffect(() => {
-    const updateViewportWidth = () => setViewportWidth(window.innerWidth);
-    window.addEventListener("resize", updateViewportWidth);
-    return () => window.removeEventListener("resize", updateViewportWidth);
-  }, []);
 
   useEffect(() => {
     const sync = () => setShowInstantSupplierPhoto(getInstantSupplierPhotoEnabled());
@@ -1188,10 +1181,8 @@ export function Products() {
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 lg:gap-4 xl:gap-5 pt-4 pb-6">
-        {filteredProducts?.map((product, productIndex) => {
+        {filteredProducts?.map((product) => {
           const cardLevel = expandedProductCards[product.id] ?? 0;
-          const gridColumns = viewportWidth >= 1536 ? 4 : viewportWidth >= 1280 ? 3 : viewportWidth >= 640 ? 2 : 1;
-          const alignOverlayRight = productIndex % gridColumns === gridColumns - 1;
           const supplier = suppliersList?.find((item: any) => item.id === product.supplier_id);
           const supplierName = product.supplier_name || supplier?.name;
           const supplierPhone = product.supplier_mobile || supplier?.mobile || supplier?.phone;
@@ -1257,7 +1248,7 @@ export function Products() {
 
                 {/* Expanded details float over neighboring cards without changing grid layout. */}
                 {cardLevel >= 1 && (
-                  <div className={`absolute ${alignOverlayRight ? "right-0" : "left-0"} top-full z-[70] w-[min(42rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] overflow-hidden rounded-b-xl border border-t-0 border-indigo-200 bg-white shadow-2xl dark:border-indigo-900 dark:bg-slate-900`}>
+                  <div className="absolute left-0 top-full z-[70] w-full max-w-full overflow-hidden rounded-b-xl border border-t-0 border-indigo-200 bg-white shadow-2xl dark:border-indigo-900 dark:bg-slate-900">
                     <div className="space-y-2 border-t border-slate-100 bg-slate-50/95 p-3 dark:border-slate-800 dark:bg-slate-800/95">
                     <div className="grid min-w-0 grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 text-sm">
                       <div className="min-w-0">
