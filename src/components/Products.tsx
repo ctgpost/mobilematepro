@@ -1219,8 +1219,8 @@ export function Products() {
                     <div className="grid min-w-0 grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-slate-700 dark:text-slate-200">
                       <span className="min-w-0 break-all select-text cursor-text rounded-md bg-blue-50 px-2 py-1 dark:bg-blue-950/40"><span className="font-semibold text-blue-700 dark:text-blue-300">Model</span> <span className="font-mono font-medium select-text text-slate-800 dark:text-slate-100">{product.model || "—"}</span></span>
                       {product.imei && (
-                        <span className="min-w-0 break-all font-mono">
-                          <span className="font-sans font-medium text-foreground">IMEI:</span> {product.imei}
+                        <span className="min-w-0 break-all rounded-md bg-violet-50 px-2 py-1 font-mono select-text cursor-text dark:bg-violet-950/40">
+                          <span className="font-sans font-semibold text-violet-700 dark:text-violet-300">IMEI</span> <span className="select-text">{product.imei}</span>
                         </span>
                       )}
                     </div>
@@ -1254,11 +1254,7 @@ export function Products() {
                         <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Company</p>
                         <p className="break-words font-medium text-foreground">{product.brand || "—"}</p>
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-xs text-muted-foreground">Model</p>
-                        <p className="break-words font-medium text-foreground">{product.model || "—"}</p>
-                      </div>
-                      <div className="min-w-0">
+                                            <div className="min-w-0">
                         <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Condition</p>
                         <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${product.condition === "new" ? "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-300" : "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300"}`}>
                           {product.condition === "new" ? "✨ নতুন" : "♻️ পুরাতন"}
