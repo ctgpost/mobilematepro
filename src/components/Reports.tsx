@@ -72,9 +72,10 @@ export function Reports() {
   const totalSales = filteredSales?.length || 0;
   // Net = total sales − completed returns refunds within the same period
   const filteredSaleIds = new Set((filteredSales || []).map((s: any) => s.id));
+  const activeSaleRatios = new Map((filteredSales || []).map((sale: any) => [sale.id, sale.__activeItemsRatio ?? 1]));
   const totalRefunds = (completedReturns || [])
     .filter((r: any) => filteredSaleIds.has(r.sale_id))
-    .reduce((sum: number, r: any) => sum + Number(r.refund_amount || 0), 0);
+    .reduce((sum: number, r: any) => sum + Number(r.refund_amount || 0) * Number(activeSaleRatios.get(r.sale_id) ?? 0), 0);
   const netRevenue = totalRevenue - totalRefunds;
   const averageSale = totalSales > 0 ? totalRevenue / totalSales : 0;
 
