@@ -176,7 +176,7 @@ BEGIN
         (v_item->>'unit_price')::numeric * v_quantity), v_imei);
 
     UPDATE public.products
-       SET stock_quantity = stock_quantity - v_quantity,
+       SET stock_quantity = COALESCE(stock_quantity,0) - v_quantity,
            last_stock_reason = 'sale', last_stock_ref = v_sale_id
      WHERE id = v_product.id;
   END LOOP;
