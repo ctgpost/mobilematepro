@@ -424,6 +424,7 @@ export type Database = {
       }
       products: {
         Row: {
+          archived_at: string | null
           barcode: string | null
           battery: string | null
           brand: string | null
@@ -458,6 +459,7 @@ export type Database = {
           warranty_status: string | null
         }
         Insert: {
+          archived_at?: string | null
           barcode?: string | null
           battery?: string | null
           brand?: string | null
@@ -492,6 +494,7 @@ export type Database = {
           warranty_status?: string | null
         }
         Update: {
+          archived_at?: string | null
           barcode?: string | null
           battery?: string | null
           brand?: string | null

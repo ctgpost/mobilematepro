@@ -39,7 +39,7 @@ export function POS() {
   const { data: products } = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
-      return (await fetchAll<any>("products", "*, categories(name)", (q) => q.order("name"))) as any[];
+      return (await fetchAll<any>("products", "*, categories(name)", (q) => q.is("archived_at", null).order("name"))) as any[];
     },
   });
 
