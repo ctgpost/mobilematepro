@@ -1194,8 +1194,8 @@ export function Products() {
           ].filter(Boolean);
 
           return (
-            <Card key={product.id} className="group min-w-0 overflow-hidden rounded-xl border border-slate-200/90 bg-white text-slate-900 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 p-0 card-hover">
-              <div className="divide-y divide-border">
+            <Card key={product.id} className={`group relative min-w-0 overflow-visible rounded-xl border border-slate-200/90 bg-white text-slate-900 shadow-sm transition-[border-color,box-shadow] duration-150 hover:border-indigo-300 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 p-0 card-hover ${cardLevel > 0 ? "z-[60] shadow-xl ring-1 ring-indigo-300/70 dark:ring-indigo-700/70" : "z-0"}`}>
+              <div className="relative">
                 {/* Level 1: compact product summary */}
                 <button
                   type="button"
@@ -1246,9 +1246,10 @@ export function Products() {
                   </div>
                 </button>
 
-                {/* Level 2: brand, condition, SKU and price */}
+                {/* Expanded details float over neighboring cards without changing grid layout. */}
                 {cardLevel >= 1 && (
-                  <div className="space-y-2 border-t border-slate-100 bg-slate-50/90 p-3 dark:border-slate-800 dark:bg-slate-800/50">
+                  <div className="absolute left-0 top-full z-[70] w-[min(42rem,calc(100vw-2rem))] overflow-hidden rounded-b-xl border border-t-0 border-indigo-200 bg-white shadow-2xl dark:border-indigo-900 dark:bg-slate-900">
+                    <div className="space-y-2 border-t border-slate-100 bg-slate-50/95 p-3 dark:border-slate-800 dark:bg-slate-800/95">
                     <div className="grid min-w-0 grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 text-sm">
                       <div className="min-w-0">
                         <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Company</p>
@@ -1277,8 +1278,7 @@ export function Products() {
                     {product.description && (
                       <p className="break-words text-xs text-muted-foreground">{product.description}</p>
                     )}
-                  </div>
-                )}
+                    </div>
 
                 {/* Level 3: supplier information and existing five actions */}
                 {cardLevel >= 2 && (
@@ -1374,6 +1374,7 @@ export function Products() {
                       >
                         {deleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin text-white" /> : <Trash2 className="h-4 w-4 text-white opacity-100" strokeWidth={2.5} />}
                       </Button>
+                    </div>
                     </div>
                   </div>
                 )}
