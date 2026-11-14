@@ -62,6 +62,7 @@ export function Products() {
   const [showImeiScanner, setShowImeiScanner] = useState(false);
   const [imeiScanError, setImeiScanError] = useState<string | null>(null);
   const [showOutOfStock, setShowOutOfStock] = useState(false);
+  const [showArchivedProducts, setShowArchivedProducts] = useState(false);
   const [expandedProductCards, setExpandedProductCards] = useState<Record<string, number>>({});
   const [formData, setFormData] = useState({
     name: "",
@@ -196,20 +197,31 @@ export function Products() {
     },
   });
 
-  const deleteMutation = useMutation({
+  const archiveMutation = useMutation({
     mutationFn: async ({ id, name }: { id: string; name: string }) => {
-      const { error, queued } = await offlineMutate("products", "delete", { match: { id } });
+      const { error, queued } = await offlineMutate("products", "update", { values: { archived_at: new Date().toISOString() }, match: { id } });
       if (error) throw error;
       return { name, queued };
     },
     onSuccess: ({ name, queued }) => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
-      toast.success(queued ? "অফলাইন: মুছে ফেলা সারিতে যোগ হয়েছে" : "Product deleted successfully!");
+      toast.success(queued ? "অফলাইন: Archive সারিতে যোগ হয়েছে" : "প্রোডাক্ট Archive করা হয়েছে");
       if (!queued) ActivityLogger.productDeleted(name);
     },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to delete product");
+    onError: (error: any) => toast.error(error.message || "প্রোডাক্ট Archive করা যায়নি"),
+  });
+
+  const restoreMutation = useMutation({
+    mutationFn: async ({ id }: { id: string }) => {
+      const { error, queued } = await offlineMutate("products", "update", { values: { archived_at: null }, match: { id } });
+      if (error) throw error;
+      return { queued };
     },
+    onSuccess: ({ queued }) => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      toast.success(queued ? "অফলাইন: Restore সারিতে যোগ হয়েছে" : "প্রোডাক্ট Restore করা হয়েছে");
+    },
+    onError: (error: any) => toast.error(error.message || "প্রোডাক্ট Restore করা যায়নি"),
   });
 
   const resetForm = () => {
@@ -389,6 +401,9 @@ export function Products() {
     const digitsQuery = query.replace(/\D/g, "");
 
     return products.filter((product) => {
+      const isArchived = Boolean((product as any).archived_at);
+      if (isArchived !== showArchivedProducts) return false;
+
       const haystack = [
         product.name,
         product.imei,
@@ -427,11 +442,11 @@ export function Products() {
 
       // While searching, never hide a matching product just because stock is 0.
       const hasStock =
-        showOutOfStock || terms.length > 0 || (product.stock_quantity ?? 0) > 0;
+        isArchived || showOutOfStock || terms.length > 0 || (product.stock_quantity ?? 0) > 0;
 
       return matchesSearch && matchesCondition && matchesCategory && hasStock;
     });
-  }, [products, searchTerm, filterCondition, filterCategory, showOutOfStock]);
+  }, [products, searchTerm, filterCondition, filterCategory, showOutOfStock, showArchivedProducts]);
 
   const hasActiveFilters =
     isSearching || filterCondition !== "all" || filterCategory !== "all";
@@ -1143,7 +1158,8 @@ export function Products() {
             </SelectContent>
           </Select>
         </div>
-        <div className="mt-4 flex items-center space-x-2">
+        <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2">
+          <div className="flex items-center space-x-2">
           <Checkbox 
             id="showOutOfStock" 
             checked={showOutOfStock}
@@ -1155,6 +1171,11 @@ export function Products() {
           >
             Show out of stock products (0 stock)
           </label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox id="showArchivedProducts" checked={showArchivedProducts} onCheckedChange={(checked) => setShowArchivedProducts(checked === true)} />
+            <label htmlFor="showArchivedProducts" className="cursor-pointer text-sm font-medium leading-none">Archived products ({(products || []).filter((p: any) => Boolean(p.archived_at)).length})</label>
+          </div>
         </div>
         {(searchTerm || filterCondition !== "all" || filterCategory !== "all") && (
           <div className="mt-3 flex items-center justify-between">
@@ -1215,7 +1236,9 @@ export function Products() {
                       <h3 className="min-w-0 break-words font-semibold text-sm lg:text-base leading-snug text-slate-900 dark:text-slate-100">
                         {product.name}
                       </h3>
-                      {product.stock_quantity <= (product.low_stock_threshold ?? 0) && (
+                      {(product as any).archived_at ? (
+                        <span className="shrink-0 rounded-full bg-slate-200 px-2 py-1 text-[10px] font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-200">ARCHIVED</span>
+                      ) : product.stock_quantity <= (product.low_stock_threshold ?? 0) && (
                         <span className="shrink-0 text-base" title="Low Stock">⚠️</span>
                       )}
                     </div>
@@ -1335,7 +1358,7 @@ export function Products() {
                         title="এডিট করুন"
                         aria-label="প্রোডাক্ট এডিট করুন"
                         onClick={() => startEdit(product)}
-                        disabled={updateMutation.isPending || deleteMutation.isPending}
+                        disabled={updateMutation.isPending || archiveMutation.isPending || restoreMutation.isPending}
                         className="h-9 w-full rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-sm"
                       >
                         <Pencil className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -1355,28 +1378,26 @@ export function Products() {
                         variant="outline"
                         size="icon"
                         onClick={() => setLabelProduct(product)}
-                        disabled={deleteMutation.isPending}
+                        disabled={archiveMutation.isPending || restoreMutation.isPending}
                         className="h-9 w-full"
                         title="বারকোড লেবেল প্রিন্ট"
                         aria-label="বারকোড লেবেল প্রিন্ট"
                       >
                         <Printer className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                       </Button>
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        title="ডিলিট"
-                        aria-label="প্রোডাক্ট ডিলিট করুন"
-                        disabled={deleteMutation.isPending || updateMutation.isPending}
-                        onClick={() => {
-                          if (confirm(`আপনি কি “${product.name}” প্রোডাক্টটি স্থায়ীভাবে ডিলিট করতে চান?`)) {
-                            deleteMutation.mutate({ id: product.id, name: product.name });
-                          }
-                        }}
-                        className="h-9 w-full"
-                      >
-                        {deleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin text-white" /> : <Trash2 className="h-4 w-4 text-white opacity-100" strokeWidth={2.5} />}
-                      </Button>
+                      {(product as any).archived_at ? (
+                        <Button variant="outline" size="icon" title="Restore" aria-label="প্রোডাক্ট Restore করুন" disabled={restoreMutation.isPending || archiveMutation.isPending} onClick={() => {
+                          if (confirm(`“${product.name}” প্রোডাক্টটি আবার Active করতে চান?`)) restoreMutation.mutate({ id: product.id });
+                        }} className="h-9 w-full">
+                          {restoreMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <History className="h-4 w-4 text-emerald-600" />}
+                        </Button>
+                      ) : (
+                        <Button variant="destructive" size="icon" title="Archive" aria-label="প্রোডাক্ট Archive করুন" disabled={archiveMutation.isPending || restoreMutation.isPending || updateMutation.isPending} onClick={() => {
+                          if (confirm(`“${product.name}” প্রোডাক্টটি Archive করতে চান? এটি বিক্রির তালিকা থেকে সরবে, তবে IMEI ও বিক্রয়ের ইতিহাস সংরক্ষিত থাকবে।`)) archiveMutation.mutate({ id: product.id, name: product.name });
+                        }} className="h-9 w-full">
+                          {archiveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin text-white" /> : <Trash2 className="h-4 w-4 text-white" strokeWidth={2.5} />}
+                        </Button>
+                      )}
                     </div>
                   </div>
                 )}
