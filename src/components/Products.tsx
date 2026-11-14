@@ -1190,7 +1190,7 @@ export function Products() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 lg:gap-4 xl:gap-5 pt-4 pb-6">
         {filteredProducts?.map((product, productIndex) => {
           const cardLevel = expandedProductCards[product.id] ?? 0;
-          const gridColumns = viewportWidth >= 1536 ? 4 : viewportWidth >= 1024 ? 3 : viewportWidth >= 640 ? 2 : 1;
+          const gridColumns = viewportWidth >= 1536 ? 4 : viewportWidth >= 1280 ? 3 : viewportWidth >= 640 ? 2 : 1;
           const alignOverlayRight = productIndex % gridColumns === gridColumns - 1;
           const supplier = suppliersList?.find((item: any) => item.id === product.supplier_id);
           const supplierName = product.supplier_name || supplier?.name;
