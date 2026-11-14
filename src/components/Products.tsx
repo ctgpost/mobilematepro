@@ -1257,7 +1257,7 @@ export function Products() {
 
                 {/* Expanded details float over neighboring cards without changing grid layout. */}
                 {cardLevel >= 1 && (
-                  <div className={`absolute ${alignOverlayRight ? "right-0" : "left-0"} top-full z-[70] w-[min(42rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] overflow-hidden rounded-b-xl border border-t-0 border-indigo-200 bg-white shadow-2xl dark:border-indigo-900 dark:bg-slate-900`}>
+                  <div className={`absolute ${alignOverlayRight ? "right-0" : "left-0"} top-full z-[70] w-[min(42rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] overflow-hidden rounded-b-xl border border-t-0 border-indigo-200 bg-white shadow-2xl dark:border-indigo-900 dark:bg-slate-900">
                     <div className="space-y-2 border-t border-slate-100 bg-slate-50/95 p-3 dark:border-slate-800 dark:bg-slate-800/95">
                     <div className="grid min-w-0 grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 text-sm">
                       <div className="min-w-0">
