@@ -3,6 +3,7 @@ import { PageHeader } from "./PageHeader";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAll } from "@/lib/fetchAll";
+import { filterSalesWithActiveProducts } from "@/lib/activeSales";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -46,7 +47,8 @@ export function CustomerLedger() {
     enabled: !!selectedCustomerId,
     queryFn: async () => {
       // Unlimited fetch — no 1000-row cap
-      return fetchAll<any>("sales", "*", (q) => q.eq("customer_id", selectedCustomerId).order("created_at"));
+      const rows = await fetchAll<any>("sales", "*, sale_items(*, products(archived_at))", (q) => q.eq("customer_id", selectedCustomerId).order("created_at"));
+      return filterSalesWithActiveProducts(rows);
     },
   });
 
@@ -57,7 +59,12 @@ export function CustomerLedger() {
       const ids = sales?.map(s => s.id) || [];
       if (!ids.length) return [];
       // Unlimited fetch — no 1000-row cap
-      return fetchAll<any>("due_payments", "*", (q) => q.in("sale_id", ids).order("created_at"));
+      const payments = await fetchAll<any>("due_payments", "*", (q) => q.in("sale_id", ids).order("created_at"));
+       const ratios = new Map((sales || []).map((sale: any) => [sale.id, sale.__activeItemsRatio ?? 1]));
+       return payments.map((payment: any) => ({
+         ...payment,
+         amount: Math.round(Number(payment.amount || 0) * Number(ratios.get(payment.sale_id) ?? 0) * 100) / 100,
+       }));
     },
   });
 
