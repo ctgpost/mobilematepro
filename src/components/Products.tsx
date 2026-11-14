@@ -449,10 +449,10 @@ export function Products() {
   }, [products, searchTerm, filterCondition, filterCategory, showOutOfStock, showArchivedProducts]);
 
   const hasActiveFilters =
-    isSearching || filterCondition !== "all" || filterCategory !== "all";
+    isSearching || filterCondition !== "all" || filterCategory !== "all" || showArchivedProducts;
 
   // Exports follow what the user currently sees when any filter/search is active.
-  const exportProducts: any[] = hasActiveFilters ? filteredProducts : (products || []);
+  const exportProducts: any[] = hasActiveFilters ? filteredProducts : (products || []).filter((product: any) => Boolean(product.archived_at) === showArchivedProducts);
 
   const handleBarcodeScanned = (barcode: string) => {
     const code = (barcode || "").trim();
