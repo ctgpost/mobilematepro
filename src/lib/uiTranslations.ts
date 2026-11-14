@@ -968,7 +968,7 @@ export const bengaliToEnglish: Record<string, string> = {
   "কাস্টমার রিটার্ন": "Customer Returns",
   "ইনভেস্টমেন্ট সেক্টর": "Investment Sectors",
   "ইনভেস্টমেন্ট আয়": "Investment Income",
-  "শপ সেটিংস": "Shop Settings"
+  "শপ সেটিংস": "Shop Settings",
   "নতুন IMEI নিবন্ধন": "New IMEI Registration",
   "প্রতিটি ফিজিক্যাল ডিভাইসের জন্য আলাদা ১৫ ডিজিট IMEI নিবন্ধন করুন।": "Register a separate 15-digit IMEI for each physical device.",
   "IMEI event, sale, return, stock movement ও supplier ledger একসাথে": "View IMEI events, sales, returns, stock movements, and supplier ledger together.",
@@ -1292,7 +1292,7 @@ export const englishToBengali: Record<string, string> = {
   "Admin": "অ্যাডমিন",
   "Manager": "ম্যানেজার",
   "Staff": "স্টাফা",
-  "📱 IMEI...": "আসলে..."
+  "📱 IMEI...": "আসলে...",
   "January": "জানুয়ারি",
   "February": "ফেব্রুয়ারি",
   "March": "মার্চ",
