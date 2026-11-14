@@ -23,6 +23,8 @@ const normalizeDigits = (value: string, lang: Language, source: string): string 
 };
 
 const translate = (source: string, lang: Language): string => {
+  const hasSourceLanguageText = lang === "en" ? /[\\u0980-\\u09FF]/.test(source) : /[A-Za-z]/.test(source);
+  if (!hasSourceLanguageText) return normalizeDigits(source, lang, source);
   const table = lang === "en" ? bengaliToEnglish : englishToBengali;
   const exact = table[source];
   if (exact) return normalizeDigits(exact, lang, source);
