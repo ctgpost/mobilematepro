@@ -57,13 +57,14 @@ export function Dashboard({ onNavigateToPOS, onNavigateToProducts }: DashboardPr
   const activeSaleRatios = new Map((sales || []).map((sale: any) => [sale.id, sale.__activeItemsRatio ?? 1]));
   const totalReturnsAmount = (completedReturns || []).reduce((sum: number, r: any) => sum + Number(r.refund_amount || 0) * Number(activeSaleRatios.get(r.sale_id) ?? 0), 0);
   const netSales = totalSales - totalReturnsAmount;
+  const getActiveRefundAmount = (refund: any) => Number(refund.refund_amount || 0) * Number(activeSaleRatios.get(refund.sale_id) ?? 0);
   const isSameDay = (d: Date, ref: Date) => d.toDateString() === ref.toDateString();
   const todayRef = new Date();
   const startOfWeek = new Date(); startOfWeek.setDate(todayRef.getDate() - 7);
   const startOfMonth = new Date(); startOfMonth.setMonth(todayRef.getMonth() - 1);
-  const todayReturns = (completedReturns || []).filter((r: any) => isSameDay(new Date(r.created_at), todayRef)).reduce((s: number, r: any) => s + Number(r.refund_amount || 0), 0);
-  const weekReturns = (completedReturns || []).filter((r: any) => new Date(r.created_at) >= startOfWeek).reduce((s: number, r: any) => s + Number(r.refund_amount || 0), 0);
-  const monthReturns = (completedReturns || []).filter((r: any) => new Date(r.created_at) >= startOfMonth).reduce((s: number, r: any) => s + Number(r.refund_amount || 0), 0);
+  const todayReturns = (completedReturns || []).filter((r: any) => isSameDay(new Date(r.created_at), todayRef)).reduce((sum: number, r: any) => sum + getActiveRefundAmount(r), 0);
+  const weekReturns = (completedReturns || []).filter((r: any) => new Date(r.created_at) >= startOfWeek).reduce((sum: number, r: any) => sum + getActiveRefundAmount(r), 0);
+  const monthReturns = (completedReturns || []).filter((r: any) => new Date(r.created_at) >= startOfMonth).reduce((sum: number, r: any) => sum + getActiveRefundAmount(r), 0);
   const todaySales = sales?.filter(s => 
     new Date(s.created_at).toDateString() === new Date().toDateString()
   ).length || 0;
