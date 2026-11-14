@@ -1180,7 +1180,7 @@ export function Products() {
 
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 pt-4 pb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 lg:gap-4 xl:gap-5 pt-4 pb-6">
         {filteredProducts?.map((product) => {
           const cardLevel = expandedProductCards[product.id] ?? 0;
           const supplier = suppliersList?.find((item: any) => item.id === product.supplier_id);
@@ -1194,7 +1194,7 @@ export function Products() {
           ].filter(Boolean);
 
           return (
-            <Card key={product.id} className="min-w-0 overflow-hidden border-slate-200 bg-white text-slate-900 shadow-sm transition-shadow hover:shadow-md dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 p-0 card-hover">
+            <Card key={product.id} className="group min-w-0 overflow-hidden rounded-xl border border-slate-200/90 bg-white text-slate-900 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 p-0 card-hover">
               <div className="divide-y divide-border">
                 {/* Level 1: compact product summary */}
                 <button
@@ -1205,19 +1205,19 @@ export function Products() {
                     ...previous,
                     [product.id]: cardLevel === 2 ? 0 : cardLevel + 1,
                   }))}
-                  className="flex w-full min-w-0 items-center justify-between gap-3 p-2 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
+                  className="flex w-full min-w-0 items-center justify-between gap-3 bg-gradient-to-r from-slate-50 via-white to-indigo-50/60 p-3 text-left transition-colors hover:from-indigo-50 hover:to-blue-50/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset dark:from-slate-900 dark:via-slate-900 dark:to-indigo-950/30 dark:hover:from-slate-800 dark:hover:to-indigo-950/40"
                 >
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex min-w-0 items-start justify-between gap-2">
-                      <h3 className="min-w-0 break-words font-semibold text-sm leading-snug text-foreground">
+                      <h3 className="min-w-0 break-words font-semibold text-sm lg:text-base leading-snug text-slate-900 dark:text-slate-100">
                         {product.name}
                       </h3>
                       {product.stock_quantity <= (product.low_stock_threshold ?? 0) && (
                         <span className="shrink-0 text-base" title="Low Stock">⚠️</span>
                       )}
                     </div>
-                    <div className="grid min-w-0 grid-cols-2 gap-x-2 gap-y-1 text-[11px] text-slate-700 dark:text-slate-200">
-                      <span className="min-w-0 break-all select-text cursor-text"><span className="font-semibold text-foreground">Model:</span> <span className="font-mono select-text">{product.model || "—"}</span></span>
+                    <div className="grid min-w-0 grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-slate-700 dark:text-slate-200">
+                      <span className="min-w-0 break-all select-text cursor-text rounded-md bg-blue-50 px-2 py-1 dark:bg-blue-950/40"><span className="font-semibold text-blue-700 dark:text-blue-300">Model</span> <span className="font-mono font-medium select-text text-slate-800 dark:text-slate-100">{product.model || "—"}</span></span>
                       {product.imei && (
                         <span className="min-w-0 break-all font-mono">
                           <span className="font-sans font-medium text-foreground">IMEI:</span> {product.imei}
@@ -1227,7 +1227,7 @@ export function Products() {
                     {variations.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {variations.map((variation) => (
-                          <span key={variation} className="rounded-md border border-slate-200 bg-slate-100 px-2 py-1 dark:border-slate-700 dark:bg-slate-800 text-[11px] font-medium text-slate-700 dark:text-slate-200">
+                          <span key={variation} className="rounded-md border border-cyan-200 bg-cyan-50 px-2 py-0.5 text-[10px] font-semibold text-cyan-800 dark:border-cyan-900 dark:bg-cyan-950/50 dark:text-cyan-200">
                             {variation}
                           </span>
                         ))}
@@ -1235,12 +1235,12 @@ export function Products() {
                     )}
                     <div className="flex items-center gap-2 text-xs">
                       <span className="text-slate-600 dark:text-slate-300">Stock</span>
-                      <span className={`font-semibold tabular-nums ${product.stock_quantity <= (product.low_stock_threshold ?? 0) ? "text-amber-600" : "text-foreground"}`}>
+                      <span className={`rounded-full px-2 py-0.5 font-bold tabular-nums ${product.stock_quantity <= (product.low_stock_threshold ?? 0) ? "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300" : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300"}`}>
                         {product.stock_quantity ?? 0} {product.unit || "pcs"}
                       </span>
                     </div>
                   </div>
-                  <div className="flex shrink-0 flex-col items-center gap-1 text-slate-600 dark:text-slate-300">
+                  <div className="flex shrink-0 flex-col items-center gap-1 rounded-lg bg-indigo-100 px-2 py-1 text-indigo-700 transition-colors group-hover:bg-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300 dark:group-hover:bg-indigo-900">
                     {cardLevel === 2 ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
                     <span className="text-[10px] tabular-nums">{cardLevel + 1}/3</span>
                   </div>
@@ -1248,10 +1248,10 @@ export function Products() {
 
                 {/* Level 2: brand, condition, SKU and price */}
                 {cardLevel >= 1 && (
-                  <div className="space-y-2 bg-slate-50 p-2 dark:bg-slate-800/70 dark:bg-slate-800/70">
-                    <div className="grid min-w-0 grid-cols-2 gap-x-3 gap-y-3 text-sm">
+                  <div className="space-y-2 border-t border-slate-100 bg-slate-50/90 p-3 dark:border-slate-800 dark:bg-slate-800/50">
+                    <div className="grid min-w-0 grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 text-sm">
                       <div className="min-w-0">
-                        <p className="text-xs text-muted-foreground">Company</p>
+                        <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Company</p>
                         <p className="break-words font-medium text-foreground">{product.brand || "—"}</p>
                       </div>
                       <div className="min-w-0">
@@ -1259,18 +1259,18 @@ export function Products() {
                         <p className="break-words font-medium text-foreground">{product.model || "—"}</p>
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs text-muted-foreground">Condition</p>
+                        <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Condition</p>
                         <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${product.condition === "new" ? "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-300" : "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300"}`}>
                           {product.condition === "new" ? "✨ নতুন" : "♻️ পুরাতন"}
                         </span>
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs text-muted-foreground">SKU</p>
+                        <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">SKU</p>
                         <p className="break-all font-mono text-xs font-medium text-foreground">{product.sku || "—"}</p>
                       </div>
-                      <div className="col-span-2 min-w-0 border-t border-border pt-2">
-                        <p className="text-xs text-muted-foreground">Price</p>
-                        <p className="text-lg font-bold tabular-nums text-foreground">
+                      <div className="sm:col-span-2 min-w-0 rounded-lg border border-emerald-100 bg-emerald-50/70 px-3 py-2 dark:border-emerald-900/60 dark:bg-emerald-950/20">
+                        <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Price</p>
+                        <p className="text-lg font-bold tabular-nums text-emerald-700 dark:text-emerald-300">
                           ৳{Number(product.price || 0).toLocaleString("bn-BD")}
                         </p>
                       </div>
@@ -1303,7 +1303,7 @@ export function Products() {
                         )}
                       </div>
                     </div>
-                    <div className="grid grid-cols-5 gap-1">
+                    <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
                       <Button
                         variant="outline"
                         size="icon"
@@ -1328,7 +1328,7 @@ export function Products() {
                         aria-label="প্রোডাক্ট এডিট করুন"
                         onClick={() => startEdit(product)}
                         disabled={updateMutation.isPending || deleteMutation.isPending}
-                        className="h-8 w-full"
+                        className="h-9 w-full rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-sm"
                       >
                         <Pencil className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                       </Button>
@@ -1336,7 +1336,7 @@ export function Products() {
                         variant="outline"
                         size="icon"
                         onClick={() => setHistoryProduct({ imei: product.imei || "", name: product.name })}
-                        className="h-9 w-full"
+                        className="h-9 w-full rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-sm"
                         disabled={!product.imei}
                         title="হিস্ট্রি"
                         aria-label="প্রোডাক্ট হিস্ট্রি"
