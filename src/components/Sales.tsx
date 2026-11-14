@@ -143,10 +143,10 @@ export function Sales() {
         `*, customers (name, phone, email, photo_url), sale_items ( quantity, unit_price, total_price, condition, products (name, sku, imei, brand, model, archived_at) )`,
         (q) => q.order("created_at", { ascending: false })
       );
-      return data.map((sale: any) => ({
+      return filterSalesWithActiveProducts(data.map((sale: any) => ({
         ...sale,
         sale_items: sale.sale_items || [],
-      })) as SaleDetail[];
+      }))) as SaleDetail[];
     },
   });
 
