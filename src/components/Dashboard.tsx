@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useShopSettings } from "@/hooks/useShopSettings";
 import { MobileDashboardWidget } from "./MobileDashboardWidget";
 import { fetchAll } from "@/lib/fetchAll";
+import { filterSalesWithActiveProducts } from "@/lib/activeSales";
 import { PageHeader } from "./PageHeader";
 import { LanguageSwitch } from "./LanguageProvider";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -24,13 +25,13 @@ export function Dashboard({ onNavigateToPOS, onNavigateToProducts }: DashboardPr
 
   const { data: products, isLoading: productsLoading } = useQuery({
     queryKey: ["products", "dashboard-all"],
-    queryFn: async () => fetchAll<any>("products", "*"),
+    queryFn: async () => (await fetchAll<any>("products", "*")).filter((product) => !product.archived_at),
   });
 
   const { data: sales, isLoading: salesLoading } = useQuery({
     queryKey: ["sales", "dashboard-all"],
     queryFn: async () =>
-      fetchAll<any>("sales", "*, customers(name, phone), sale_items(*, products(name, sku, condition, imei))", (q) => q.order("created_at", { ascending: false })),
+      filterSalesWithActiveProducts(await fetchAll<any>("sales", "*, customers(name, phone), sale_items(*, products(name, sku, condition, imei, archived_at))", (q) => q.order("created_at", { ascending: false }))),
   });
 
   const { data: purchaseEntries = [], isLoading: purchasesLoading } = useQuery({
@@ -47,21 +48,23 @@ export function Dashboard({ onNavigateToPOS, onNavigateToProducts }: DashboardPr
     queryKey: ["returns", "dashboard-all"],
     // Unlimited fetch — no 1000-row cap
     queryFn: async () =>
-      fetchAll<any>("returns", "refund_amount, created_at, status", (q) => q.eq("status", "completed")),
+      fetchAll<any>("returns", "sale_id, refund_amount, created_at, status", (q) => q.eq("status", "completed")),
   });
 
   const totalProducts = products?.length || 0;
   const outOfStockProducts = products?.filter(p => p.stock_quantity <= 0).length || 0;
   const totalSales = sales?.reduce((sum, sale) => sum + Number(sale.total_amount), 0) || 0;
-  const totalReturnsAmount = (completedReturns || []).reduce((s: number, r: any) => s + Number(r.refund_amount || 0), 0);
+  const activeSaleRatios = new Map((sales || []).map((sale: any) => [sale.id, sale.__activeItemsRatio ?? 1]));
+  const totalReturnsAmount = (completedReturns || []).reduce((sum: number, r: any) => sum + Number(r.refund_amount || 0) * Number(activeSaleRatios.get(r.sale_id) ?? 0), 0);
   const netSales = totalSales - totalReturnsAmount;
+  const getActiveRefundAmount = (refund: any) => Number(refund.refund_amount || 0) * Number(activeSaleRatios.get(refund.sale_id) ?? 0);
   const isSameDay = (d: Date, ref: Date) => d.toDateString() === ref.toDateString();
   const todayRef = new Date();
   const startOfWeek = new Date(); startOfWeek.setDate(todayRef.getDate() - 7);
   const startOfMonth = new Date(); startOfMonth.setMonth(todayRef.getMonth() - 1);
-  const todayReturns = (completedReturns || []).filter((r: any) => isSameDay(new Date(r.created_at), todayRef)).reduce((s: number, r: any) => s + Number(r.refund_amount || 0), 0);
-  const weekReturns = (completedReturns || []).filter((r: any) => new Date(r.created_at) >= startOfWeek).reduce((s: number, r: any) => s + Number(r.refund_amount || 0), 0);
-  const monthReturns = (completedReturns || []).filter((r: any) => new Date(r.created_at) >= startOfMonth).reduce((s: number, r: any) => s + Number(r.refund_amount || 0), 0);
+  const todayReturns = (completedReturns || []).filter((r: any) => isSameDay(new Date(r.created_at), todayRef)).reduce((sum: number, r: any) => sum + getActiveRefundAmount(r), 0);
+  const weekReturns = (completedReturns || []).filter((r: any) => new Date(r.created_at) >= startOfWeek).reduce((sum: number, r: any) => sum + getActiveRefundAmount(r), 0);
+  const monthReturns = (completedReturns || []).filter((r: any) => new Date(r.created_at) >= startOfMonth).reduce((sum: number, r: any) => sum + getActiveRefundAmount(r), 0);
   const todaySales = sales?.filter(s => 
     new Date(s.created_at).toDateString() === new Date().toDateString()
   ).length || 0;

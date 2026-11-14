@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAll } from "@/lib/fetchAll";
+import { filterSalesWithActiveProducts } from "@/lib/activeSales";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -139,13 +140,13 @@ export function Sales() {
     queryFn: async () => {
       const data = await fetchAll<any>(
         "sales",
-        `*, customers (name, phone, email, photo_url), sale_items ( quantity, unit_price, total_price, condition, products (name, sku, imei, brand, model) )`,
+        `*, customers (name, phone, email, photo_url), sale_items ( quantity, unit_price, total_price, condition, products (name, sku, imei, brand, model, archived_at) )`,
         (q) => q.order("created_at", { ascending: false })
       );
-      return data.map((sale: any) => ({
+      return filterSalesWithActiveProducts(data.map((sale: any) => ({
         ...sale,
         sale_items: sale.sale_items || [],
-      })) as SaleDetail[];
+      }))) as SaleDetail[];
     },
   });
 

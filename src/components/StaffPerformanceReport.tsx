@@ -49,6 +49,7 @@ import {
 import { useReactToPrint } from "react-to-print";
 import { toast } from "sonner";
 import shopLogo from "@/assets/mobile-mate-pro-logo.png";
+import { filterSalesWithActiveProducts } from "@/lib/activeSales";
 
 interface StaffPerformance {
   email: string;
@@ -126,12 +127,12 @@ export function StaffPerformanceReport() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('sales')
-        .select('user_id, total_amount, created_at')
+        .select('user_id, total_amount, created_at, sale_items(*, products(archived_at))')
         .gte('created_at', dateRange.start.toISOString())
         .lte('created_at', dateRange.end.toISOString());
 
       if (error) throw error;
-      return data;
+      return filterSalesWithActiveProducts(data || []);
     },
     enabled: isAdmin || isManager,
   });
@@ -191,10 +192,6 @@ export function StaffPerformanceReport() {
         }
       }
 
-      if (log.action_type === 'sale') {
-        perf.salesCount++;
-      }
-
       if (log.action_type === 'product') {
         perf.productActions++;
         if (log.action.toLowerCase().includes('added') || log.action.toLowerCase().includes('created')) {
@@ -221,6 +218,7 @@ export function StaffPerformanceReport() {
         const email = profileMap.get(sale.user_id) || 'Unknown';
         const perf = performanceMap.get(email);
         if (perf) {
+          perf.salesCount++;
           perf.salesAmount += Number(sale.total_amount) || 0;
         }
       });
