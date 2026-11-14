@@ -1205,21 +1205,19 @@ export function Products() {
                     ...previous,
                     [product.id]: cardLevel === 2 ? 0 : cardLevel + 1,
                   }))}
-                  className="flex w-full min-w-0 items-center justify-between gap-3 p-3 sm:p-4 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
+                  className="flex w-full min-w-0 items-center justify-between gap-3 p-2 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
                 >
-                  <div className="min-w-0 flex-1 space-y-2">
+                  <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex min-w-0 items-start justify-between gap-2">
-                      <h3 className="min-w-0 break-words font-semibold text-base leading-snug text-foreground">
+                      <h3 className="min-w-0 break-words font-semibold text-sm leading-snug text-foreground">
                         {product.name}
                       </h3>
                       {product.stock_quantity <= (product.low_stock_threshold ?? 0) && (
                         <span className="shrink-0 text-base" title="Low Stock">⚠️</span>
                       )}
                     </div>
-                    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                      <span className="min-w-0 break-all">
-                        <span className="font-medium text-foreground">Model:</span> {product.model || "—"}
-                      </span>
+                    <div className="grid min-w-0 grid-cols-2 gap-x-2 gap-y-1 text-[11px] text-slate-700 dark:text-slate-200">
+                      <span className="min-w-0 break-all select-text cursor-text"><span className="font-semibold text-foreground">Model:</span> <span className="font-mono select-text">{product.model || "—"}</span></span>
                       {product.imei && (
                         <span className="min-w-0 break-all font-mono">
                           <span className="font-sans font-medium text-foreground">IMEI:</span> {product.imei}
@@ -1235,8 +1233,8 @@ export function Products() {
                         ))}
                       </div>
                     )}
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-muted-foreground">Stock</span>
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-slate-600 dark:text-slate-300">Stock</span>
                       <span className={`font-semibold tabular-nums ${product.stock_quantity <= (product.low_stock_threshold ?? 0) ? "text-amber-600" : "text-foreground"}`}>
                         {product.stock_quantity ?? 0} {product.unit || "pcs"}
                       </span>
@@ -1250,7 +1248,7 @@ export function Products() {
 
                 {/* Level 2: brand, condition, SKU and price */}
                 {cardLevel >= 1 && (
-                  <div className="space-y-3 bg-slate-50 p-3 sm:p-4 dark:bg-slate-800/70">
+                  <div className="space-y-2 bg-slate-50 p-2 dark:bg-slate-800/70 dark:bg-slate-800/70">
                     <div className="grid min-w-0 grid-cols-2 gap-x-3 gap-y-3 text-sm">
                       <div className="min-w-0">
                         <p className="text-xs text-muted-foreground">Company</p>
@@ -1285,8 +1283,8 @@ export function Products() {
 
                 {/* Level 3: supplier information and existing five actions */}
                 {cardLevel >= 2 && (
-                  <div className="space-y-3 p-3 sm:p-4">
-                    <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+                  <div className="space-y-2 p-2">
+                    <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-900">
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-200">Supplier Info</p>
                       <div className="grid min-w-0 grid-cols-1 gap-2 text-sm sm:grid-cols-2">
                         <div className="min-w-0">
@@ -1305,7 +1303,7 @@ export function Products() {
                         )}
                       </div>
                     </div>
-                    <div className="grid grid-cols-5 gap-1.5">
+                    <div className="grid grid-cols-5 gap-1">
                       <Button
                         variant="outline"
                         size="icon"
@@ -1319,7 +1317,7 @@ export function Products() {
                             setDetailProduct(product);
                           }
                         }}
-                        className="h-10 w-full border-slate-300 text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
+                        className="h-8 w-full border-slate-300 text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
                       >
                         <Eye className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                       </Button>
@@ -1330,7 +1328,7 @@ export function Products() {
                         aria-label="প্রোডাক্ট এডিট করুন"
                         onClick={() => startEdit(product)}
                         disabled={updateMutation.isPending || deleteMutation.isPending}
-                        className="h-9 w-full"
+                        className="h-8 w-full"
                       >
                         <Pencil className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                       </Button>
@@ -1369,7 +1367,7 @@ export function Products() {
                         }}
                         className="h-9 w-full"
                       >
-                        {deleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 text-red-600 dark:text-red-400" />}
+                        {deleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin text-white" /> : <Trash2 className="h-4 w-4 text-white opacity-100" strokeWidth={2.5} />}
                       </Button>
                     </div>
                   </div>
