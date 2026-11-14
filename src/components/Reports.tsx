@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAll } from "@/lib/fetchAll";
+import { filterSalesWithActiveProducts } from "@/lib/activeSales";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -22,16 +23,16 @@ export function Reports() {
     queryFn: async () => {
       const rows = await fetchAll<any>(
         "sales",
-        "*, sale_items(*, products(name)), customers(name)",
+        "*, sale_items(*, products(name, archived_at, condition)), customers(name)",
         (q) => q.order("created_at", { ascending: false })
       );
-      return rows;
+      return filterSalesWithActiveProducts(rows);
     },
   });
 
   const { data: products } = useQuery({
     queryKey: ["products", "all-reports"],
-    queryFn: async () => fetchAll<any>("products", "*"),
+    queryFn: async () => (await fetchAll<any>("products", "*")).filter((product) => !product.archived_at),
   });
 
   const { data: completedReturns } = useQuery({
