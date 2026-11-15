@@ -105,7 +105,24 @@ export function Investments() {
         entry_date: entryForm.entry_date,
         created_by: user?.id,
       };
-      if (editingEntry) {
+      if (entryForm.entry_type === "withdraw") {
+        if (editingEntry) {
+          const { data: currentEntries, error: balanceError } = await supabase.from("investment_entries")
+            .select("amount,entry_type").eq("sector_id", entryForm.sector_id).neq("id", editingEntry.id);
+          if (balanceError) throw balanceError;
+          const available = (currentEntries || []).reduce((sum: number, row: any) =>
+            sum + (row.entry_type === "deposit" ? Number(row.amount) : row.entry_type === "withdraw" ? -Number(row.amount) : 0), 0);
+          if (amount > available) throw new Error(`উত্তোলন উপলব্ধ ব্যালেন্সের বেশি। সর্বোচ্চ: ৳${available.toLocaleString("bn-BD")}`);
+          const { error } = await supabase.from("investment_entries").update(payload).eq("id", editingEntry.id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.rpc("create_investment_withdrawal_atomic", {
+            p_sector_id: entryForm.sector_id, p_amount: amount, p_purpose: entryForm.purpose || null,
+            p_notes: entryForm.notes || null, p_entry_date: entryForm.entry_date,
+          });
+          if (error) throw error;
+        }
+      } else if (editingEntry) {
         const { error } = await supabase.from("investment_entries").update(payload).eq("id", editingEntry.id);
         if (error) throw error;
       } else {
