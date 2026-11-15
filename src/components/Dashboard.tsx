@@ -106,7 +106,7 @@ export function Dashboard({ onNavigateToPOS, onNavigateToProducts }: DashboardPr
   const isLoading = productsLoading || salesLoading;
 
   const LoadingSkeleton = () => (
-    <div className="flex flex-col h-screen animate-fade-in">
+    <div className="flex w-full min-w-0 max-w-full flex-col h-[100dvh] animate-fade-in overflow-x-clip">
       <div className="sticky top-0 z-10 bg-white dark:bg-gray-950 border-b border-border pb-4">
         <div className="flex items-start justify-between">
           <div>
@@ -159,12 +159,12 @@ export function Dashboard({ onNavigateToPOS, onNavigateToProducts }: DashboardPr
         icon={<img src={logoSrc} alt={settings.shop_name} className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 shrink-0 object-contain" />}
       />
 
-      <div className="flex-1 overflow-y-auto pb-6 space-y-4 sm:space-y-4 pt-3">
+      <div className="flex-1 min-w-0 max-w-full overflow-x-clip overflow-y-auto pb-6 space-y-4 sm:space-y-4 pt-3">
         <MobileDashboardWidget 
           onNavigateToPOS={onNavigateToPOS}
           onNavigateToProducts={onNavigateToProducts}
         />
-        <div className="grid min-w-0 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid w-full min-w-0 max-w-full grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
         {stats.map((stat, index) => (
           <Card key={index} className="min-w-0 overflow-hidden p-3 sm:p-4 card-hover border-border bg-card">
             <div className="flex min-w-0 items-center justify-between gap-3">
@@ -194,12 +194,12 @@ export function Dashboard({ onNavigateToPOS, onNavigateToProducts }: DashboardPr
         </Card>
       )}
 
-      <Card className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border-amber-200/60">
+      <Card className="min-w-0 max-w-full overflow-hidden p-4 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border-amber-200/60">
         <h2 className="text-xl font-semibold mb-6 text-foreground flex items-center">
           <span className="text-2xl mr-2">💰</span>
           মোট বিনিয়োগ বিশ্লেষণ
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid min-w-0 grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="p-4 bg-green-50 dark:bg-green-950/20 border-green-200">
             <div className="flex items-center space-x-2 mb-3">
               <div className="w-3 h-3 rounded-full bg-green-500"></div>
@@ -228,8 +228,8 @@ export function Dashboard({ onNavigateToPOS, onNavigateToProducts }: DashboardPr
           </Card>
         </div>
         
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg">
+        <div className="mt-4 grid min-w-0 grid-cols-2 gap-3">
+          <div className="min-w-0 overflow-hidden bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg">
             <p className="text-sm text-muted-foreground mb-1">নতুন প্রোডাক্ট শেয়ার</p>
             <div className="flex items-center space-x-2">
               <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">

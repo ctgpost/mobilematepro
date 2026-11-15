@@ -275,3 +275,84 @@
   border-left: 3px solid hsl(38 92% 50%);
   box-shadow: inset 0 0 20px hsl(38 92% 50% / 0.05);
 }
+
+
+/* Responsive layout guardrails: prevent mobile viewport drift and card overflow. */
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+body {
+  overflow-x: clip;
+}
+
+#root,
+#root > * {
+  min-width: 0;
+}
+
+main,
+main > div,
+main > div > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (max-width: 1023px) {
+  main {
+    width: 100%;
+    margin-inline: 0;
+    padding-inline: 0;
+  }
+
+  main > div {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: clip;
+  }
+
+  /* Avoid hover transforms causing horizontal wobble on touch devices. */
+  .card-hover:hover {
+    transform: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .card,
+  [data-slot="card"],
+  .glass-card,
+  .glass-card > *,
+  .grid > *,
+  .flex > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .card-hover {
+    will-change: auto;
+  }
+
+  /* Keep long labels, IDs and currency figures inside their own cards. */
+  .card p,
+  .card h1,
+  .card h2,
+  .card h3,
+  [data-slot="card"] p,
+  [data-slot="card"] h1,
+  [data-slot="card"] h2,
+  [data-slot="card"] h3 {
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+  .card [class*="tabular-nums"],
+  [data-slot="card"] [class*="tabular-nums"] {
+    max-width: 100%;
+    min-width: 0;
+    font-variant-numeric: tabular-nums;
+  }
+}

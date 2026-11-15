@@ -260,7 +260,7 @@ export default function Index({ user }: IndexProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen w-full min-w-0 max-w-full overflow-x-clip bg-background">
       {/* Desktop Sidebar - MOBILE MATE PRO Style */}
       <aside className="hidden lg:block fixed left-0 top-0 h-screen w-64 glass-sidebar border-r border-sidebar-border z-40">
         <div className="flex flex-col h-full p-3">
@@ -386,8 +386,8 @@ export default function Index({ user }: IndexProps) {
       )}
 
       {/* Main Content */}
-      <main className="lg:pl-64">
-        <div className="px-3 py-4 pb-[calc(5.25rem+env(safe-area-inset-bottom))] sm:px-4 lg:px-6 lg:pt-0 lg:pb-5 pt-[4.25rem]">
+      <main className="w-full min-w-0 max-w-full overflow-x-clip lg:pl-64">
+        <div className="w-full min-w-0 max-w-full overflow-x-clip px-3 py-4 pb-[calc(5.25rem+env(safe-area-inset-bottom))] sm:px-4 lg:px-6 lg:pt-0 lg:pb-5 pt-[4.25rem]">
           {renderContent()}
         </div>
       </main>
