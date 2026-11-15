@@ -79,9 +79,11 @@ export function ReconciliationReport() {
     const total = rows.reduce((s, r) => s + r.total, 0);
     const refunded = rows.reduce((s, r) => s + r.refunded, 0);
     const net = total - refunded;
-    const supplierRecovery = (supplierReturns || [])
-      .filter((s: any) => s.status === "completed")
-      .reduce((acc: number, s: any) => acc + Number(s.return_amount || 0), 0);
+    const supplierRecovery = (supplierReturns || []).filter((s: any) => s.status === "completed").reduce((acc: number, s: any) => acc + Number(s.return_amount || 0), 0);
+    const ledgerPurchases = (supplierLedger || []).filter((e: any) => e.transaction_type === "purchase").reduce((s: number, e: any) => s + Math.max(0, Number(e.amount || 0)), 0);
+    const ledgerPayments = (supplierLedger || []).filter((e: any) => e.transaction_type === "payment").reduce((s: number, e: any) => s + Math.abs(Number(e.amount || 0)), 0);
+    const ledgerReturns = (supplierLedger || []).filter((e: any) => e.transaction_type === "supplier_return").reduce((s: number, e: any) => s + Math.abs(Number(e.amount || 0)), 0);
+    const supplierLedgerBalance = (supplierLedger || []).reduce((s: number, e: any) => s + Number(e.amount || 0), 0);
     const mismatches = rows.filter((r) => r.balanceMismatch).length;
     const settlementMismatches = rows.reduce((sum, r) => sum + r.settlementMismatchCount, 0);
     const pendingReturns = (returns || []).filter((r: any) => ["pending", "approved"].includes(r.status)).length;
