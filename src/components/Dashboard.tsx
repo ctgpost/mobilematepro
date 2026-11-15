@@ -200,7 +200,7 @@ export function Dashboard({ onNavigateToPOS, onNavigateToProducts }: DashboardPr
           মোট বিনিয়োগ বিশ্লেষণ
         </h2>
         <div className="grid min-w-0 grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="p-4 bg-green-50 dark:bg-green-950/20 border-green-200">
+          <Card className="min-w-0 overflow-hidden p-2.5 sm:p-4 bg-green-50 dark:bg-green-950/20 border-green-200">
             <div className="flex items-center space-x-2 mb-3">
               <div className="w-3 h-3 rounded-full bg-green-500"></div>
               <p className="text-sm font-medium text-muted-foreground">নতুন প্রোডাক্ট বিনিয়োগ</p>
@@ -209,7 +209,7 @@ export function Dashboard({ onNavigateToPOS, onNavigateToProducts }: DashboardPr
             <p className="text-xs text-muted-foreground mt-2">{newProducts}টি প্রোডাক্ট • {newProductsStock}টি ইউনিট</p>
           </Card>
           
-          <Card className="p-4 bg-blue-50 dark:bg-blue-950/20 border-blue-200">
+          <Card className="min-w-0 overflow-hidden p-2.5 sm:p-4 bg-blue-50 dark:bg-blue-950/20 border-blue-200">
             <div className="flex items-center space-x-2 mb-3">
               <div className="w-3 h-3 rounded-full bg-blue-500"></div>
               <p className="text-sm font-medium text-muted-foreground">ব্যবহৃত প্রোডাক্ট বিনিয়োগ</p>
@@ -267,24 +267,24 @@ export function Dashboard({ onNavigateToPOS, onNavigateToProducts }: DashboardPr
           <div className="space-y-4">
             <div className="flex items-center space-x-2 mb-4">
               <div className="w-3 h-3 rounded-full bg-green-500"></div>
-              <h3 className="text-lg font-semibold text-foreground">নতুন প্রোডাক্ট</h3>
+              <h3 className="min-w-0 break-words [overflow-wrap:anywhere] text-base sm:text-lg font-semibold text-foreground">নতুন প্রোডাক্ট</h3>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <Card className="p-4 bg-green-50 dark:bg-green-950/20 border-green-200">
-                <p className="text-sm text-muted-foreground">প্রোডাক্ট</p>
+                <p className="min-w-0 break-words [overflow-wrap:anywhere] text-xs sm:text-sm text-muted-foreground">প্রোডাক্ট</p>
                 <p className="min-w-0 break-words [overflow-wrap:anywhere] text-2xl font-bold leading-tight tabular-nums text-green-600">{newProducts}</p>
               </Card>
               <Card className="p-4 bg-green-50 dark:bg-green-950/20 border-green-200">
-                <p className="text-sm text-muted-foreground">মোট স্টক</p>
-                <p className="text-2xl font-bold text-green-600">{newProductsStock}</p>
+                <p className="min-w-0 break-words [overflow-wrap:anywhere] text-xs sm:text-sm text-muted-foreground">মোট স্টক</p>
+                <p className="min-w-0 break-words [overflow-wrap:anywhere] text-lg sm:text-2xl font-bold leading-tight tabular-nums text-green-600">{newProductsStock.toLocaleString("bn-BD")}</p>
               </Card>
               <Card className="p-4 bg-green-50 dark:bg-green-950/20 border-green-200">
-                <p className="text-sm text-muted-foreground">বিক্রয়</p>
-                <p className="text-2xl font-bold text-green-600">{newSalesCount}</p>
+                <p className="min-w-0 break-words [overflow-wrap:anywhere] text-xs sm:text-sm text-muted-foreground">বিক্রয়</p>
+                <p className="min-w-0 break-words [overflow-wrap:anywhere] text-lg sm:text-2xl font-bold leading-tight tabular-nums text-green-600">{newSalesCount.toLocaleString("bn-BD")}</p>
               </Card>
               <Card className="p-4 bg-green-50 dark:bg-green-950/20 border-green-200">
-                <p className="text-sm text-muted-foreground">রেভিনিউ</p>
-                <p className="text-2xl font-bold text-green-600">৳{newSalesRevenue.toLocaleString('bn-BD')}</p>
+                <p className="min-w-0 break-words [overflow-wrap:anywhere] text-xs sm:text-sm text-muted-foreground">রেভিনিউ</p>
+                <p className="min-w-0 break-words [overflow-wrap:anywhere] text-base sm:text-xl md:text-2xl font-bold leading-tight tabular-nums text-green-600">৳{newSalesRevenue.toLocaleString('bn-BD')}</p>
               </Card>
             </div>
           </div>
@@ -292,7 +292,7 @@ export function Dashboard({ onNavigateToPOS, onNavigateToProducts }: DashboardPr
           <div className="space-y-4">
             <div className="flex items-center space-x-2 mb-4">
               <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-              <h3 className="text-lg font-semibold text-foreground">ব্যবহৃত প্রোডাক্ট</h3>
+              <h3 className="min-w-0 break-words [overflow-wrap:anywhere] text-base sm:text-lg font-semibold text-foreground">ব্যবহৃত প্রোডাক্ট</h3>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <Card className="p-4 bg-blue-50 dark:bg-blue-950/20 border-blue-200">
@@ -301,15 +301,15 @@ export function Dashboard({ onNavigateToPOS, onNavigateToProducts }: DashboardPr
               </Card>
               <Card className="p-4 bg-blue-50 dark:bg-blue-950/20 border-blue-200">
                 <p className="text-sm text-muted-foreground">মোট স্টক</p>
-                <p className="text-2xl font-bold text-blue-600">{usedProductsStock}</p>
+                <p className="min-w-0 break-words [overflow-wrap:anywhere] text-lg sm:text-2xl font-bold leading-tight tabular-nums text-blue-600">{usedProductsStock.toLocaleString("bn-BD")}</p>
               </Card>
               <Card className="p-4 bg-blue-50 dark:bg-blue-950/20 border-blue-200">
                 <p className="text-sm text-muted-foreground">বিক্রয়</p>
-                <p className="text-2xl font-bold text-blue-600">{usedSalesCount}</p>
+                <p className="min-w-0 break-words [overflow-wrap:anywhere] text-lg sm:text-2xl font-bold leading-tight tabular-nums text-blue-600">{usedSalesCount.toLocaleString("bn-BD")}</p>
               </Card>
               <Card className="p-4 bg-blue-50 dark:bg-blue-950/20 border-blue-200">
                 <p className="text-sm text-muted-foreground">রেভিনিউ</p>
-                <p className="text-2xl font-bold text-blue-600">৳{usedSalesRevenue.toLocaleString('bn-BD')}</p>
+                <p className="min-w-0 break-words [overflow-wrap:anywhere] text-base sm:text-xl md:text-2xl font-bold leading-tight tabular-nums text-blue-600">৳{usedSalesRevenue.toLocaleString('bn-BD')}</p>
               </Card>
             </div>
           </div>
