@@ -1257,6 +1257,32 @@ export type Database = {
           p_supplier_id: string
         }
         Returns: string
+      },
+      create_supplier_return_atomic: {
+        Args: {
+          p_product_id: string
+          p_supplier_id: string
+          p_supplier_name: string | null
+          p_quantity: number
+          p_return_amount: number
+          p_reason: string
+          p_notes?: string | null
+        }
+        Returns: string
+      }
+      delete_supplier_return_atomic: {
+        Args: { p_return_id: string }
+        Returns: undefined
+      }
+      create_investment_withdrawal_atomic: {
+        Args: {
+          p_sector_id: string
+          p_amount: number
+          p_purpose?: string | null
+          p_notes?: string | null
+          p_entry_date?: string
+        }
+        Returns: string
       }
     }
     Enums: {
