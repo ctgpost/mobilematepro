@@ -36,6 +36,11 @@ export function ReconciliationReport() {
     },
   });
 
+  const { data: supplierLedger } = useQuery({
+    queryKey: ["recon-supplier-ledger"],
+    queryFn: async () => fetchAll<any>("supplier_ledger_entries", "id,transaction_type,amount,created_at"),
+  });
+
   const rows = useMemo(() => {
     if (!sales) return [];
     return sales
@@ -81,8 +86,8 @@ export function ReconciliationReport() {
     const settlementMismatches = rows.reduce((sum, r) => sum + r.settlementMismatchCount, 0);
     const pendingReturns = (returns || []).filter((r: any) => ["pending", "approved"].includes(r.status)).length;
     const pendingSupplierReturns = (supplierReturns || []).filter((r: any) => r.status !== "completed").length;
-    return { total, refunded, net, supplierRecovery, mismatches, settlementMismatches, pendingReturns, pendingSupplierReturns };
-  }, [rows, supplierReturns, returns]);
+    return { total, refunded, net, supplierRecovery, ledgerPurchases, ledgerPayments, ledgerReturns, supplierLedgerBalance, mismatches, settlementMismatches, pendingReturns, pendingSupplierReturns };
+  }, [rows, supplierReturns, returns, supplierLedger]);
 
   const exportPDF = () => {
     const w = window.open("", "_blank");
@@ -120,12 +125,18 @@ export function ReconciliationReport() {
         </div>
       </Card>
 
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-3">
         <Card className="p-3"><p className="text-xs text-muted-foreground">মোট বিক্রয়</p><p className="text-lg font-bold">৳{totals.total.toLocaleString("bn-BD")}</p></Card>
         <Card className="p-3"><p className="text-xs text-muted-foreground">রিফান্ড</p><p className="text-lg font-bold text-red-600">৳{totals.refunded.toLocaleString("bn-BD")}</p></Card>
         <Card className="p-3"><p className="text-xs text-muted-foreground">নেট বিক্রয়</p><p className="text-lg font-bold text-primary">৳{totals.net.toLocaleString("bn-BD")}</p></Card>
         <Card className="p-3"><p className="text-xs text-muted-foreground">সাপ্লায়ার রিকভারি</p><p className="text-lg font-bold text-green-600">৳{totals.supplierRecovery.toLocaleString("bn-BD")}</p></Card>
         <Card className="p-3"><p className="text-xs text-muted-foreground">অসামঞ্জস্য</p><p className="text-lg font-bold text-yellow-600">{totals.mismatches}</p></Card>
+      <Card className="p-3"><p className="text-xs text-muted-foreground">Ledger Purchase</p><p className="text-lg font-bold">৳{totals.ledgerPurchases.toLocaleString("bn-BD")}</p></Card>
+      <Card className="p-3"><p className="text-xs text-muted-foreground">Supplier Paid</p><p className="text-lg font-bold">৳{totals.ledgerPayments.toLocaleString("bn-BD")}</p></Card>
+      <Card className="p-3"><p className="text-xs text-muted-foreground">Ledger Return</p><p className="text-lg font-bold">৳{totals.ledgerReturns.toLocaleString("bn-BD")}</p></Card>
+      <Card className="p-3"><p className="text-xs text-muted-foreground">Supplier Net Balance</p><p className="text-lg font-bold">৳{totals.supplierLedgerBalance.toLocaleString("bn-BD")}</p></Card>
+      <Card className="p-3"><p className="text-xs text-muted-foreground">Settlement Mismatch</p><p className="text-lg font-bold text-destructive">{totals.settlementMismatches}</p></Card>
+      <Card className="p-3"><p className="text-xs text-muted-foreground">Pending Returns</p><p className="text-lg font-bold">{totals.pendingReturns + totals.pendingSupplierReturns}</p></Card>
       </div>
 
       <Card className="overflow-x-auto">
