@@ -47,6 +47,7 @@ export function ReconciliationReport() {
       .map((s) => {
         const rels = (returns || []).filter((r: any) => r.sale_id === s.id && r.status === "completed");
         const refunded = rels.reduce((sum, r: any) => sum + Number(r.refund_amount || 0), 0);
+        const settlementMismatchCount = rels.filter((r: any) => Math.abs(Number(r.refund_amount || 0) - Number(r.due_adjusted || 0) - Number(r.cash_refunded || 0) - Number(r.customer_credit || 0)) > 0.01).length;
         const netAmount = Number(s.total_amount) - refunded;
         const itemsQty = (s.sale_items || []).reduce((sum: number, it: any) => sum + Number(it.quantity || 0), 0);
         const returnedQty = rels.reduce((sum, r: any) => sum + Number(r.quantity || 0), 0);
