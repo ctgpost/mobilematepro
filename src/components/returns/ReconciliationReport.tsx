@@ -64,6 +64,7 @@ export function ReconciliationReport() {
           paid,
           due,
           balanceMismatch,
+          settlementMismatchCount,
           createdAt: s.created_at,
         };
       });
