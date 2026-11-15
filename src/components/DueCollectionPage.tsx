@@ -3,6 +3,7 @@ import { CollapsibleSection } from "./CollapsibleSection";
 import { PageHeader } from "./PageHeader";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { filterSalesWithActiveProducts } from "@/lib/activeSales";
 import { fetchAll } from "@/lib/fetchAll";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -27,13 +28,14 @@ export function DueCollectionPage() {
       // Unlimited fetch — no 1000-row cap
       return fetchAll<any>(
         "sales",
-        "id, instant_customer_name, instant_customer_phone, total_amount, paid_amount, due_amount, created_at, customer_id, customers(name, phone)",
+        "id, instant_customer_name, instant_customer_phone, total_amount, paid_amount, due_amount, created_at, customer_id, customers(name, phone), sale_items(total_price, products(archived_at))",
         (q) => q.gt("due_amount", 0).order("created_at", { ascending: false })
       );
     },
   });
 
-  const filtered = sales.filter((s: any) => {
+  const activeSales = filterSalesWithActiveProducts(sales);
+  const filtered = activeSales.filter((s: any) => {
     const q = search.toLowerCase();
     const name = s.customers?.name || s.instant_customer_name || "";
     const phone = s.customers?.phone || s.instant_customer_phone || "";
