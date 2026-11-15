@@ -24,7 +24,7 @@ export function ReconciliationReport() {
     queryKey: ["recon-returns"],
     queryFn: async () => {
       // Unlimited fetch — no 1000-row cap
-      return fetchAll<any>("returns", "id, sale_id, sale_item_id, product_id, quantity, refund_amount, status");
+      return fetchAll<any>("returns", "id, sale_id, sale_item_id, product_id, quantity, refund_amount, status, due_adjusted, cash_refunded, customer_credit");
     },
   });
 
@@ -87,7 +87,7 @@ export function ReconciliationReport() {
       table{width:100%;border-collapse:collapse;margin-top:10px}
       th,td{border:1px solid #ddd;padding:6px;text-align:left}th{background:#0066cc;color:#fff}</style></head><body>
       <h1>MOBILE MATE PRO — রিকনসিলিয়েশন রিপোর্ট</h1>
-      <p>মোট বিক্রয়: ৳${totals.total.toLocaleString("bn-BD")} | রিফান্ড: ৳${totals.refunded.toLocaleString("bn-BD")} | নেট: ৳${totals.net.toLocaleString("bn-BD")} | সাপ্লায়ার রিকভারি: ৳${totals.supplierRecovery.toLocaleString("bn-BD")} | অসামঞ্জস্য: ${totals.mismatches}</p>
+      <p>মোট বিক্রয়: ৳${totals.total.toLocaleString("bn-BD")} | রিফান্ড: ৳${totals.refunded.toLocaleString("bn-BD")} | নেট: ৳${totals.net.toLocaleString("bn-BD")} | সাপ্লায়ার রিকভারি: ৳${totals.supplierRecovery.toLocaleString("bn-BD")} | Sales balance mismatch: ${totals.mismatches} | Settlement mismatch: ${totals.settlementMismatches} | Pending customer return: ${totals.pendingReturns} | Pending supplier return: ${totals.pendingSupplierReturns}</p>
       <table><thead><tr><th>ইনভয়েস</th><th>মোট</th><th>রিফান্ড</th><th>নেট</th><th>আইটেম</th><th>রিটার্ন</th><th>পরিশোধিত</th><th>বকেয়া</th><th>অবস্থা</th></tr></thead><tbody>
       ${rows.map((r) => `<tr><td>${r.id.slice(0, 8)}</td><td>৳${r.total.toLocaleString("bn-BD")}</td><td>৳${r.refunded.toLocaleString("bn-BD")}</td><td>৳${r.netAmount.toLocaleString("bn-BD")}</td><td>${r.itemsQty}</td><td>${r.returnedQty}</td><td>৳${r.paid.toLocaleString("bn-BD")}</td><td>৳${r.due.toLocaleString("bn-BD")}</td><td>${r.balanceMismatch ? "❌ অসামঞ্জস্য" : "✅ ঠিক"}</td></tr>`).join("")}
       </tbody></table></body></html>`);
@@ -115,7 +115,7 @@ export function ReconciliationReport() {
         </div>
       </Card>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
         <Card className="p-3"><p className="text-xs text-muted-foreground">মোট বিক্রয়</p><p className="text-lg font-bold">৳{totals.total.toLocaleString("bn-BD")}</p></Card>
         <Card className="p-3"><p className="text-xs text-muted-foreground">রিফান্ড</p><p className="text-lg font-bold text-red-600">৳{totals.refunded.toLocaleString("bn-BD")}</p></Card>
         <Card className="p-3"><p className="text-xs text-muted-foreground">নেট বিক্রয়</p><p className="text-lg font-bold text-primary">৳{totals.net.toLocaleString("bn-BD")}</p></Card>
