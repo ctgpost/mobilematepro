@@ -77,7 +77,10 @@ export function ReconciliationReport() {
       .filter((s: any) => s.status === "completed")
       .reduce((acc: number, s: any) => acc + Number(s.return_amount || 0), 0);
     const mismatches = rows.filter((r) => r.balanceMismatch).length;
-    return { total, refunded, net, supplierRecovery, mismatches };
+    const settlementMismatches = rows.reduce((sum, r) => sum + r.settlementMismatchCount, 0);
+    const pendingReturns = (returns || []).filter((r: any) => ["pending", "approved"].includes(r.status)).length;
+    const pendingSupplierReturns = (supplierReturns || []).filter((r: any) => r.status !== "completed").length;
+    return { total, refunded, net, supplierRecovery, mismatches, settlementMismatches, pendingReturns, pendingSupplierReturns };
   }, [rows, supplierReturns, returns]);
 
   const exportPDF = () => {
