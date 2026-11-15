@@ -77,7 +77,7 @@ export function ReconciliationReport() {
       .reduce((acc: number, s: any) => acc + Number(s.return_amount || 0), 0);
     const mismatches = rows.filter((r) => r.balanceMismatch).length;
     return { total, refunded, net, supplierRecovery, mismatches };
-  }, [rows, supplierReturns]);
+  }, [rows, supplierReturns, returns]);
 
   const exportPDF = () => {
     const w = window.open("", "_blank");
