@@ -124,8 +124,8 @@ export function Suppliers() {
 
       if (editingReturn) {
         const { error } = await supabase.from("supplier_returns").update({
-          quantity: returnForm.quantity,
-          return_amount: Number(returnForm.return_amount) || product.cost * returnForm.quantity,
+          // Quantity is immutable after stock has been returned. Change the amount/reason/notes only.
+          return_amount: Number(returnForm.return_amount) || product.cost * editingReturn.quantity,
           reason: returnForm.reason,
           notes: returnForm.notes,
         }).eq("id", editingReturn.id);
@@ -135,29 +135,24 @@ export function Suppliers() {
           return_id: editingReturn.id,
           action: "updated",
           product_id: product.id,
-          quantity: returnForm.quantity,
-          amount_delta: Number(returnForm.return_amount) || product.cost * returnForm.quantity,
+          quantity: editingReturn.quantity,
+          amount_delta: (Number(returnForm.return_amount) || product.cost * editingReturn.quantity) - Number(editingReturn.return_amount || 0),
         });
       } else {
         if (product.stock_quantity < returnForm.quantity) throw new Error("পর্যাপ্ত স্টক নেই বা ইতিমধ্যে বিক্রি হয়েছে");
-        const { data: inserted, error } = await supabase.from("supplier_returns").insert({
-          product_id: product.id,
-          supplier_id: returnForm.supplier_id,
-          supplier_name: sup?.name || product.supplier_name,
-          quantity: returnForm.quantity,
-          return_amount: Number(returnForm.return_amount) || product.cost * returnForm.quantity,
-          reason: returnForm.reason,
-          notes: returnForm.notes,
-          status: "completed",
-          created_by: user?.id,
-        }).select().single();
+        const { data: returnId, error } = await supabase.rpc("create_supplier_return_atomic", {
+          p_product_id: product.id,
+          p_supplier_id: returnForm.supplier_id,
+          p_supplier_name: sup?.name || product.supplier_name || null,
+          p_quantity: returnForm.quantity,
+          p_return_amount: Number(returnForm.return_amount) || product.cost * returnForm.quantity,
+          p_reason: returnForm.reason,
+          p_notes: returnForm.notes || null,
+        });
         if (error) throw error;
-        await supabase.from("products").update({
-          stock_quantity: Math.max(0, product.stock_quantity - returnForm.quantity)
-        }).eq("id", product.id);
         await logReturnAudit({
           return_type: "supplier",
-          return_id: inserted.id,
+          return_id: returnId,
           action: "completed",
           product_id: product.id,
           quantity: returnForm.quantity,
@@ -180,17 +175,9 @@ export function Suppliers() {
 
   const deleteReturn = useMutation({
     mutationFn: async (ret: any) => {
-      // restore stock
-      const product = products?.find((p: any) => p.id === ret.product_id);
-      let stockDelta = 0;
-      if (product) {
-        await supabase.from("products").update({
-          stock_quantity: product.stock_quantity + ret.quantity
-        }).eq("id", product.id);
-        stockDelta = ret.quantity;
-      }
-      const { error } = await supabase.from("supplier_returns").delete().eq("id", ret.id);
+      const { error } = await supabase.rpc("delete_supplier_return_atomic", { p_return_id: ret.id });
       if (error) throw error;
+      const stockDelta = Number(ret.quantity || 0);
       await logReturnAudit({
         return_type: "supplier",
         return_id: ret.id,
