@@ -91,10 +91,14 @@ export function Investments() {
   // Entry CRUD
   const saveEntry = useMutation({
     mutationFn: async () => {
+      const amount = Number(entryForm.amount);
+      if (!entryForm.sector_id) throw new Error("বিনিয়োগ খাত নির্বাচন করুন");
+      if (!Number.isFinite(amount) || amount <= 0) throw new Error("পরিমাণ শূন্যের বেশি হতে হবে");
+      if (!entryForm.entry_date) throw new Error("তারিখ নির্বাচন করুন");
       const { data: { user } } = await supabase.auth.getUser();
       const payload = {
         sector_id: entryForm.sector_id,
-        amount: Number(entryForm.amount),
+        amount,
         entry_type: entryForm.entry_type,
         purpose: entryForm.purpose,
         notes: entryForm.notes,
@@ -129,10 +133,14 @@ export function Investments() {
   // Income CRUD
   const saveIncome = useMutation({
     mutationFn: async () => {
+      const amount = Number(incomeForm.amount);
+      if (!incomeForm.sector_id) throw new Error("বিনিয়োগ খাত নির্বাচন করুন");
+      if (!Number.isFinite(amount) || amount <= 0) throw new Error("আয়ের পরিমাণ শূন্যের বেশি হতে হবে");
+      if (!incomeForm.income_date) throw new Error("তারিখ নির্বাচন করুন");
       const { data: { user } } = await supabase.auth.getUser();
       const payload = {
         sector_id: incomeForm.sector_id,
-        amount: Number(incomeForm.amount),
+        amount,
         source: incomeForm.source,
         purpose: incomeForm.purpose,
         notes: incomeForm.notes,
