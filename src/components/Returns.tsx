@@ -402,7 +402,7 @@ export function Returns() {
     if (filteredReturns.length === 0) { toast.error("কোনো ডেটা নেই"); return; }
     const w = window.open('', '_blank');
     if (!w) { toast.error("পপআপ ব্লক"); return; }
-    const totalAmt = filteredReturns.reduce((s, r) => s + Number(r.refund_amount), 0);
+    const totalAmt = filteredReturns.filter((r) => r.status === "completed").reduce((s, r) => s + Number(r.refund_amount), 0);
     w.document.write(`<html><head><title>MOBILE MATE PRO - Returns Report</title><style>
       body{font-family:Arial;padding:20px;font-size:12px}
       h1{text-align:center;color:#0066cc}.summary{background:#f5f5f5;padding:10px;margin:15px 0;border-radius:6px}

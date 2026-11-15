@@ -24,7 +24,7 @@ export function ReconciliationReport() {
     queryKey: ["recon-returns"],
     queryFn: async () => {
       // Unlimited fetch — no 1000-row cap
-      return fetchAll<any>("returns", "id, sale_id, sale_item_id, product_id, quantity, refund_amount, status");
+      return fetchAll<any>("returns", "id, sale_id, sale_item_id, product_id, quantity, refund_amount, status, due_adjusted, cash_refunded, customer_credit");
     },
   });
 
@@ -34,6 +34,11 @@ export function ReconciliationReport() {
       // Unlimited fetch — no 1000-row cap
       return fetchAll<any>("supplier_returns", "id, product_id, quantity, return_amount, status");
     },
+  });
+
+  const { data: supplierLedger } = useQuery({
+    queryKey: ["recon-supplier-ledger"],
+    queryFn: async () => fetchAll<any>("supplier_ledger_entries", "id,transaction_type,amount,created_at"),
   });
 
   const rows = useMemo(() => {
@@ -47,6 +52,7 @@ export function ReconciliationReport() {
       .map((s) => {
         const rels = (returns || []).filter((r: any) => r.sale_id === s.id && r.status === "completed");
         const refunded = rels.reduce((sum, r: any) => sum + Number(r.refund_amount || 0), 0);
+        const settlementMismatchCount = rels.filter((r: any) => Math.abs(Number(r.refund_amount || 0) - Number(r.due_adjusted || 0) - Number(r.cash_refunded || 0) - Number(r.customer_credit || 0)) > 0.01).length;
         const netAmount = Number(s.total_amount) - refunded;
         const itemsQty = (s.sale_items || []).reduce((sum: number, it: any) => sum + Number(it.quantity || 0), 0);
         const returnedQty = rels.reduce((sum, r: any) => sum + Number(r.quantity || 0), 0);
@@ -63,6 +69,7 @@ export function ReconciliationReport() {
           paid,
           due,
           balanceMismatch,
+          settlementMismatchCount,
           createdAt: s.created_at,
         };
       });
@@ -72,12 +79,17 @@ export function ReconciliationReport() {
     const total = rows.reduce((s, r) => s + r.total, 0);
     const refunded = rows.reduce((s, r) => s + r.refunded, 0);
     const net = total - refunded;
-    const supplierRecovery = (supplierReturns || [])
-      .filter((s: any) => s.status === "completed")
-      .reduce((acc: number, s: any) => acc + Number(s.return_amount || 0), 0);
+    const supplierRecovery = (supplierReturns || []).filter((s: any) => s.status === "completed").reduce((acc: number, s: any) => acc + Number(s.return_amount || 0), 0);
+    const ledgerPurchases = (supplierLedger || []).filter((e: any) => e.transaction_type === "purchase").reduce((s: number, e: any) => s + Math.max(0, Number(e.amount || 0)), 0);
+    const ledgerPayments = (supplierLedger || []).filter((e: any) => e.transaction_type === "payment").reduce((s: number, e: any) => s + Math.abs(Number(e.amount || 0)), 0);
+    const ledgerReturns = (supplierLedger || []).filter((e: any) => e.transaction_type === "supplier_return").reduce((s: number, e: any) => s + Math.abs(Number(e.amount || 0)), 0);
+    const supplierLedgerBalance = (supplierLedger || []).reduce((s: number, e: any) => s + Number(e.amount || 0), 0);
     const mismatches = rows.filter((r) => r.balanceMismatch).length;
-    return { total, refunded, net, supplierRecovery, mismatches };
-  }, [rows, supplierReturns]);
+    const settlementMismatches = rows.reduce((sum, r) => sum + r.settlementMismatchCount, 0);
+    const pendingReturns = (returns || []).filter((r: any) => ["pending", "approved"].includes(r.status)).length;
+    const pendingSupplierReturns = (supplierReturns || []).filter((r: any) => r.status !== "completed").length;
+    return { total, refunded, net, supplierRecovery, ledgerPurchases, ledgerPayments, ledgerReturns, supplierLedgerBalance, mismatches, settlementMismatches, pendingReturns, pendingSupplierReturns };
+  }, [rows, supplierReturns, returns, supplierLedger]);
 
   const exportPDF = () => {
     const w = window.open("", "_blank");
@@ -87,7 +99,7 @@ export function ReconciliationReport() {
       table{width:100%;border-collapse:collapse;margin-top:10px}
       th,td{border:1px solid #ddd;padding:6px;text-align:left}th{background:#0066cc;color:#fff}</style></head><body>
       <h1>MOBILE MATE PRO — রিকনসিলিয়েশন রিপোর্ট</h1>
-      <p>মোট বিক্রয়: ৳${totals.total.toLocaleString("bn-BD")} | রিফান্ড: ৳${totals.refunded.toLocaleString("bn-BD")} | নেট: ৳${totals.net.toLocaleString("bn-BD")} | সাপ্লায়ার রিকভারি: ৳${totals.supplierRecovery.toLocaleString("bn-BD")} | অসামঞ্জস্য: ${totals.mismatches}</p>
+      <p>মোট বিক্রয়: ৳${totals.total.toLocaleString("bn-BD")} | রিফান্ড: ৳${totals.refunded.toLocaleString("bn-BD")} | নেট: ৳${totals.net.toLocaleString("bn-BD")} | সাপ্লায়ার রিকভারি: ৳${totals.supplierRecovery.toLocaleString("bn-BD")} | Sales balance mismatch: ${totals.mismatches} | Settlement mismatch: ${totals.settlementMismatches} | Pending customer return: ${totals.pendingReturns} | Pending supplier return: ${totals.pendingSupplierReturns}</p>
       <table><thead><tr><th>ইনভয়েস</th><th>মোট</th><th>রিফান্ড</th><th>নেট</th><th>আইটেম</th><th>রিটার্ন</th><th>পরিশোধিত</th><th>বকেয়া</th><th>অবস্থা</th></tr></thead><tbody>
       ${rows.map((r) => `<tr><td>${r.id.slice(0, 8)}</td><td>৳${r.total.toLocaleString("bn-BD")}</td><td>৳${r.refunded.toLocaleString("bn-BD")}</td><td>৳${r.netAmount.toLocaleString("bn-BD")}</td><td>${r.itemsQty}</td><td>${r.returnedQty}</td><td>৳${r.paid.toLocaleString("bn-BD")}</td><td>৳${r.due.toLocaleString("bn-BD")}</td><td>${r.balanceMismatch ? "❌ অসামঞ্জস্য" : "✅ ঠিক"}</td></tr>`).join("")}
       </tbody></table></body></html>`);
@@ -115,12 +127,18 @@ export function ReconciliationReport() {
         </div>
       </Card>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-3">
         <Card className="p-3"><p className="text-xs text-muted-foreground">মোট বিক্রয়</p><p className="text-lg font-bold">৳{totals.total.toLocaleString("bn-BD")}</p></Card>
         <Card className="p-3"><p className="text-xs text-muted-foreground">রিফান্ড</p><p className="text-lg font-bold text-red-600">৳{totals.refunded.toLocaleString("bn-BD")}</p></Card>
         <Card className="p-3"><p className="text-xs text-muted-foreground">নেট বিক্রয়</p><p className="text-lg font-bold text-primary">৳{totals.net.toLocaleString("bn-BD")}</p></Card>
         <Card className="p-3"><p className="text-xs text-muted-foreground">সাপ্লায়ার রিকভারি</p><p className="text-lg font-bold text-green-600">৳{totals.supplierRecovery.toLocaleString("bn-BD")}</p></Card>
         <Card className="p-3"><p className="text-xs text-muted-foreground">অসামঞ্জস্য</p><p className="text-lg font-bold text-yellow-600">{totals.mismatches}</p></Card>
+      <Card className="p-3"><p className="text-xs text-muted-foreground">Ledger Purchase</p><p className="text-lg font-bold">৳{totals.ledgerPurchases.toLocaleString("bn-BD")}</p></Card>
+      <Card className="p-3"><p className="text-xs text-muted-foreground">Supplier Paid</p><p className="text-lg font-bold">৳{totals.ledgerPayments.toLocaleString("bn-BD")}</p></Card>
+      <Card className="p-3"><p className="text-xs text-muted-foreground">Ledger Return</p><p className="text-lg font-bold">৳{totals.ledgerReturns.toLocaleString("bn-BD")}</p></Card>
+      <Card className="p-3"><p className="text-xs text-muted-foreground">Supplier Net Balance</p><p className="text-lg font-bold">৳{totals.supplierLedgerBalance.toLocaleString("bn-BD")}</p></Card>
+      <Card className="p-3"><p className="text-xs text-muted-foreground">Settlement Mismatch</p><p className="text-lg font-bold text-destructive">{totals.settlementMismatches}</p></Card>
+      <Card className="p-3"><p className="text-xs text-muted-foreground">Pending Returns</p><p className="text-lg font-bold">{totals.pendingReturns + totals.pendingSupplierReturns}</p></Card>
       </div>
 
       <Card className="overflow-x-auto">
