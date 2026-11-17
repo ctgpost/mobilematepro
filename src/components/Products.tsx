@@ -33,7 +33,7 @@ const friendlyProductError = (error: any, imei?: string): string => {
   // Postgres unique violation
   if (code === "23505" || /duplicate key|unique constraint/i.test(msg)) {
     if (/products_imei_in_stock_unique|imei/i.test(msg)) {
-      return `এই IMEI${imei ? ` (${imei})` : ""} দিয়ে ইতিমধ্যে একটি অবিক্রিত মোবাইল স্টকে রয়েছে। আগে সেটি বিক্রি করুন, তারপর একই IMEI আবার ব্যবহার করতে পারবেন।`;
+      return `এই IMEI${imei ? ` (${imei})` : ""} দিয়ে বর্তমানে একটি সক্রিয় মোবাইল স্টকে রয়েছে। আগের মোবাইলটি বিক্রি, Archive অথবা Stock শূন্য হলে একই IMEI আবার ব্যবহার করা যাবে।`;
     }
     return "ডুপ্লিকেট এন্ট্রি — এই তথ্য ইতিমধ্যে রয়েছে।";
   }
@@ -299,7 +299,8 @@ export function Products() {
       if (typeof navigator !== "undefined" && navigator.onLine) {
         let query = supabase
           .from("products")
-          .select("id, name, stock_quantity")
+          .select("id, name, stock_quantity, archived_at")
+          .is("archived_at", null)
           .eq("imei", imei)
           .gt("stock_quantity", 0);
 
@@ -317,6 +318,7 @@ export function Products() {
         // Offline: use cached products list
         existingProducts = (products || []).filter((p: any) =>
           p.imei === imei &&
+          !p.archived_at &&
           (p.stock_quantity ?? 0) > 0 &&
           (!editingProduct || p.id !== editingProduct.id)
         );
