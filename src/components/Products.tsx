@@ -299,7 +299,8 @@ export function Products() {
       if (typeof navigator !== "undefined" && navigator.onLine) {
         let query = supabase
           .from("products")
-          .select("id, name, stock_quantity")
+          .select("id, name, stock_quantity, archived_at")
+          .is("archived_at", null)
           .eq("imei", imei)
           .gt("stock_quantity", 0);
 
@@ -317,6 +318,7 @@ export function Products() {
         // Offline: use cached products list
         existingProducts = (products || []).filter((p: any) =>
           p.imei === imei &&
+          !p.archived_at &&
           (p.stock_quantity ?? 0) > 0 &&
           (!editingProduct || p.id !== editingProduct.id)
         );
