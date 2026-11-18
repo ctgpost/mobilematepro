@@ -29,7 +29,7 @@ export function calculateGrossProfit(input) {
   let returnedCogs = 0;
   let missingCostLines = 0;
   let missingReturnCostLines = 0;
-  const soldQuantityByItem = new Map<string, number>();
+  const soldQuantityByItem = new Map();
 
   for (const sale of sales) {
     for (const item of sale.sale_items || []) {
