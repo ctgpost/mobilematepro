@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { calculateGrossProfit } from "../src/lib/financialCalculations.ts";
+import { calculateGrossProfit } from "../src/lib/financialCalculations.mjs";
 
 test("gross profit uses immutable item cost and subtracts only completed returns", () => {
   const result = calculateGrossProfit({
