@@ -281,7 +281,7 @@ export function Reports() {
       <Card className="min-w-0 overflow-hidden p-4 md:p-5 border-primary/20">
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-foreground">Profit & Loss (Gross Profit)</h2>
-          <p className="text-xs text-muted-foreground">বিক্রির তারিখে Revenue/COGS এবং Refund সম্পন্ন হওয়ার তারিখে Return গণনা করা হয়েছে</p>
+          <p className="text-xs text-muted-foreground">বিক্রির তারিখে Revenue/COGS এবং Refund সম্পন্ন হওয়ার তারিখে Return গণনা করা হয়েছে। পরিচালন ব্যয় আলাদা Expense Ledger-এ না থাকায় এখানে Net Profit দেখানো হচ্ছে না।</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
           <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Net Revenue</p><p className="text-xl font-bold tabular-nums">৳{profit.netRevenue.toLocaleString("bn-BD")}</p></div>
@@ -304,7 +304,7 @@ export function Reports() {
               <div className="w-3 h-3 rounded-full bg-green-500"></div>
               <p className="text-xs md:text-sm font-medium text-muted-foreground">New Products Investment</p>
             </div>
-            <p className="min-w-0 break-words [overflow-wrap:anywhere] text-[clamp(1.1rem,2vw,1.875rem)] font-bold leading-tight tabular-nums text-green-600">${newProductsInvestment.toFixed(2)}</p>
+            <p className="min-w-0 break-words [overflow-wrap:anywhere] text-[clamp(1.1rem,2vw,1.875rem)] font-bold leading-tight tabular-nums text-green-600">৳{newProductsInvestment.toLocaleString("bn-BD")}</p>
             <p className="text-xs text-muted-foreground mt-2">{newProducts} products • {newProductsStock} units</p>
           </Card>
           
@@ -313,7 +313,7 @@ export function Reports() {
               <div className="w-3 h-3 rounded-full bg-blue-500"></div>
               <p className="text-xs md:text-sm font-medium text-muted-foreground">Used Products Investment</p>
             </div>
-            <p className="min-w-0 break-words [overflow-wrap:anywhere] text-[clamp(1.1rem,2vw,1.875rem)] font-bold leading-tight tabular-nums text-blue-600">${usedProductsInvestment.toFixed(2)}</p>
+            <p className="min-w-0 break-words [overflow-wrap:anywhere] text-[clamp(1.1rem,2vw,1.875rem)] font-bold leading-tight tabular-nums text-blue-600">৳{usedProductsInvestment.toLocaleString("bn-BD")}</p>
             <p className="text-xs text-muted-foreground mt-2">{usedProducts} products • {usedProductsStock} units</p>
           </Card>
           
@@ -322,7 +322,7 @@ export function Reports() {
               <div className="w-3 h-3 rounded-full bg-purple-500"></div>
               <p className="text-xs md:text-sm font-medium text-muted-foreground">Total Investment</p>
             </div>
-            <p className="min-w-0 break-words [overflow-wrap:anywhere] text-[clamp(1.1rem,2vw,1.875rem)] font-bold leading-tight tabular-nums text-purple-600">${totalInvestment.toFixed(2)}</p>
+            <p className="min-w-0 break-words [overflow-wrap:anywhere] text-[clamp(1.1rem,2vw,1.875rem)] font-bold leading-tight tabular-nums text-purple-600">৳{totalInvestment.toLocaleString("bn-BD")}</p>
             <p className="text-xs text-muted-foreground mt-2">{newProducts + usedProducts} products • {newProductsStock + usedProductsStock} units</p>
           </Card>
         </div>
@@ -386,7 +386,7 @@ export function Reports() {
               </Card>
               <Card className="min-w-0 overflow-hidden p-3 md:p-4 bg-green-50 dark:bg-green-950/20 border-green-200">
                 <p className="text-xs md:text-sm text-muted-foreground">Revenue</p>
-                <p className="min-w-0 break-words [overflow-wrap:anywhere] text-[clamp(1rem,1.7vw,1.5rem)] font-bold leading-tight tabular-nums text-green-600">${newSalesRevenue.toFixed(2)}</p>
+                <p className="min-w-0 break-words [overflow-wrap:anywhere] text-[clamp(1rem,1.7vw,1.5rem)] font-bold leading-tight tabular-nums text-green-600">৳{newSalesRevenue.toLocaleString("bn-BD")}</p>
               </Card>
             </div>
           </div>
@@ -412,7 +412,7 @@ export function Reports() {
               </Card>
               <Card className="min-w-0 overflow-hidden p-3 md:p-4 bg-blue-50 dark:bg-blue-950/20 border-blue-200">
                 <p className="text-xs md:text-sm text-muted-foreground">Revenue</p>
-                <p className="min-w-0 break-words [overflow-wrap:anywhere] text-[clamp(1rem,1.7vw,1.5rem)] font-bold leading-tight tabular-nums text-blue-600">${usedSalesRevenue.toFixed(2)}</p>
+                <p className="min-w-0 break-words [overflow-wrap:anywhere] text-[clamp(1rem,1.7vw,1.5rem)] font-bold leading-tight tabular-nums text-blue-600">৳{usedSalesRevenue.toLocaleString("bn-BD")}</p>
               </Card>
             </div>
           </div>
@@ -428,7 +428,7 @@ export function Reports() {
                 <p className="font-medium text-foreground">{product.name}</p>
                 <p className="text-sm text-muted-foreground">{product.quantity} units sold</p>
               </div>
-              <p className="min-w-0 break-words [overflow-wrap:anywhere] font-semibold tabular-nums text-primary">${product.revenue.toFixed(2)}</p>
+              <p className="min-w-0 break-words [overflow-wrap:anywhere] font-semibold tabular-nums text-primary">৳{product.revenue.toLocaleString("bn-BD")}</p>
             </div>
           ))}
           {topProducts.length === 0 && (
@@ -454,7 +454,7 @@ export function Reports() {
                 </div>
                 <div className="text-right">
                   <p className="min-w-0 break-words [overflow-wrap:anywhere] text-lg sm:text-xl font-bold leading-tight tabular-nums text-primary">
-                    ${Number(sale.total_amount).toFixed(2)}
+                    ৳{Number(sale.total_amount).toLocaleString("bn-BD")}
                   </p>
                   <p className="text-xs text-muted-foreground capitalize">
                     {sale.payment_method}
@@ -468,12 +468,12 @@ export function Reports() {
                     <div className="min-w-0 flex-1">
                       <p className="break-words [overflow-wrap:anywhere] font-medium text-foreground">{item.products?.name || "Product"}</p>
                       <p className="text-xs text-muted-foreground">
-                        Qty: {item.quantity} × ${Number(item.unit_price).toFixed(2)}
+                        Qty: {item.quantity} × ৳{Number(item.unit_price).toLocaleString("bn-BD")}
                         {item.condition && <span className="ml-2">• {item.condition}</span>}
                       </p>
                     </div>
                     <p className="font-semibold text-foreground">
-                      ${Number(item.total_price).toFixed(2)}
+                      ৳{Number(item.total_price).toLocaleString("bn-BD")}
                     </p>
                   </div>
                 ))}
