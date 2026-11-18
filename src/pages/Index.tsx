@@ -20,6 +20,7 @@ import { StockHistory } from "@/components/StockHistory";
 import { DueCollectionPage } from "@/components/DueCollectionPage";
 import { CustomerLedger } from "@/components/CustomerLedger";
 import { Expenses } from "@/components/Expenses";
+import { AccountingLedger } from "@/components/AccountingLedger";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -208,6 +209,7 @@ export default function Index({ user }: IndexProps) {
     { id: "categories", label: "ক্যাটাগরি", icon: Tags, permission: 'canManageCategories' },
     { id: "investments", label: "ইনভেস্টমেন্ট", icon: Wallet, permission: 'canAccessReports' },
     { id: "expenses", label: "ব্যয় ব্যবস্থাপনা", icon: Receipt, permission: 'canManageExpenses' },
+    { id: "accounting-ledger", label: "Accounting Ledger", icon: BookOpen, permission: 'canAccessReports' },
     { id: "reports", label: "রিপোর্ট", icon: FileText, permission: 'canAccessReports' },
     { id: "staff-performance", label: "স্টাফ পারফরম্যান্স", icon: Trophy, permission: 'canAccessReports' },
     { id: "stock-history", label: "স্টক ইতিহাস ও মিলকরণ", icon: History, permission: 'canAccessReports' },
@@ -248,6 +250,7 @@ export default function Index({ user }: IndexProps) {
       case "returns": return <Returns />;
       case "investments": return <Investments />;
       case "expenses": return <Expenses />;
+      case "accounting-ledger": return <AccountingLedger />;
       case "customers": return <Customers />;
       case "customer-ledger": return <CustomerLedger />;
       case "suppliers": return <Suppliers />;
