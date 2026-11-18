@@ -98,7 +98,7 @@ export function Reports() {
   const inSelectedDateRange = (value: string) => (!filterDateFrom || value >= filterDateFrom) && (!filterDateTo || value <= filterDateTo);
   const operatingExpenses = (expenseJournalRows || []).filter((entry: any) => inSelectedDateRange(entry.entry_date)).flatMap((entry: any) => entry.accounting_journal_lines || []).filter((line: any) => String(line.accounting_accounts?.account_code || "").startsWith("6")).reduce((sum: number, line: any) => sum + Number(line.debit || 0) - Number(line.credit || 0), 0);
   const investmentIncome = (investmentIncomeRows || []).filter((row: any) => inSelectedDateRange(row.income_date)).reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
-  const netProfitBeforeOtherAdjustments = profit.grossProfit - operatingExpenses + investmentIncome;
+  const netProfitBeforeOtherAdjustments = profit.isCostComplete ? Number(profit.grossProfit) - operatingExpenses + investmentIncome : null;
 
   // Top selling products
   const productSales = new Map();
@@ -303,20 +303,20 @@ export function Reports() {
           {[
             { key: "revenue", label: "Net Revenue", value: profit.netRevenue },
             { key: "cogs", label: "Net COGS", value: profit.netCogs },
-            { key: "gross", label: "Gross Profit", value: profit.grossProfit },
+            { key: "gross", label: "Gross Profit", value: profit.isCostComplete ? profit.grossProfit : null },
             { key: "expenses", label: "Operating Expenses", value: operatingExpenses },
             { key: "investment", label: "Investment Income", value: investmentIncome },
             { key: "net", label: "Net Profit (Known Items)", value: netProfitBeforeOtherAdjustments },
           ].map((item) => (
             <button key={item.key} type="button" onClick={() => setDrilldownMetric(item.key)} className="rounded-lg bg-muted/50 p-3 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
               <p className="text-xs text-muted-foreground">{item.label}</p>
-              <p className={"text-xl font-bold tabular-nums " + (item.value < 0 ? "text-destructive" : "text-foreground")}>৳{item.value.toLocaleString("bn-BD")}</p>
+              <p className={"text-xl font-bold tabular-nums " + (item.value !== null && item.value < 0 ? "text-destructive" : "text-foreground")}>{item.value === null ? "Incomplete" : `৳${item.value.toLocaleString("bn-BD")}`}</p>
               <p className="mt-1 text-[11px] text-primary">View breakdown ↗</p>
             </button>
           ))}
         </div>
         <p className="mt-3 text-xs text-muted-foreground">Net Profit (Known Items) = Gross Profit − recorded operating expenses + recorded investment income. এটি পূর্ণাঙ্গ statutory P&L নয়, যতক্ষণ না অন্যান্য আয়-ব্যয়, finance charges, depreciation, tax এবং opening adjustments অন্তর্ভুক্ত হচ্ছে।</p>
-        {!profit.isCostComplete && <p className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-700 dark:text-amber-300">সতর্কতা: {profit.missingCostLines}টি বিক্রয় লাইনের এবং {profit.missingReturnCostLines}টি রিটার্ন লাইনের ঐতিহাসিক ক্রয়মূল্য পাওয়া যায়নি। Gross Profit আংশিক, পূর্ণাঙ্গ Net Profit নয়।</p>}
+        {!profit.isCostComplete && <p className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-700 dark:text-amber-300">সতর্কতা: {profit.missingCostLines}টি বিক্রয় লাইনের এবং {profit.missingReturnCostLines}টি রিটার্ন লাইনের ঐতিহাসিক ক্রয়মূল্য পাওয়া যায়নি। Gross Profit এবং Net Profit নির্ভরযোগ্যভাবে দেখানো যাচ্ছে না। আগে অনুপস্থিত ক্রয়মূল্য পূরণ করুন।</p>}
       </Card>
 
       <Dialog open={!!drilldownMetric} onOpenChange={(open) => !open && setDrilldownMetric(null)}>
