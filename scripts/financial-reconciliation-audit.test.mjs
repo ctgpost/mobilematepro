@@ -38,3 +38,10 @@ test("investment dashboard labels income yield as ROI rather than accounting pro
   assert.match(investments, /আয়ের হার/);
   assert.doesNotMatch(investments, /grandProfit|s\.profit/);
 });
+
+test("sales and staff performance reports retain archived invoice revenue", async () => {
+  const sales = await read("../src/components/Sales.tsx");
+  const staff = await read("../src/components/StaffPerformanceReport.tsx");
+  assert.doesNotMatch(sales, /filterSalesWithActiveProducts/);
+  assert.doesNotMatch(staff, /filterSalesWithActiveProducts/);
+});
