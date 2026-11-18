@@ -296,13 +296,13 @@ export function Reports() {
       <Card className="min-w-0 overflow-hidden p-4 md:p-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 border-purple-200">
         <h2 className="text-lg md:text-xl font-semibold mb-4 md:mb-4 text-foreground flex items-center">
           <span className="text-xl md:text-2xl mr-2">💰</span>
-          Total Investment Analysis
+          Estimated Current Inventory Cost
         </h2>
         <div className="grid min-w-0 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
           <Card className="min-w-0 overflow-hidden p-4 md:p-4 bg-green-50 dark:bg-green-950/20 border-green-200">
             <div className="flex min-w-0 flex-wrap items-center gap-2 mb-3">
               <div className="w-3 h-3 rounded-full bg-green-500"></div>
-              <p className="text-xs md:text-sm font-medium text-muted-foreground">New Products Investment</p>
+              <p className="text-xs md:text-sm font-medium text-muted-foreground">New Products Stock Cost</p>
             </div>
             <p className="min-w-0 break-words [overflow-wrap:anywhere] text-[clamp(1.1rem,2vw,1.875rem)] font-bold leading-tight tabular-nums text-green-600">৳{newProductsInvestment.toLocaleString("bn-BD")}</p>
             <p className="text-xs text-muted-foreground mt-2">{newProducts} products • {newProductsStock} units</p>
@@ -311,7 +311,7 @@ export function Reports() {
           <Card className="min-w-0 overflow-hidden p-4 md:p-4 bg-blue-50 dark:bg-blue-950/20 border-blue-200">
             <div className="flex min-w-0 flex-wrap items-center gap-2 mb-3">
               <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-              <p className="text-xs md:text-sm font-medium text-muted-foreground">Used Products Investment</p>
+              <p className="text-xs md:text-sm font-medium text-muted-foreground">Used Products Stock Cost</p>
             </div>
             <p className="min-w-0 break-words [overflow-wrap:anywhere] text-[clamp(1.1rem,2vw,1.875rem)] font-bold leading-tight tabular-nums text-blue-600">৳{usedProductsInvestment.toLocaleString("bn-BD")}</p>
             <p className="text-xs text-muted-foreground mt-2">{usedProducts} products • {usedProductsStock} units</p>
@@ -320,14 +320,14 @@ export function Reports() {
           <Card className="min-w-0 overflow-hidden p-4 md:p-4 bg-purple-50 dark:bg-purple-950/20 border-purple-200">
             <div className="flex min-w-0 flex-wrap items-center gap-2 mb-3">
               <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-              <p className="text-xs md:text-sm font-medium text-muted-foreground">Total Investment</p>
+              <p className="text-xs md:text-sm font-medium text-muted-foreground">Total Current Stock Cost</p>
             </div>
             <p className="min-w-0 break-words [overflow-wrap:anywhere] text-[clamp(1.1rem,2vw,1.875rem)] font-bold leading-tight tabular-nums text-purple-600">৳{totalInvestment.toLocaleString("bn-BD")}</p>
             <p className="text-xs text-muted-foreground mt-2">{newProducts + usedProducts} products • {newProductsStock + usedProductsStock} units</p>
           </Card>
         </div>
         
-        {/* Investment Breakdown Percentage */}
+        {/* Inventory Cost Breakdown */}
         <div className="mt-4 md:mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg">
             <p className="text-sm text-muted-foreground mb-1">New Products Share</p>
