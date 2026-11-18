@@ -123,8 +123,14 @@ CREATE POLICY "admin manager read accounting journals" ON public.accounting_jour
   FOR SELECT TO authenticated USING (public.has_role(auth.uid(),'admin') OR public.has_role(auth.uid(),'manager'));
 CREATE POLICY "admin manager read accounting journal lines" ON public.accounting_journal_lines
   FOR SELECT TO authenticated USING (public.has_role(auth.uid(),'admin') OR public.has_role(auth.uid(),'manager'));
+CREATE POLICY "admin manager insert accounting journal entries" ON public.accounting_journal_entries
+  FOR INSERT TO authenticated WITH CHECK (public.has_role(auth.uid(),'admin') OR public.has_role(auth.uid(),'manager'));
+CREATE POLICY "admin manager insert accounting journal lines" ON public.accounting_journal_lines
+  FOR INSERT TO authenticated WITH CHECK (public.has_role(auth.uid(),'admin') OR public.has_role(auth.uid(),'manager'));
 CREATE POLICY "admin manager read expenses" ON public.expenses
   FOR SELECT TO authenticated USING (public.has_role(auth.uid(),'admin') OR public.has_role(auth.uid(),'manager'));
+CREATE POLICY "admin manager insert expenses" ON public.expenses
+  FOR INSERT TO authenticated WITH CHECK ((public.has_role(auth.uid(),'admin') OR public.has_role(auth.uid(),'manager')) AND created_by = auth.uid());
 CREATE POLICY "admin manager update expenses" ON public.expenses
   FOR UPDATE TO authenticated
   USING (public.has_role(auth.uid(),'admin') OR public.has_role(auth.uid(),'manager'))
