@@ -49,7 +49,6 @@ import {
 import { useReactToPrint } from "react-to-print";
 import { toast } from "sonner";
 import shopLogo from "@/assets/mobile-mate-pro-logo.png";
-import { filterSalesWithActiveProducts } from "@/lib/activeSales";
 
 interface StaffPerformance {
   email: string;
@@ -132,7 +131,7 @@ export function StaffPerformanceReport() {
         .lte('created_at', dateRange.end.toISOString());
 
       if (error) throw error;
-      return filterSalesWithActiveProducts(data || []);
+      return data || [];
     },
     enabled: isAdmin || isManager,
   });
