@@ -21,7 +21,7 @@ export function calculateGrossProfit(input: {
   for (const row of input.saleCostHistory || []) {
     const match = /^sale-item:(.+)$/.exec(row.source_key || "");
     if (match && row.unit_cost !== null && row.unit_cost !== undefined) {
-      historyByItem.set(match[1], amount(row.unit_cost));
+      historyByItem.set(match[1], { unitCost: amount(row.unit_cost), quantity: amount(row.quantity) });
     }
   }
 
@@ -39,32 +39,32 @@ export function calculateGrossProfit(input: {
     for (const item of sale.sale_items || []) {
       const quantity = Math.max(0, amount(item.quantity));
       soldQuantityByItem.set(item.id, quantity);
-      const unitCost = historyByItem.get(item.id);
-      if (unitCost === undefined) {
+      const history = historyByItem.get(item.id);
+      if (history === undefined) {
         missingCostLines += 1;
       } else {
-        soldCogs += unitCost * quantity;
+        soldCogs += history.unitCost * quantity;
       }
     }
   }
 
   for (const row of completedReturns) {
     const itemId = row.sale_item_id || "";
-    const unitCost = historyByItem.get(itemId);
-    if (!itemId || unitCost === undefined) {
+    const history = historyByItem.get(itemId);
+    if (!itemId || history === undefined) {
       missingReturnCostLines += 1;
       continue;
     }
-    const soldQty = soldQuantityByItem.get(itemId);
+    const soldQty = soldQuantityByItem.get(itemId) ?? history.quantity;
     if (soldQty === undefined) {
       missingReturnCostLines += 1;
       continue;
     }
     const returnedQty = Math.max(0, Math.min(amount(row.quantity), soldQty));
-    returnedCogs += unitCost * returnedQty;
+    returnedCogs += history.unitCost * returnedQty;
   }
 
-  const netCogs = money(Math.max(0, soldCogs - returnedCogs));
+  const netCogs = money(soldCogs - returnedCogs);
   const knownGrossProfit = money(netRevenue - netCogs);
   const isCostComplete = missingCostLines === 0 && missingReturnCostLines === 0;
 
