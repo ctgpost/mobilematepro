@@ -71,8 +71,10 @@ export function calculateGrossProfit(input) {
     soldCogs: money(soldCogs),
     returnedCogs: money(returnedCogs),
     netCogs,
-    grossProfit: knownGrossProfit,
-    grossMarginPercent: netRevenue > 0 ? money((knownGrossProfit / netRevenue) * 100) : 0,
+    // Never present a partial cost calculation as a trustworthy gross profit.
+    grossProfit: isCostComplete ? knownGrossProfit : null,
+    knownGrossProfit,
+    grossMarginPercent: isCostComplete && netRevenue > 0 ? money((knownGrossProfit / netRevenue) * 100) : null,
     missingCostLines,
     missingReturnCostLines,
     isCostComplete,
