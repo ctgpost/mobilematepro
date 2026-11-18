@@ -220,7 +220,7 @@ export function Products() {
         p_product_id: id,
       });
       if (error) throw error;
-      return data as { product_id: string; imei: string | null; stock_quantity: number; restored: boolean };
+      return data as unknown as { product_id: string; imei: string | null; stock_quantity: number; restored: boolean };
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
