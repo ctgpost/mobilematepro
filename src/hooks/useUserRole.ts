@@ -24,7 +24,7 @@ const rolePermissions: Record<AppRole, RolePermissions> = {
   admin: {
     canAccessSettings: true,
     canAccessReports: true,
-    canManageExpenses: true;
+    canManageExpenses: true,
     canAccessUserManagement: true,
     canManageProducts: true,
     canManageCustomers: true,
@@ -40,7 +40,7 @@ const rolePermissions: Record<AppRole, RolePermissions> = {
   manager: {
     canAccessSettings: false,
     canAccessReports: false,
-    canManageExpenses: true;
+    canManageExpenses: true,
     canAccessUserManagement: false,
     canManageProducts: true,
     canManageCustomers: false,
@@ -56,7 +56,7 @@ const rolePermissions: Record<AppRole, RolePermissions> = {
   staff: {
     canAccessSettings: false,
     canAccessReports: false,
-    canManageExpenses: false;
+    canManageExpenses: false,
     canAccessUserManagement: false,
     canManageProducts: false,
     canManageCustomers: false,
