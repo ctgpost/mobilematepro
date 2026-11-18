@@ -1,6 +1,5 @@
 import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { fetchAll } from "@/lib/fetchAll";
 import { calculateGrossProfit } from "@/lib/financialCalculations.mjs";
 import { Card } from "@/components/ui/card";
