@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAll } from "@/lib/fetchAll";
-import { filterSalesWithActiveProducts } from "@/lib/activeSales";
+import { calculateGrossProfit } from "@/lib/financialCalculations.mjs";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -26,7 +26,7 @@ export function Reports() {
         "*, sale_items(*, products(name, archived_at, condition)), customers(name)",
         (q) => q.order("created_at", { ascending: false })
       );
-      return filterSalesWithActiveProducts(rows);
+      return rows;
     },
   });
 
@@ -38,9 +38,13 @@ export function Reports() {
   const { data: completedReturns } = useQuery({
     queryKey: ["returns", "all-reports"],
     queryFn: async () => {
-      const { data } = await supabase.from("returns").select("sale_id, refund_amount, created_at, status").eq("status", "completed");
-      return data || [];
+      return fetchAll<any>("returns", "sale_id, sale_item_id, quantity, refund_amount, created_at, status", (q) => q.eq("status", "completed"));
     },
+  });
+
+  const { data: saleCostHistory } = useQuery({
+    queryKey: ["sale-cost-history", "all-reports"],
+    queryFn: async () => fetchAll<any>("product_transaction_history", "transaction_id, source_key, unit_cost, quantity, created_at", (q) => q.eq("transaction_type", "sale")),
   });
 
   const { data: customers } = useQuery({
@@ -51,32 +55,34 @@ export function Reports() {
     },
   });
 
-  // Filter sales based on selected filters
-  const filteredSales = sales?.filter(sale => {
+  const matchingSales = (sales || []).filter((sale: any) =>
+    (filterCustomer === "all" || sale.customer_id === filterCustomer) &&
+    (filterPaymentMethod === "all" || sale.payment_method === filterPaymentMethod)
+  );
+  const filteredSales = matchingSales.filter((sale: any) => {
     const saleDate = new Date(sale.created_at);
-    const dateFrom = filterDateFrom ? new Date(filterDateFrom) : null;
-    const dateTo = filterDateTo ? new Date(filterDateTo) : null;
-
-    if (dateFrom && saleDate < dateFrom) return false;
-    if (dateTo) {
-      dateTo.setHours(23, 59, 59, 999);
-      if (saleDate > dateTo) return false;
-    }
-    if (filterCustomer !== "all" && sale.customer_id !== filterCustomer) return false;
-    if (filterPaymentMethod !== "all" && sale.payment_method !== filterPaymentMethod) return false;
-
-    return true;
+    const dateFrom = filterDateFrom ? new Date(filterDateFrom + "T00:00:00") : null;
+    const dateTo = filterDateTo ? new Date(filterDateTo + "T23:59:59.999") : null;
+    return (!dateFrom || saleDate >= dateFrom) && (!dateTo || saleDate <= dateTo);
   });
-
-  const totalRevenue = filteredSales?.reduce((sum, sale) => sum + Number(sale.total_amount), 0) || 0;
-  const totalSales = filteredSales?.length || 0;
-  // Net = total sales − completed returns refunds within the same period
-  const filteredSaleIds = new Set((filteredSales || []).map((s: any) => s.id));
-  const activeSaleRatios = new Map((filteredSales || []).map((sale: any) => [sale.id, sale.__activeItemsRatio ?? 1]));
-  const totalRefunds = (completedReturns || [])
-    .filter((r: any) => filteredSaleIds.has(r.sale_id))
-    .reduce((sum: number, r: any) => sum + Number(r.refund_amount || 0) * Number(activeSaleRatios.get(r.sale_id) ?? 0), 0);
-  const netRevenue = totalRevenue - totalRefunds;
+  const matchingSaleIds = new Set(matchingSales.map((sale: any) => sale.id));
+  const filteredReturns = (completedReturns || []).filter((row: any) => {
+    if (!matchingSaleIds.has(row.sale_id)) return false;
+    const returnDate = new Date(row.created_at);
+    const dateFrom = filterDateFrom ? new Date(filterDateFrom + "T00:00:00") : null;
+    const dateTo = filterDateTo ? new Date(filterDateTo + "T23:59:59.999") : null;
+    return (!dateFrom || returnDate >= dateFrom) && (!dateTo || returnDate <= dateTo);
+  });
+  const relevantSaleIds = new Set([...filteredSales.map((sale: any) => sale.id), ...filteredReturns.map((row: any) => row.sale_id)]);
+  const profit = calculateGrossProfit({
+    sales: filteredSales || [],
+    returns: filteredReturns,
+    saleCostHistory: (saleCostHistory || []).filter((row: any) => relevantSaleIds.has(row.transaction_id)),
+  });
+  const totalRevenue = profit.grossRevenue;
+  const totalSales = filteredSales.length;
+  const totalRefunds = profit.refunds;
+  const netRevenue = profit.netRevenue;
   const averageSale = totalSales > 0 ? totalRevenue / totalSales : 0;
 
   // Top selling products
