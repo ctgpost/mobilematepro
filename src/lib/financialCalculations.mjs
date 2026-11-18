@@ -1,23 +1,19 @@
-const amount = (value: unknown) => {
+const amount = (value) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
-const money = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
+const money = (value) => Math.round((value + Number.EPSILON) * 100) / 100;
 
 /**
  * Computes accrual-basis gross profit from immutable sale-item cost snapshots.
  * Archived product status is intentionally irrelevant to historical financials.
  * Returns reduce revenue and reverse COGS only when completed.
  */
-export function calculateGrossProfit(input: {
-  sales: FinancialSale[];
-  returns: FinancialReturn[];
-  saleCostHistory: SaleCostHistory[];
-}) {
+export function calculateGrossProfit(input) {
   const sales = input.sales || [];
   const completedReturns = (input.returns || []).filter((row) => row.status === "completed");
-  const historyByItem = new Map<string, number>();
+  const historyByItem = new Map();
   for (const row of input.saleCostHistory || []) {
     const match = /^sale-item:(.+)$/.exec(row.source_key || "");
     if (match && row.unit_cost !== null && row.unit_cost !== undefined) {
