@@ -1237,6 +1237,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      restore_archived_product_safe: {
+        Args: { p_product_id: string }
+        Returns: Json
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]

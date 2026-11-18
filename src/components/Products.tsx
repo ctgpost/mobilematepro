@@ -213,15 +213,25 @@ export function Products() {
 
   const restoreMutation = useMutation({
     mutationFn: async ({ id }: { id: string }) => {
-      const { error, queued } = await offlineMutate("products", "update", { values: { archived_at: null }, match: { id } });
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        throw new Error("নিরাপদ Restore করতে ইন্টারনেট সংযোগ প্রয়োজন। অনলাইনে এসে আবার চেষ্টা করুন।");
+      }
+      const { data, error } = await supabase.rpc("restore_archived_product_safe", {
+        p_product_id: id,
+      });
       if (error) throw error;
-      return { queued };
+      return data as unknown as { product_id: string; imei: string | null; stock_quantity: number; restored: boolean };
     },
-    onSuccess: ({ queued }) => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
-      toast.success(queued ? "অফলাইন: Restore সারিতে যোগ হয়েছে" : "প্রোডাক্ট Restore করা হয়েছে");
+      queryClient.invalidateQueries({ queryKey: ["imei-lifecycle"] });
+      toast.success(
+        result.imei
+          ? "প্রোডাক্ট Restore হয়েছে। IMEI ডিভাইসের Stock ০ রাখা হয়েছে। বাস্তবে মোবাইলটি পুনরায় কিনলে Purchase Entry দিয়ে Stock ১ করুন।"
+          : "প্রোডাক্ট Restore করা হয়েছে।"
+      );
     },
-    onError: (error: any) => toast.error(error.message || "প্রোডাক্ট Restore করা যায়নি"),
+    onError: (error: any) => toast.error(friendlyProductError(error, undefined) || "প্রোডাক্ট Restore করা যায়নি"),
   });
 
   const resetForm = () => {
@@ -1389,7 +1399,7 @@ export function Products() {
                       </Button>
                       {(product as any).archived_at ? (
                         <Button variant="outline" size="icon" title="Restore" aria-label="প্রোডাক্ট Restore করুন" disabled={restoreMutation.isPending || archiveMutation.isPending} onClick={() => {
-                          if (confirm(`“${product.name}” প্রোডাক্টটি আবার Active করতে চান?`)) restoreMutation.mutate({ id: product.id });
+                          if (confirm(`“${product.name}” Restore করবেন? IMEI যুক্ত মোবাইল হলে পুরোনো Stock স্বয়ংক্রিয়ভাবে ০ হবে, যাতে বিক্রি হয়ে যাওয়া বা অন্য রেকর্ডে থাকা মোবাইল ভুল করে আবার স্টকে না আসে।`)) restoreMutation.mutate({ id: product.id });
                         }} className="h-9 w-full">
                           {restoreMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <History className="h-4 w-4 text-emerald-600" />}
                         </Button>

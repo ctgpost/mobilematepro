@@ -16,7 +16,8 @@ test("product archive migration preserves product rows and blocks archived produ
 test("Products screen archives and restores instead of deleting product rows", async () => {
   const products = await read("../src/components/Products.tsx");
   assert.match(products, /values: \{ archived_at: new Date\(\)\.toISOString\(\) \}/);
-  assert.match(products, /values: \{ archived_at: null \}/);
+  assert.match(products, /rpc\("restore_archived_product_safe"/);
+  assert.doesNotMatch(products, /values: \{ archived_at: null \}/);
   assert.match(products, /showArchivedProducts/);
   assert.match(products, /প্রোডাক্ট Restore করুন/);
   assert.doesNotMatch(products, /offlineMutate\("products", "delete"/);
