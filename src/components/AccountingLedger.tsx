@@ -59,11 +59,11 @@ export function AccountingLedger() {
     supplier_return: "Supplier Return",
     investment_entry: "Investment Entry",
     investment_income: "Investment Income",
-  }[type] || type.replaceAll("_", " "));
+  }[type] || type.replace(/_/g, " "));
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Accounting Ledger" description="Account balances, journal history and trial balance" />
+      <PageHeader title="Accounting Ledger" subtitle="Account balances, journal history and trial balance" />
       <Card className="border-amber-500/30 bg-amber-500/5">
         <CardContent className="flex gap-3 p-4">
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
