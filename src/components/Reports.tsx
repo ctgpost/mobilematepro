@@ -279,6 +279,20 @@ export function Reports() {
           </Card>
         </div>
 
+      <Card className="min-w-0 overflow-hidden p-4 md:p-5 border-primary/20">
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold text-foreground">Profit & Loss (Gross Profit)</h2>
+          <p className="text-xs text-muted-foreground">বিক্রির তারিখে Revenue/COGS এবং Refund সম্পন্ন হওয়ার তারিখে Return গণনা করা হয়েছে</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Net Revenue</p><p className="text-xl font-bold tabular-nums">৳{profit.netRevenue.toLocaleString("bn-BD")}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Net COGS</p><p className="text-xl font-bold tabular-nums">৳{profit.netCogs.toLocaleString("bn-BD")}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Gross Profit</p><p className={"text-xl font-bold tabular-nums " + (profit.grossProfit >= 0 ? "text-emerald-600" : "text-destructive")}>৳{profit.grossProfit.toLocaleString("bn-BD")}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Gross Margin</p><p className="text-xl font-bold tabular-nums">{profit.grossMarginPercent.toLocaleString("bn-BD")}%</p></div>
+        </div>
+        {!profit.isCostComplete && <p className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-700 dark:text-amber-300">সতর্কতা: {profit.missingCostLines}টি বিক্রয় লাইনের এবং {profit.missingReturnCostLines}টি রিটার্ন লাইনের ঐতিহাসিক ক্রয়মূল্য পাওয়া যায়নি। Gross Profit আংশিক, পূর্ণাঙ্গ Net Profit নয়।</p>}
+      </Card>
+
       {/* Investment Analysis Section */}
       <Card className="min-w-0 overflow-hidden p-4 md:p-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 border-purple-200">
         <h2 className="text-lg md:text-xl font-semibold mb-4 md:mb-4 text-foreground flex items-center">
