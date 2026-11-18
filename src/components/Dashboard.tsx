@@ -6,7 +6,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useShopSettings } from "@/hooks/useShopSettings";
 import { MobileDashboardWidget } from "./MobileDashboardWidget";
 import { fetchAll } from "@/lib/fetchAll";
-import { filterSalesWithActiveProducts } from "@/lib/activeSales";
 import { PageHeader } from "./PageHeader";
 import { LanguageSwitch } from "./LanguageProvider";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -31,7 +30,7 @@ export function Dashboard({ onNavigateToPOS, onNavigateToProducts }: DashboardPr
   const { data: sales, isLoading: salesLoading } = useQuery({
     queryKey: ["sales", "dashboard-all"],
     queryFn: async () =>
-      filterSalesWithActiveProducts(await fetchAll<any>("sales", "*, customers(name, phone), sale_items(*, products(name, sku, condition, imei, archived_at))", (q) => q.order("created_at", { ascending: false }))),
+      await fetchAll<any>("sales", "*, customers(name, phone), sale_items(*, products(name, sku, condition, imei, archived_at))", (q) => q.order("created_at", { ascending: false })),
   });
 
   const { data: purchaseEntries = [], isLoading: purchasesLoading } = useQuery({
@@ -54,10 +53,9 @@ export function Dashboard({ onNavigateToPOS, onNavigateToProducts }: DashboardPr
   const totalProducts = products?.length || 0;
   const outOfStockProducts = products?.filter(p => p.stock_quantity <= 0).length || 0;
   const totalSales = sales?.reduce((sum, sale) => sum + Number(sale.total_amount), 0) || 0;
-  const activeSaleRatios = new Map((sales || []).map((sale: any) => [sale.id, sale.__activeItemsRatio ?? 1]));
-  const totalReturnsAmount = (completedReturns || []).reduce((sum: number, r: any) => sum + Number(r.refund_amount || 0) * Number(activeSaleRatios.get(r.sale_id) ?? 0), 0);
+  const totalReturnsAmount = (completedReturns || []).reduce((sum: number, r: any) => sum + Number(r.refund_amount || 0), 0);
   const netSales = totalSales - totalReturnsAmount;
-  const getActiveRefundAmount = (refund: any) => Number(refund.refund_amount || 0) * Number(activeSaleRatios.get(refund.sale_id) ?? 0);
+  const getActiveRefundAmount = (refund: any) => Number(refund.refund_amount || 0);
   const isSameDay = (d: Date, ref: Date) => d.toDateString() === ref.toDateString();
   const todayRef = new Date();
   const startOfWeek = new Date(); startOfWeek.setDate(todayRef.getDate() - 7);
