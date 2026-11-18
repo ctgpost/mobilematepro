@@ -346,8 +346,6 @@ export function Reports() {
                 }));
               }
               if (drilldownMetric === "revenue") rows = rows.filter((row) => row.amount !== null);
-              if (drilldownMetric === "cogs") rows = rows.filter((row) => row.amount !== null);
-              if (drilldownMetric === "gross") rows = rows.filter((row) => row.amount !== null);
               if (drilldownMetric === "expenses") rows = (expenseJournalRows || []).filter((entry: any) => inSelectedDateRange(entry.entry_date)).flatMap((entry: any) => (entry.accounting_journal_lines || []).filter((line: any) => String(line.accounting_accounts?.account_code || "").startsWith("6")).map((line: any) => ({ id: entry.id, date: entry.entry_date, name: line.accounting_accounts?.account_code || "Expense", detail: `Journal #${String(entry.id).slice(0, 8)} · ${entry.source_type || "Expense"}`, amount: Number(line.debit || 0) - Number(line.credit || 0) })));
               if (drilldownMetric === "investment") rows = (investmentIncomeRows || []).filter((row: any) => inSelectedDateRange(row.income_date)).map((row: any) => ({ id: row.id, date: row.income_date, name: "Investment income", detail: `Income record #${String(row.id).slice(0, 8)}`, amount: Number(row.amount || 0) }));
               if (drilldownMetric === "net") rows = [
