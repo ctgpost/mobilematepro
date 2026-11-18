@@ -53,7 +53,7 @@ test("reports subtract recorded operating expenses and add investment income in 
   assert.match(report, /fetchAll<any>\("accounting_journal_entries"/);
   assert.match(report, /fetchAll<any>\("investment_incomes"/);
   assert.match(report, /accounting_journal_lines/);
-  assert.match(report, /account_code \\|\\| ""/);
+  assert.match(report, /account_code \|\| ""/);
   assert.match(report, /profit\.grossProfit - operatingExpenses \+ investmentIncome/);
   assert.match(report, /Net Profit \(Known Items\)/);
 });
