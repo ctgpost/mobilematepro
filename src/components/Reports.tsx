@@ -46,6 +46,16 @@ export function Reports() {
     queryFn: async () => fetchAll<any>("product_transaction_history", "transaction_id, source_key, unit_cost, quantity, created_at", (q) => q.eq("transaction_type", "sale")),
   });
 
+  const { data: expenseJournalRows = [] } = useQuery({
+    queryKey: ["accounting", "expense-journals"],
+    queryFn: () => fetchAll<any>("accounting_journal_entries", "id, entry_date, source_type, accounting_journal_lines(debit, credit, accounting_accounts(account_code))", (q) => q.order("entry_date", { ascending: false })),
+  });
+
+  const { data: investmentIncomeRows = [] } = useQuery({
+    queryKey: ["investment-incomes", "profit-loss"],
+    queryFn: () => fetchAll<any>("investment_incomes", "id, income_date, amount", (q) => q.order("income_date", { ascending: false })),
+  });
+
   const { data: customers } = useQuery({
     queryKey: ["customers"],
     queryFn: async () => {
@@ -83,6 +93,10 @@ export function Reports() {
   const totalRefunds = profit.refunds;
   const netRevenue = profit.netRevenue;
   const averageSale = totalSales > 0 ? totalRevenue / totalSales : 0;
+  const inSelectedDateRange = (value: string) => (!filterDateFrom || value >= filterDateFrom) && (!filterDateTo || value <= filterDateTo);
+  const operatingExpenses = (expenseJournalRows || []).filter((entry: any) => inSelectedDateRange(entry.entry_date)).flatMap((entry: any) => entry.accounting_journal_lines || []).filter((line: any) => String(line.accounting_accounts?.account_code || "").startsWith("6")).reduce((sum: number, line: any) => sum + Number(line.debit || 0) - Number(line.credit || 0), 0);
+  const investmentIncome = (investmentIncomeRows || []).filter((row: any) => inSelectedDateRange(row.income_date)).reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
+  const netProfitBeforeOtherAdjustments = profit.grossProfit - operatingExpenses + investmentIncome;
 
   // Top selling products
   const productSales = new Map();
@@ -280,15 +294,18 @@ export function Reports() {
 
       <Card className="min-w-0 overflow-hidden p-4 md:p-5 border-primary/20">
         <div className="mb-4">
-          <h2 className="text-lg font-semibold text-foreground">Profit & Loss (Gross Profit)</h2>
-          <p className="text-xs text-muted-foreground">বিক্রির তারিখে Revenue/COGS এবং Refund সম্পন্ন হওয়ার তারিখে Return গণনা করা হয়েছে। পরিচালন ব্যয় আলাদা Expense Ledger-এ না থাকায় এখানে Net Profit দেখানো হচ্ছে না।</p>
+          <h2 className="text-lg font-semibold text-foreground">Profit & Loss (Accrual Basis)</h2>
+          <p className="text-xs text-muted-foreground">বিক্রির তারিখে Revenue/COGS, Return সম্পন্ন হওয়ার তারিখে Refund এবং Expense Date অনুযায়ী পরিচালন ব্যয় গণনা করা হয়েছে।</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
           <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Net Revenue</p><p className="text-xl font-bold tabular-nums">৳{profit.netRevenue.toLocaleString("bn-BD")}</p></div>
           <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Net COGS</p><p className="text-xl font-bold tabular-nums">৳{profit.netCogs.toLocaleString("bn-BD")}</p></div>
           <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Gross Profit</p><p className={"text-xl font-bold tabular-nums " + (profit.grossProfit >= 0 ? "text-emerald-600" : "text-destructive")}>৳{profit.grossProfit.toLocaleString("bn-BD")}</p></div>
-          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Gross Margin</p><p className="text-xl font-bold tabular-nums">{profit.grossMarginPercent.toLocaleString("bn-BD")}%</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Operating Expenses</p><p className="text-xl font-bold tabular-nums">৳{operatingExpenses.toLocaleString("bn-BD")}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Investment Income</p><p className="text-xl font-bold tabular-nums">৳{investmentIncome.toLocaleString("bn-BD")}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Net Profit (Known Items)</p><p className={"text-xl font-bold tabular-nums " + (netProfitBeforeOtherAdjustments >= 0 ? "text-emerald-600" : "text-destructive")}>৳{netProfitBeforeOtherAdjustments.toLocaleString("bn-BD")}</p></div>
         </div>
+        <p className="mt-3 text-xs text-muted-foreground">Net Profit (Known Items) = Gross Profit − recorded operating expenses + recorded investment income. এটি পূর্ণাঙ্গ statutory P&L নয়, যতক্ষণ না অন্যান্য আয়-ব্যয়, finance charges, depreciation, tax এবং opening adjustments অন্তর্ভুক্ত হচ্ছে।</p>
         {!profit.isCostComplete && <p className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-700 dark:text-amber-300">সতর্কতা: {profit.missingCostLines}টি বিক্রয় লাইনের এবং {profit.missingReturnCostLines}টি রিটার্ন লাইনের ঐতিহাসিক ক্রয়মূল্য পাওয়া যায়নি। Gross Profit আংশিক, পূর্ণাঙ্গ Net Profit নয়।</p>}
       </Card>
 

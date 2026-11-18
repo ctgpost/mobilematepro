@@ -1287,6 +1287,14 @@ export type Database = {
           p_entry_date?: string
         }
         Returns: string
+      },
+      create_expense_atomic: {
+        Args: { p_expense: Json }
+        Returns: string
+      }
+      void_expense_atomic: {
+        Args: { p_expense_id: string; p_reason?: string | null }
+        Returns: string
       }
     }
     Enums: {

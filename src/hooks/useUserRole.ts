@@ -6,6 +6,7 @@ export type AppRole = 'admin' | 'manager' | 'staff';
 export interface RolePermissions {
   canAccessSettings: boolean;
   canAccessReports: boolean;
+  canManageExpenses: boolean;
   canAccessUserManagement: boolean;
   canManageProducts: boolean;
   canManageCustomers: boolean;
@@ -23,6 +24,7 @@ const rolePermissions: Record<AppRole, RolePermissions> = {
   admin: {
     canAccessSettings: true,
     canAccessReports: true,
+    canManageExpenses: true,
     canAccessUserManagement: true,
     canManageProducts: true,
     canManageCustomers: true,
@@ -38,6 +40,7 @@ const rolePermissions: Record<AppRole, RolePermissions> = {
   manager: {
     canAccessSettings: false,
     canAccessReports: false,
+    canManageExpenses: true,
     canAccessUserManagement: false,
     canManageProducts: true,
     canManageCustomers: false,
@@ -53,6 +56,7 @@ const rolePermissions: Record<AppRole, RolePermissions> = {
   staff: {
     canAccessSettings: false,
     canAccessReports: false,
+    canManageExpenses: false,
     canAccessUserManagement: false,
     canManageProducts: false,
     canManageCustomers: false,
