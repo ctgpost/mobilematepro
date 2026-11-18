@@ -342,7 +342,7 @@ export function Reports() {
                   const quantity = Number(line.quantity || 0);
                   const revenue = Number(line.total_price || 0);
                   const unitCost = cost ? Number(cost.unit_cost || 0) : null;
-                  return { id: sale.id, date: sale.created_at, name: line.products?.name || "Product", detail: `Invoice #${String(sale.id).slice(0, 8)} · Qty ${quantity} · ${unitCost === null ? "Historical cost missing" : `Unit cost ৳${unitCost.toLocaleString("en-US")}`}`, amount: drilldownMetric === "cogs" ? (unitCost === null ? null : unitCost * quantity) : drilldownMetric === "gross" ? (unitCost === null ? null : revenue - unitCost * quantity) : revenue });
+                  return { id: sale.id, date: sale.created_at, name: line.products?.name || "Product", detail: `Invoice #${String(sale.id).slice(0, 8)} · Qty ${quantity} · ${unitCost === null ? "Historical cost missing" : `Unit cost ৳${unitCost.toLocaleString("en-US")}`}`, amount: drilldownMetric === "cogs" ? (unitCost === null ? null : unitCost * quantity) : drilldownMetric === "gross" ? (unitCost === null ? null : revenue - unitCost * quantity) : revenue };
                 }));
               }
               if (drilldownMetric === "revenue") rows = rows.filter((row) => row.amount !== null);
