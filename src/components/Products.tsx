@@ -64,6 +64,7 @@ export function Products() {
   const [showOutOfStock, setShowOutOfStock] = useState(false);
   const [showArchivedProducts, setShowArchivedProducts] = useState(false);
   const [expandedProductCards, setExpandedProductCards] = useState<Record<string, number>>({});
+  const closeExpandedProductCards = () => setExpandedProductCards({});
   const [formData, setFormData] = useState({
     name: "",
     category_id: "",
@@ -375,6 +376,7 @@ export function Products() {
   };
 
   const startEdit = (product: any) => {
+    closeExpandedProductCards();
     setEditingProduct(product);
     setFormData({
       name: product.name || "",
@@ -477,6 +479,7 @@ export function Products() {
     setSearchTerm(code);
 
     if (product) {
+      closeExpandedProductCards();
       setDetailProduct(product);
     } else {
       toast.error("এই বারকোড/IMEI দিয়ে কোনো প্রোডাক্ট পাওয়া যায়নি");
@@ -706,7 +709,7 @@ export function Products() {
             }}>
               <DialogTrigger asChild>
                 <Button
-                  onClick={() => setIsAddDialogOpen(true)}
+                  onClick={() => { closeExpandedProductCards(); setIsAddDialogOpen(true); }}
                   className="bg-gradient-to-r from-primary to-accent hover:opacity-90 text-sm md:text-base"
                 >
                   <span className="hidden sm:inline">➕ Add Product</span>
@@ -1354,6 +1357,7 @@ export function Products() {
                         aria-label="প্রোডাক্ট দেখুন"
                         onClick={() => {
                           const index = filteredProducts.findIndex((p) => p.id === product.id);
+                          closeExpandedProductCards();
                           if (window.innerWidth < 1024) {
                             setQuickViewIndex(index);
                           } else {
@@ -1378,7 +1382,7 @@ export function Products() {
                       <Button
                         variant="outline"
                         size="icon"
-                        onClick={() => setHistoryProduct({ imei: product.imei || "", name: product.name })}
+                        onClick={() => { closeExpandedProductCards(); setHistoryProduct({ imei: product.imei || "", name: product.name }); }}
                         className="h-9 w-full rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-sm"
                         disabled={!product.imei}
                         title="হিস্ট্রি"
@@ -1389,7 +1393,7 @@ export function Products() {
                       <Button
                         variant="outline"
                         size="icon"
-                        onClick={() => setLabelProduct(product)}
+                        onClick={() => { closeExpandedProductCards(); setLabelProduct(product); }}
                         disabled={archiveMutation.isPending || restoreMutation.isPending}
                         className="h-9 w-full"
                         title="বারকোড লেবেল প্রিন্ট"
@@ -1399,12 +1403,14 @@ export function Products() {
                       </Button>
                       {(product as any).archived_at ? (
                         <Button variant="outline" size="icon" title="Restore" aria-label="প্রোডাক্ট Restore করুন" disabled={restoreMutation.isPending || archiveMutation.isPending} onClick={() => {
+                          closeExpandedProductCards();
                           if (confirm(`“${product.name}” Restore করবেন? IMEI যুক্ত মোবাইল হলে পুরোনো Stock স্বয়ংক্রিয়ভাবে ০ হবে, যাতে বিক্রি হয়ে যাওয়া বা অন্য রেকর্ডে থাকা মোবাইল ভুল করে আবার স্টকে না আসে।`)) restoreMutation.mutate({ id: product.id });
                         }} className="h-9 w-full">
                           {restoreMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <History className="h-4 w-4 text-emerald-600" />}
                         </Button>
                       ) : (
                         <Button variant="destructive" size="icon" title="Archive" aria-label="প্রোডাক্ট Archive করুন" disabled={archiveMutation.isPending || restoreMutation.isPending || updateMutation.isPending} onClick={() => {
+                          closeExpandedProductCards();
                           if (confirm(`“${product.name}” প্রোডাক্টটি Archive করতে চান? এটি বিক্রির তালিকা থেকে সরবে, তবে IMEI ও বিক্রয়ের ইতিহাস সংরক্ষিত থাকবে।`)) archiveMutation.mutate({ id: product.id, name: product.name });
                         }} className="h-9 w-full">
                           {archiveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin text-white" /> : <Trash2 className="h-4 w-4 text-white" strokeWidth={2.5} />}
