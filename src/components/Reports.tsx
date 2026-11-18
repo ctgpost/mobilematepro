@@ -1,8 +1,7 @@
 import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { fetchAll } from "@/lib/fetchAll";
-import { filterSalesWithActiveProducts } from "@/lib/activeSales";
+import { calculateGrossProfit } from "@/lib/financialCalculations.mjs";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -26,7 +25,7 @@ export function Reports() {
         "*, sale_items(*, products(name, archived_at, condition)), customers(name)",
         (q) => q.order("created_at", { ascending: false })
       );
-      return filterSalesWithActiveProducts(rows);
+      return rows;
     },
   });
 
@@ -38,9 +37,13 @@ export function Reports() {
   const { data: completedReturns } = useQuery({
     queryKey: ["returns", "all-reports"],
     queryFn: async () => {
-      const { data } = await supabase.from("returns").select("sale_id, refund_amount, created_at, status").eq("status", "completed");
-      return data || [];
+      return fetchAll<any>("returns", "sale_id, sale_item_id, quantity, refund_amount, created_at, status", (q) => q.eq("status", "completed"));
     },
+  });
+
+  const { data: saleCostHistory } = useQuery({
+    queryKey: ["sale-cost-history", "all-reports"],
+    queryFn: async () => fetchAll<any>("product_transaction_history", "transaction_id, source_key, unit_cost, quantity, created_at", (q) => q.eq("transaction_type", "sale")),
   });
 
   const { data: customers } = useQuery({
@@ -51,32 +54,34 @@ export function Reports() {
     },
   });
 
-  // Filter sales based on selected filters
-  const filteredSales = sales?.filter(sale => {
+  const matchingSales = (sales || []).filter((sale: any) =>
+    (filterCustomer === "all" || sale.customer_id === filterCustomer) &&
+    (filterPaymentMethod === "all" || sale.payment_method === filterPaymentMethod)
+  );
+  const filteredSales = matchingSales.filter((sale: any) => {
     const saleDate = new Date(sale.created_at);
-    const dateFrom = filterDateFrom ? new Date(filterDateFrom) : null;
-    const dateTo = filterDateTo ? new Date(filterDateTo) : null;
-
-    if (dateFrom && saleDate < dateFrom) return false;
-    if (dateTo) {
-      dateTo.setHours(23, 59, 59, 999);
-      if (saleDate > dateTo) return false;
-    }
-    if (filterCustomer !== "all" && sale.customer_id !== filterCustomer) return false;
-    if (filterPaymentMethod !== "all" && sale.payment_method !== filterPaymentMethod) return false;
-
-    return true;
+    const dateFrom = filterDateFrom ? new Date(filterDateFrom + "T00:00:00") : null;
+    const dateTo = filterDateTo ? new Date(filterDateTo + "T23:59:59.999") : null;
+    return (!dateFrom || saleDate >= dateFrom) && (!dateTo || saleDate <= dateTo);
   });
-
-  const totalRevenue = filteredSales?.reduce((sum, sale) => sum + Number(sale.total_amount), 0) || 0;
-  const totalSales = filteredSales?.length || 0;
-  // Net = total sales − completed returns refunds within the same period
-  const filteredSaleIds = new Set((filteredSales || []).map((s: any) => s.id));
-  const activeSaleRatios = new Map((filteredSales || []).map((sale: any) => [sale.id, sale.__activeItemsRatio ?? 1]));
-  const totalRefunds = (completedReturns || [])
-    .filter((r: any) => filteredSaleIds.has(r.sale_id))
-    .reduce((sum: number, r: any) => sum + Number(r.refund_amount || 0) * Number(activeSaleRatios.get(r.sale_id) ?? 0), 0);
-  const netRevenue = totalRevenue - totalRefunds;
+  const matchingSaleIds = new Set(matchingSales.map((sale: any) => sale.id));
+  const filteredReturns = (completedReturns || []).filter((row: any) => {
+    if (!matchingSaleIds.has(row.sale_id)) return false;
+    const returnDate = new Date(row.created_at);
+    const dateFrom = filterDateFrom ? new Date(filterDateFrom + "T00:00:00") : null;
+    const dateTo = filterDateTo ? new Date(filterDateTo + "T23:59:59.999") : null;
+    return (!dateFrom || returnDate >= dateFrom) && (!dateTo || returnDate <= dateTo);
+  });
+  const relevantSaleIds = new Set([...filteredSales.map((sale: any) => sale.id), ...filteredReturns.map((row: any) => row.sale_id)]);
+  const profit = calculateGrossProfit({
+    sales: filteredSales || [],
+    returns: filteredReturns,
+    saleCostHistory: (saleCostHistory || []).filter((row: any) => relevantSaleIds.has(row.transaction_id)),
+  });
+  const totalRevenue = profit.grossRevenue;
+  const totalSales = filteredSales.length;
+  const totalRefunds = profit.refunds;
+  const netRevenue = profit.netRevenue;
   const averageSale = totalSales > 0 ? totalRevenue / totalSales : 0;
 
   // Top selling products
@@ -273,42 +278,56 @@ export function Reports() {
           </Card>
         </div>
 
+      <Card className="min-w-0 overflow-hidden p-4 md:p-5 border-primary/20">
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold text-foreground">Profit & Loss (Gross Profit)</h2>
+          <p className="text-xs text-muted-foreground">বিক্রির তারিখে Revenue/COGS এবং Refund সম্পন্ন হওয়ার তারিখে Return গণনা করা হয়েছে। পরিচালন ব্যয় আলাদা Expense Ledger-এ না থাকায় এখানে Net Profit দেখানো হচ্ছে না।</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Net Revenue</p><p className="text-xl font-bold tabular-nums">৳{profit.netRevenue.toLocaleString("bn-BD")}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Net COGS</p><p className="text-xl font-bold tabular-nums">৳{profit.netCogs.toLocaleString("bn-BD")}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Gross Profit</p><p className={"text-xl font-bold tabular-nums " + (profit.grossProfit >= 0 ? "text-emerald-600" : "text-destructive")}>৳{profit.grossProfit.toLocaleString("bn-BD")}</p></div>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Gross Margin</p><p className="text-xl font-bold tabular-nums">{profit.grossMarginPercent.toLocaleString("bn-BD")}%</p></div>
+        </div>
+        {!profit.isCostComplete && <p className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-700 dark:text-amber-300">সতর্কতা: {profit.missingCostLines}টি বিক্রয় লাইনের এবং {profit.missingReturnCostLines}টি রিটার্ন লাইনের ঐতিহাসিক ক্রয়মূল্য পাওয়া যায়নি। Gross Profit আংশিক, পূর্ণাঙ্গ Net Profit নয়।</p>}
+      </Card>
+
       {/* Investment Analysis Section */}
       <Card className="min-w-0 overflow-hidden p-4 md:p-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 border-purple-200">
         <h2 className="text-lg md:text-xl font-semibold mb-4 md:mb-4 text-foreground flex items-center">
           <span className="text-xl md:text-2xl mr-2">💰</span>
-          Total Investment Analysis
+          Estimated Current Inventory Cost
         </h2>
         <div className="grid min-w-0 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
           <Card className="min-w-0 overflow-hidden p-4 md:p-4 bg-green-50 dark:bg-green-950/20 border-green-200">
             <div className="flex min-w-0 flex-wrap items-center gap-2 mb-3">
               <div className="w-3 h-3 rounded-full bg-green-500"></div>
-              <p className="text-xs md:text-sm font-medium text-muted-foreground">New Products Investment</p>
+              <p className="text-xs md:text-sm font-medium text-muted-foreground">New Products Stock Cost</p>
             </div>
-            <p className="min-w-0 break-words [overflow-wrap:anywhere] text-[clamp(1.1rem,2vw,1.875rem)] font-bold leading-tight tabular-nums text-green-600">${newProductsInvestment.toFixed(2)}</p>
+            <p className="min-w-0 break-words [overflow-wrap:anywhere] text-[clamp(1.1rem,2vw,1.875rem)] font-bold leading-tight tabular-nums text-green-600">৳{newProductsInvestment.toLocaleString("bn-BD")}</p>
             <p className="text-xs text-muted-foreground mt-2">{newProducts} products • {newProductsStock} units</p>
           </Card>
           
           <Card className="min-w-0 overflow-hidden p-4 md:p-4 bg-blue-50 dark:bg-blue-950/20 border-blue-200">
             <div className="flex min-w-0 flex-wrap items-center gap-2 mb-3">
               <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-              <p className="text-xs md:text-sm font-medium text-muted-foreground">Used Products Investment</p>
+              <p className="text-xs md:text-sm font-medium text-muted-foreground">Used Products Stock Cost</p>
             </div>
-            <p className="min-w-0 break-words [overflow-wrap:anywhere] text-[clamp(1.1rem,2vw,1.875rem)] font-bold leading-tight tabular-nums text-blue-600">${usedProductsInvestment.toFixed(2)}</p>
+            <p className="min-w-0 break-words [overflow-wrap:anywhere] text-[clamp(1.1rem,2vw,1.875rem)] font-bold leading-tight tabular-nums text-blue-600">৳{usedProductsInvestment.toLocaleString("bn-BD")}</p>
             <p className="text-xs text-muted-foreground mt-2">{usedProducts} products • {usedProductsStock} units</p>
           </Card>
           
           <Card className="min-w-0 overflow-hidden p-4 md:p-4 bg-purple-50 dark:bg-purple-950/20 border-purple-200">
             <div className="flex min-w-0 flex-wrap items-center gap-2 mb-3">
               <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-              <p className="text-xs md:text-sm font-medium text-muted-foreground">Total Investment</p>
+              <p className="text-xs md:text-sm font-medium text-muted-foreground">Total Current Stock Cost</p>
             </div>
-            <p className="min-w-0 break-words [overflow-wrap:anywhere] text-[clamp(1.1rem,2vw,1.875rem)] font-bold leading-tight tabular-nums text-purple-600">${totalInvestment.toFixed(2)}</p>
+            <p className="min-w-0 break-words [overflow-wrap:anywhere] text-[clamp(1.1rem,2vw,1.875rem)] font-bold leading-tight tabular-nums text-purple-600">৳{totalInvestment.toLocaleString("bn-BD")}</p>
             <p className="text-xs text-muted-foreground mt-2">{newProducts + usedProducts} products • {newProductsStock + usedProductsStock} units</p>
           </Card>
         </div>
         
-        {/* Investment Breakdown Percentage */}
+        {/* Inventory Cost Breakdown */}
         <div className="mt-4 md:mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg">
             <p className="text-sm text-muted-foreground mb-1">New Products Share</p>
@@ -367,7 +386,7 @@ export function Reports() {
               </Card>
               <Card className="min-w-0 overflow-hidden p-3 md:p-4 bg-green-50 dark:bg-green-950/20 border-green-200">
                 <p className="text-xs md:text-sm text-muted-foreground">Revenue</p>
-                <p className="min-w-0 break-words [overflow-wrap:anywhere] text-[clamp(1rem,1.7vw,1.5rem)] font-bold leading-tight tabular-nums text-green-600">${newSalesRevenue.toFixed(2)}</p>
+                <p className="min-w-0 break-words [overflow-wrap:anywhere] text-[clamp(1rem,1.7vw,1.5rem)] font-bold leading-tight tabular-nums text-green-600">৳{newSalesRevenue.toLocaleString("bn-BD")}</p>
               </Card>
             </div>
           </div>
@@ -393,7 +412,7 @@ export function Reports() {
               </Card>
               <Card className="min-w-0 overflow-hidden p-3 md:p-4 bg-blue-50 dark:bg-blue-950/20 border-blue-200">
                 <p className="text-xs md:text-sm text-muted-foreground">Revenue</p>
-                <p className="min-w-0 break-words [overflow-wrap:anywhere] text-[clamp(1rem,1.7vw,1.5rem)] font-bold leading-tight tabular-nums text-blue-600">${usedSalesRevenue.toFixed(2)}</p>
+                <p className="min-w-0 break-words [overflow-wrap:anywhere] text-[clamp(1rem,1.7vw,1.5rem)] font-bold leading-tight tabular-nums text-blue-600">৳{usedSalesRevenue.toLocaleString("bn-BD")}</p>
               </Card>
             </div>
           </div>
@@ -409,7 +428,7 @@ export function Reports() {
                 <p className="font-medium text-foreground">{product.name}</p>
                 <p className="text-sm text-muted-foreground">{product.quantity} units sold</p>
               </div>
-              <p className="min-w-0 break-words [overflow-wrap:anywhere] font-semibold tabular-nums text-primary">${product.revenue.toFixed(2)}</p>
+              <p className="min-w-0 break-words [overflow-wrap:anywhere] font-semibold tabular-nums text-primary">৳{product.revenue.toLocaleString("bn-BD")}</p>
             </div>
           ))}
           {topProducts.length === 0 && (
@@ -435,7 +454,7 @@ export function Reports() {
                 </div>
                 <div className="text-right">
                   <p className="min-w-0 break-words [overflow-wrap:anywhere] text-lg sm:text-xl font-bold leading-tight tabular-nums text-primary">
-                    ${Number(sale.total_amount).toFixed(2)}
+                    ৳{Number(sale.total_amount).toLocaleString("bn-BD")}
                   </p>
                   <p className="text-xs text-muted-foreground capitalize">
                     {sale.payment_method}
@@ -449,12 +468,12 @@ export function Reports() {
                     <div className="min-w-0 flex-1">
                       <p className="break-words [overflow-wrap:anywhere] font-medium text-foreground">{item.products?.name || "Product"}</p>
                       <p className="text-xs text-muted-foreground">
-                        Qty: {item.quantity} × ${Number(item.unit_price).toFixed(2)}
+                        Qty: {item.quantity} × ৳{Number(item.unit_price).toLocaleString("bn-BD")}
                         {item.condition && <span className="ml-2">• {item.condition}</span>}
                       </p>
                     </div>
                     <p className="font-semibold text-foreground">
-                      ${Number(item.total_price).toFixed(2)}
+                      ৳{Number(item.total_price).toLocaleString("bn-BD")}
                     </p>
                   </div>
                 ))}

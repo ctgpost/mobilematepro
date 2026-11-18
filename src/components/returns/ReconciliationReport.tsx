@@ -83,7 +83,7 @@ export function ReconciliationReport() {
     const ledgerPurchases = (supplierLedger || []).filter((e: any) => e.transaction_type === "purchase").reduce((s: number, e: any) => s + Math.max(0, Number(e.amount || 0)), 0);
     const ledgerPayments = (supplierLedger || []).filter((e: any) => e.transaction_type === "payment").reduce((s: number, e: any) => s + Math.abs(Number(e.amount || 0)), 0);
     const ledgerReturns = (supplierLedger || []).filter((e: any) => e.transaction_type === "supplier_return").reduce((s: number, e: any) => s + Math.abs(Number(e.amount || 0)), 0);
-    const supplierLedgerBalance = (supplierLedger || []).reduce((s: number, e: any) => s + Number(e.amount || 0), 0);
+    const supplierLedgerBalance = (supplierLedger || []).filter((e: any) => e.transaction_type !== "historical_purchase").reduce((s: number, e: any) => s + Number(e.amount || 0), 0);
     const mismatches = rows.filter((r) => r.balanceMismatch).length;
     const settlementMismatches = rows.reduce((sum, r) => sum + r.settlementMismatchCount, 0);
     const pendingReturns = (returns || []).filter((r: any) => ["pending", "approved"].includes(r.status)).length;

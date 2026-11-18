@@ -6,7 +6,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useShopSettings } from "@/hooks/useShopSettings";
 import { MobileDashboardWidget } from "./MobileDashboardWidget";
 import { fetchAll } from "@/lib/fetchAll";
-import { filterSalesWithActiveProducts } from "@/lib/activeSales";
 import { PageHeader } from "./PageHeader";
 import { LanguageSwitch } from "./LanguageProvider";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -31,7 +30,7 @@ export function Dashboard({ onNavigateToPOS, onNavigateToProducts }: DashboardPr
   const { data: sales, isLoading: salesLoading } = useQuery({
     queryKey: ["sales", "dashboard-all"],
     queryFn: async () =>
-      filterSalesWithActiveProducts(await fetchAll<any>("sales", "*, customers(name, phone), sale_items(*, products(name, sku, condition, imei, archived_at))", (q) => q.order("created_at", { ascending: false }))),
+      await fetchAll<any>("sales", "*, customers(name, phone), sale_items(*, products(name, sku, condition, imei, archived_at))", (q) => q.order("created_at", { ascending: false })),
   });
 
   const { data: purchaseEntries = [], isLoading: purchasesLoading } = useQuery({
@@ -54,10 +53,9 @@ export function Dashboard({ onNavigateToPOS, onNavigateToProducts }: DashboardPr
   const totalProducts = products?.length || 0;
   const outOfStockProducts = products?.filter(p => p.stock_quantity <= 0).length || 0;
   const totalSales = sales?.reduce((sum, sale) => sum + Number(sale.total_amount), 0) || 0;
-  const activeSaleRatios = new Map((sales || []).map((sale: any) => [sale.id, sale.__activeItemsRatio ?? 1]));
-  const totalReturnsAmount = (completedReturns || []).reduce((sum: number, r: any) => sum + Number(r.refund_amount || 0) * Number(activeSaleRatios.get(r.sale_id) ?? 0), 0);
+  const totalReturnsAmount = (completedReturns || []).reduce((sum: number, r: any) => sum + Number(r.refund_amount || 0), 0);
   const netSales = totalSales - totalReturnsAmount;
-  const getActiveRefundAmount = (refund: any) => Number(refund.refund_amount || 0) * Number(activeSaleRatios.get(refund.sale_id) ?? 0);
+  const getActiveRefundAmount = (refund: any) => Number(refund.refund_amount || 0);
   const isSameDay = (d: Date, ref: Date) => d.toDateString() === ref.toDateString();
   const todayRef = new Date();
   const startOfWeek = new Date(); startOfWeek.setDate(todayRef.getDate() - 7);
@@ -197,13 +195,13 @@ export function Dashboard({ onNavigateToPOS, onNavigateToProducts }: DashboardPr
       <Card className="min-w-0 max-w-full overflow-hidden p-4 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border-amber-200/60">
         <h2 className="text-xl font-semibold mb-6 text-foreground flex items-center">
           <span className="text-2xl mr-2">💰</span>
-          মোট বিনিয়োগ বিশ্লেষণ
+          বর্তমান স্টকের ক্রয়মূল্য
         </h2>
         <div className="grid min-w-0 grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="min-w-0 overflow-hidden p-2.5 sm:p-4 bg-green-50 dark:bg-green-950/20 border-green-200">
             <div className="flex items-center space-x-2 mb-3">
               <div className="w-3 h-3 rounded-full bg-green-500"></div>
-              <p className="text-sm font-medium text-muted-foreground">নতুন প্রোডাক্ট বিনিয়োগ</p>
+              <p className="text-sm font-medium text-muted-foreground">নতুন পণ্যের বর্তমান স্টক মূল্য</p>
             </div>
             <p className="min-w-0 break-words [overflow-wrap:anywhere] text-xl sm:text-2xl md:text-3xl font-bold leading-tight tabular-nums text-green-600">৳{newProductsInvestment.toLocaleString('bn-BD')}</p>
             <p className="text-xs text-muted-foreground mt-2">{newProducts}টি প্রোডাক্ট • {newProductsStock}টি ইউনিট</p>
@@ -212,7 +210,7 @@ export function Dashboard({ onNavigateToPOS, onNavigateToProducts }: DashboardPr
           <Card className="min-w-0 overflow-hidden p-2.5 sm:p-4 bg-blue-50 dark:bg-blue-950/20 border-blue-200">
             <div className="flex items-center space-x-2 mb-3">
               <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-              <p className="text-sm font-medium text-muted-foreground">ব্যবহৃত প্রোডাক্ট বিনিয়োগ</p>
+              <p className="text-sm font-medium text-muted-foreground">ব্যবহৃত পণ্যের বর্তমান স্টক মূল্য</p>
             </div>
             <p className="min-w-0 break-words [overflow-wrap:anywhere] text-xl sm:text-2xl md:text-3xl font-bold leading-tight tabular-nums text-blue-600">৳{usedProductsInvestment.toLocaleString('bn-BD')}</p>
             <p className="text-xs text-muted-foreground mt-2">{usedProducts}টি প্রোডাক্ট • {usedProductsStock}টি ইউনিট</p>
@@ -221,7 +219,7 @@ export function Dashboard({ onNavigateToPOS, onNavigateToProducts }: DashboardPr
           <Card className="p-4 bg-amber-50 dark:bg-amber-950/20 border-amber-200/60">
             <div className="flex items-center space-x-2 mb-3">
               <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-              <p className="text-sm font-medium text-muted-foreground">সর্বমোট বিনিয়োগ</p>
+              <p className="text-sm font-medium text-muted-foreground">মোট বর্তমান স্টক মূল্য</p>
             </div>
             <p className="min-w-0 break-words [overflow-wrap:anywhere] text-xl sm:text-2xl md:text-3xl font-bold leading-tight tabular-nums text-amber-600">৳{totalInvestment.toLocaleString('bn-BD')}</p>
             <p className="text-xs text-muted-foreground mt-2">{newProducts + usedProducts}টি প্রোডাক্ট • {newProductsStock + usedProductsStock}টি ইউনিট</p>

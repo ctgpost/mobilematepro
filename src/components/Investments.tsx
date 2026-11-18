@@ -212,12 +212,12 @@ export function Investments() {
     const totalWithdraw = sEntries.filter(e => e.entry_type === 'withdraw').reduce((s, e) => s + Number(e.amount), 0);
     const totalIncome = sIncomes.reduce((s, i) => s + Number(i.amount), 0);
     const netInvestment = totalDeposit - totalWithdraw;
-    return { ...sector, totalDeposit, totalWithdraw, totalIncome, netInvestment, profit: totalIncome - netInvestment };
+    return { ...sector, totalDeposit, totalWithdraw, totalIncome, netInvestment };
   }) || [], [sectors, entries, incomes]);
 
   const grandInvestment = sectorStats.reduce((s, x) => s + x.netInvestment, 0);
   const grandIncome = sectorStats.reduce((s, x) => s + x.totalIncome, 0);
-  const grandProfit = grandIncome - grandInvestment;
+  const grandIncomeRate = grandInvestment > 0 ? (grandIncome / grandInvestment) * 100 : 0;
 
   // Edit start helpers
   const startEditSector = (s: any) => { setEditingSector(s); setSectorForm({ name: s.name, description: s.description || "" }); setShowSector(true); };
@@ -277,11 +277,11 @@ export function Investments() {
       <div class="grid">
         <div class="stat"><div>মোট বিনিয়োগ</div><div class="v">৳${grandInvestment.toLocaleString('bn-BD')}</div></div>
         <div class="stat"><div>মোট আয়</div><div class="v">৳${grandIncome.toLocaleString('bn-BD')}</div></div>
-        <div class="stat"><div>লাভ/ক্ষতি</div><div class="v" style="color:${grandProfit>=0?'green':'red'}">৳${grandProfit.toLocaleString('bn-BD')}</div></div>
+        <div class="stat"><div>আয়ের হার</div><div class="v">${grandInvestment > 0 ? ((grandIncome / grandInvestment) * 100).toFixed(2) : "0.00"}%</div></div>
       </div>
       <h2>খাতওয়ারি সারাংশ</h2>
-      <table><thead><tr><th>খাত</th><th>জমা</th><th>উত্তোলন</th><th>নেট বিনিয়োগ</th><th>আয়</th><th>লাভ/ক্ষতি</th></tr></thead><tbody>
-      ${sectorStats.map(s => `<tr><td>${s.name}</td><td>৳${s.totalDeposit.toLocaleString('bn-BD')}</td><td>৳${s.totalWithdraw.toLocaleString('bn-BD')}</td><td>৳${s.netInvestment.toLocaleString('bn-BD')}</td><td>৳${s.totalIncome.toLocaleString('bn-BD')}</td><td style="color:${s.profit>=0?'green':'red'}">৳${s.profit.toLocaleString('bn-BD')}</td></tr>`).join('')}
+      <table><thead><tr><th>খাত</th><th>জমা</th><th>উত্তোলন</th><th>নেট বিনিয়োগ</th><th>আয়</th><th>আয়ের হার</th></tr></thead><tbody>
+      ${sectorStats.map(s => `<tr><td>${s.name}</td><td>৳${s.totalDeposit.toLocaleString("bn-BD")}</td><td>৳${s.totalWithdraw.toLocaleString("bn-BD")}</td><td>৳${s.netInvestment.toLocaleString("bn-BD")}</td><td>৳${s.totalIncome.toLocaleString("bn-BD")}</td><td>${s.netInvestment > 0 ? ((s.totalIncome / s.netInvestment) * 100).toFixed(2) : "0.00"}%</td></tr>`).join("")}
       </tbody></table>
       <h2>ইনভেস্টমেন্ট এন্ট্রি (${filteredEntries.length})</h2>
       <table><thead><tr><th>তারিখ</th><th>খাত</th><th>ধরন</th><th>পরিমাণ</th><th>উদ্দেশ্য</th></tr></thead><tbody>
@@ -327,10 +327,10 @@ export function Investments() {
             <p className="text-xl font-bold text-accent">৳{grandIncome.toLocaleString('bn-BD')}</p>
           </CardContent>
         </Card>
-        <Card className={grandProfit >= 0 ? "border-green-500/20 bg-green-500/5" : "border-destructive/20 bg-destructive/5"}>
+        <Card className={grandIncome >= 0 ? "border-green-500/20 bg-green-500/5" : "border-destructive/20 bg-destructive/5"}>
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">লাভ/ক্ষতি</p>
-            <p className={`text-xl font-bold ${grandProfit >= 0 ? 'text-green-600' : 'text-destructive'}`}>৳{grandProfit.toLocaleString('bn-BD')}</p>
+            <p className="text-xs text-muted-foreground">আয়ের হার (ROI)</p>
+            <p className="text-xl font-bold text-accent">{grandIncomeRate.toFixed(2)}%</p>
           </CardContent>
         </Card>
         <Card>
@@ -436,9 +436,9 @@ export function Investments() {
                 <div className="p-2 rounded bg-primary/10"><div className="text-muted-foreground">নেট বিনিয়োগ</div><div className="font-bold text-primary">৳{s.netInvestment.toLocaleString('bn-BD')}</div></div>
                 <div className="p-2 rounded bg-accent/10"><div className="text-muted-foreground">আয়</div><div className="font-bold text-accent">৳{s.totalIncome.toLocaleString('bn-BD')}</div></div>
               </div>
-              <div className={`p-2 rounded text-center ${s.profit >= 0 ? 'bg-green-500/10' : 'bg-destructive/10'}`}>
-                <div className="text-xs text-muted-foreground">লাভ/ক্ষতি</div>
-                <div className={`font-bold ${s.profit >= 0 ? 'text-green-600' : 'text-destructive'}`}>৳{s.profit.toLocaleString('bn-BD')}</div>
+              <div className={`p-2 rounded text-center ${s.totalIncome >= 0 ? 'bg-green-500/10' : 'bg-destructive/10'}`}>
+                <div className="text-xs text-muted-foreground">আয়ের হার</div>
+                <div className="font-bold text-accent">{s.netInvestment > 0 ? ((s.totalIncome / s.netInvestment) * 100).toFixed(2) : "0.00"}%</div>
               </div>
             </CardContent>
           </Card>
