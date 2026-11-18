@@ -104,6 +104,24 @@ BEGIN
                             'stock_reset_to',0),
          auth.uid());
     END IF;
+    IF NOT FOUND THEN
+      INSERT INTO public.imei_registry
+        (imei, product_id, status, supplier_id, supplier_name, purchase_cost, created_by)
+      VALUES
+        (v_imei, v_product.id, 'sold', v_product.supplier_id,
+         v_product.supplier_name, COALESCE(v_product.cost,0), auth.uid())
+      RETURNING * INTO v_registry;
+
+      INSERT INTO public.imei_lifecycle_events
+        (registry_id, imei, product_id, event_type, to_status,
+         reference_type, reference_id, notes, details, created_by)
+      VALUES
+        (v_registry.id, v_imei, v_product.id, 'restored', 'sold',
+         'product', v_product.id,
+         'Archived product restored with stock reset to zero; registry repaired',
+         jsonb_build_object('stock_reset_to',0,'registry_repaired',true),
+         auth.uid());
+    END IF;
   END IF;
 
   -- Never restore archived quantity as sellable stock. It must be physically
