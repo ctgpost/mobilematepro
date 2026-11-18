@@ -42,3 +42,15 @@ test("return cost reversal is capped at sold quantity", () => {
   assert.equal(result.returnedCogs, 200);
   assert.equal(result.netCogs, 0);
 });
+
+test("returns in this period reverse historical COGS even when the sale was in an earlier period", () => {
+  const result = calculateGrossProfit({
+    sales: [],
+    returns: [{ sale_item_id: "old-item", quantity: 1, refund_amount: 250, status: "completed" }],
+    saleCostHistory: [{ source_key: "sale-item:old-item", unit_cost: 180, quantity: 1 }],
+  });
+  assert.equal(result.returnedCogs, 180);
+  assert.equal(result.netCogs, -180);
+  assert.equal(result.grossProfit, -70);
+  assert.equal(result.isCostComplete, true);
+});
