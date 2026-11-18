@@ -16,6 +16,8 @@ INSERT INTO public.accounting_accounts (account_code, account_name, account_type
 ('1000','Cash on Hand','asset','debit'),
 ('1010','Bank Account','asset','debit'),
 ('1020','Mobile Financial Services','asset','debit'),
+('1030','Card Settlement','asset','debit'),
+('1040','Other Payment Clearing','asset','debit'),
 ('1100','Inventory','asset','debit'),
 ('1200','Accounts Receivable','asset','debit'),
 ('2000','Accounts Payable','liability','credit'),
@@ -180,7 +182,7 @@ BEGIN
   SELECT * INTO v_expense_account FROM public.accounting_accounts WHERE account_code=v_category.account_code AND is_active;
   IF NOT FOUND THEN RAISE EXCEPTION 'Expense account mapping is missing'; END IF;
 
-  v_cash_code := CASE v_method WHEN 'bank' THEN '1010' WHEN 'mobile' THEN '1020' ELSE '1000' END;
+  v_cash_code := CASE v_method WHEN 'bank' THEN '1010' WHEN 'mobile' THEN '1020' WHEN 'card' THEN '1030' WHEN 'other' THEN '1040' ELSE '1000' END;
   SELECT * INTO v_cash_account FROM public.accounting_accounts WHERE account_code=v_cash_code AND is_active;
   IF NOT FOUND THEN RAISE EXCEPTION 'Payment account is missing'; END IF;
 
