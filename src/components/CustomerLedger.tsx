@@ -3,7 +3,6 @@ import { PageHeader } from "./PageHeader";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAll } from "@/lib/fetchAll";
-import { filterSalesWithActiveProducts } from "@/lib/activeSales";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -48,7 +47,7 @@ export function CustomerLedger() {
     queryFn: async () => {
       // Unlimited fetch — no 1000-row cap
       const rows = await fetchAll<any>("sales", "*, sale_items(*, products(archived_at))", (q) => q.eq("customer_id", selectedCustomerId).order("created_at"));
-      return filterSalesWithActiveProducts(rows);
+      return rows;
     },
   });
 
@@ -60,11 +59,7 @@ export function CustomerLedger() {
       if (!ids.length) return [];
       // Unlimited fetch — no 1000-row cap
       const payments = await fetchAll<any>("due_payments", "*", (q) => q.in("sale_id", ids).order("created_at"));
-       const ratios = new Map((sales || []).map((sale: any) => [sale.id, sale.__activeItemsRatio ?? 1]));
-       return payments.map((payment: any) => ({
-         ...payment,
-         amount: Math.round(Number(payment.amount || 0) * Number(ratios.get(payment.sale_id) ?? 0) * 100) / 100,
-       }));
+       return payments;
     },
   });
 
@@ -81,13 +76,18 @@ export function CustomerLedger() {
 
   const entries: LedgerEntry[] = useMemo(() => {
     const list: LedgerEntry[] = [];
+    const collectedBySale = new Map<string, number>();
+    duePayments?.forEach((payment: any) => {
+      collectedBySale.set(payment.sale_id, (collectedBySale.get(payment.sale_id) || 0) + Number(payment.amount || 0));
+    });
     sales?.forEach(s => {
+      const initialPayment = Math.max(0, Number(s.paid_amount || 0) - (collectedBySale.get(s.id) || 0));
       list.push({
         date: s.created_at,
         type: "sale",
         description: `বিক্রয় #${s.id.slice(0, 8)} (${s.payment_method})`,
         debit: Number(s.total_amount),
-        credit: Number(s.paid_amount) || 0,
+        credit: initialPayment,
         ref_id: s.id,
       });
     });
