@@ -112,7 +112,8 @@ ALTER TABLE public.expenses ENABLE ROW LEVEL SECURITY;
 
 GRANT SELECT ON public.accounting_accounts, public.expense_categories TO authenticated;
 GRANT SELECT ON public.accounting_journal_entries, public.accounting_journal_lines TO authenticated;
-GRANT SELECT ON public.expenses TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON public.expenses TO authenticated;
+GRANT INSERT ON public.accounting_journal_entries, public.accounting_journal_lines TO authenticated;
 GRANT ALL ON public.accounting_accounts, public.expense_categories, public.accounting_journal_entries, public.accounting_journal_lines, public.expenses TO service_role;
 
 CREATE POLICY "authenticated read accounting accounts" ON public.accounting_accounts
