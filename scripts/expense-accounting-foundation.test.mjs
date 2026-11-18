@@ -47,3 +47,12 @@ test("expense menu permission is restricted to admin and manager", async () => {
   assert.match(roles, /staff:[\s\S]*?canManageExpenses: false/);
   assert.match(page, /canManageExpenses/);
 });
+
+test("reports subtract recorded operating expenses and add investment income in the selected period", async () => {
+  const report = await read("../src/components/Reports.tsx");
+  assert.match(report, /fetchAll<any>\("expenses"/);
+  assert.match(report, /fetchAll<any>\("investment_incomes"/);
+  assert.match(report, /!row\.voided_at/);
+  assert.match(report, /profit\.grossProfit - operatingExpenses \+ investmentIncome/);
+  assert.match(report, /Net Profit \(Known Items\)/);
+});
