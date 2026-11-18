@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { useReactToPrint } from "react-to-print";
 import * as XLSX from "xlsx";
 import { PageHeader } from "./PageHeader";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export function Reports() {
   const [filterDateFrom, setFilterDateFrom] = useState("");
@@ -16,6 +17,7 @@ export function Reports() {
   const [filterCustomer, setFilterCustomer] = useState("all");
   const [filterPaymentMethod, setFilterPaymentMethod] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
+  const [drilldownMetric, setDrilldownMetric] = useState<string | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
   const { data: sales } = useQuery({
     queryKey: ["sales", "all-reports"],
@@ -96,7 +98,7 @@ export function Reports() {
   const inSelectedDateRange = (value: string) => (!filterDateFrom || value >= filterDateFrom) && (!filterDateTo || value <= filterDateTo);
   const operatingExpenses = (expenseJournalRows || []).filter((entry: any) => inSelectedDateRange(entry.entry_date)).flatMap((entry: any) => entry.accounting_journal_lines || []).filter((line: any) => String(line.accounting_accounts?.account_code || "").startsWith("6")).reduce((sum: number, line: any) => sum + Number(line.debit || 0) - Number(line.credit || 0), 0);
   const investmentIncome = (investmentIncomeRows || []).filter((row: any) => inSelectedDateRange(row.income_date)).reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
-  const netProfitBeforeOtherAdjustments = profit.grossProfit - operatingExpenses + investmentIncome;
+  const netProfitBeforeOtherAdjustments = profit.isCostComplete ? Number(profit.grossProfit) - operatingExpenses + investmentIncome : null;
 
   // Top selling products
   const productSales = new Map();
@@ -298,16 +300,75 @@ export function Reports() {
           <p className="text-xs text-muted-foreground">বিক্রির তারিখে Revenue/COGS, Return সম্পন্ন হওয়ার তারিখে Refund এবং Expense Date অনুযায়ী পরিচালন ব্যয় গণনা করা হয়েছে।</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Net Revenue</p><p className="text-xl font-bold tabular-nums">৳{profit.netRevenue.toLocaleString("bn-BD")}</p></div>
-          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Net COGS</p><p className="text-xl font-bold tabular-nums">৳{profit.netCogs.toLocaleString("bn-BD")}</p></div>
-          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Gross Profit</p><p className={"text-xl font-bold tabular-nums " + (profit.grossProfit >= 0 ? "text-emerald-600" : "text-destructive")}>৳{profit.grossProfit.toLocaleString("bn-BD")}</p></div>
-          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Operating Expenses</p><p className="text-xl font-bold tabular-nums">৳{operatingExpenses.toLocaleString("bn-BD")}</p></div>
-          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Investment Income</p><p className="text-xl font-bold tabular-nums">৳{investmentIncome.toLocaleString("bn-BD")}</p></div>
-          <div className="rounded-lg bg-muted/50 p-3"><p className="text-xs text-muted-foreground">Net Profit (Known Items)</p><p className={"text-xl font-bold tabular-nums " + (netProfitBeforeOtherAdjustments >= 0 ? "text-emerald-600" : "text-destructive")}>৳{netProfitBeforeOtherAdjustments.toLocaleString("bn-BD")}</p></div>
+          {[
+            { key: "revenue", label: "Net Revenue", value: profit.netRevenue },
+            { key: "cogs", label: "Net COGS", value: profit.netCogs },
+            { key: "gross", label: "Gross Profit", value: profit.isCostComplete ? profit.grossProfit : null },
+            { key: "expenses", label: "Operating Expenses", value: operatingExpenses },
+            { key: "investment", label: "Investment Income", value: investmentIncome },
+            { key: "net", label: "Net Profit (Known Items)", value: netProfitBeforeOtherAdjustments },
+          ].map((item) => (
+            <button key={item.key} type="button" onClick={() => setDrilldownMetric(item.key)} className="rounded-lg bg-muted/50 p-3 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+              <p className="text-xs text-muted-foreground">{item.label}</p>
+              <p className={"text-xl font-bold tabular-nums " + (item.value !== null && item.value < 0 ? "text-destructive" : "text-foreground")}>{item.value === null ? "Incomplete" : `৳${item.value.toLocaleString("bn-BD")}`}</p>
+              <p className="mt-1 text-[11px] text-primary">View breakdown ↗</p>
+            </button>
+          ))}
         </div>
         <p className="mt-3 text-xs text-muted-foreground">Net Profit (Known Items) = Gross Profit − recorded operating expenses + recorded investment income. এটি পূর্ণাঙ্গ statutory P&L নয়, যতক্ষণ না অন্যান্য আয়-ব্যয়, finance charges, depreciation, tax এবং opening adjustments অন্তর্ভুক্ত হচ্ছে।</p>
-        {!profit.isCostComplete && <p className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-700 dark:text-amber-300">সতর্কতা: {profit.missingCostLines}টি বিক্রয় লাইনের এবং {profit.missingReturnCostLines}টি রিটার্ন লাইনের ঐতিহাসিক ক্রয়মূল্য পাওয়া যায়নি। Gross Profit আংশিক, পূর্ণাঙ্গ Net Profit নয়।</p>}
+        {!profit.isCostComplete && <p className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-700 dark:text-amber-300">সতর্কতা: {profit.missingCostLines}টি বিক্রয় লাইনের এবং {profit.missingReturnCostLines}টি রিটার্ন লাইনের ঐতিহাসিক ক্রয়মূল্য পাওয়া যায়নি। Gross Profit এবং Net Profit নির্ভরযোগ্যভাবে দেখানো যাচ্ছে না। আগে অনুপস্থিত ক্রয়মূল্য পূরণ করুন।</p>}
       </Card>
+
+      <Dialog open={!!drilldownMetric} onOpenChange={(open) => !open && setDrilldownMetric(null)}>
+        <DialogContent className="max-h-[85vh] w-[95vw] max-w-3xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{({
+              revenue: "Net Revenue Breakdown",
+              cogs: "Cost of Goods Sold Breakdown",
+              gross: "Gross Profit Breakdown",
+              expenses: "Operating Expense Breakdown",
+              investment: "Investment Income Breakdown",
+              net: "Net Profit Breakdown",
+            } as Record<string, string>)[drilldownMetric || ""] || "Financial Breakdown"}</DialogTitle>
+            <DialogDescription>প্রতিটি হিসাবের উৎস রেকর্ড ও সংশ্লিষ্ট লেনদেনের সারাংশ</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            {(() => {
+              const costByItem = new Map((saleCostHistory || []).map((row: any) => [String(row.source_key || "").replace(/^sale-item:/, ""), row]));
+              let rows: any[] = [];
+              if (drilldownMetric === "revenue" || drilldownMetric === "gross" || drilldownMetric === "cogs" || drilldownMetric === "net") {
+                rows = filteredSales.flatMap((sale: any) => (sale.sale_items || []).map((line: any) => {
+                  const cost: any = costByItem.get(line.id);
+                  const quantity = Number(line.quantity || 0);
+                  const revenue = Number(line.total_price || 0);
+                  const unitCost = cost ? Number(cost.unit_cost || 0) : null;
+                  return { id: sale.id, date: sale.created_at, name: line.products?.name || "Product", detail: `Invoice #${String(sale.id).slice(0, 8)} · Qty ${quantity} · ${unitCost === null ? "Historical cost missing" : `Unit cost ৳${unitCost.toLocaleString("en-US")}`}`, amount: drilldownMetric === "cogs" ? (unitCost === null ? null : unitCost * quantity) : drilldownMetric === "gross" ? (unitCost === null ? null : revenue - unitCost * quantity) : revenue };
+                }));
+              }
+              if (drilldownMetric === "revenue") rows = rows.filter((row) => row.amount !== null);
+              if (drilldownMetric === "expenses") rows = (expenseJournalRows || []).filter((entry: any) => inSelectedDateRange(entry.entry_date)).flatMap((entry: any) => (entry.accounting_journal_lines || []).filter((line: any) => String(line.accounting_accounts?.account_code || "").startsWith("6")).map((line: any) => ({ id: entry.id, date: entry.entry_date, name: line.accounting_accounts?.account_code || "Expense", detail: `Journal #${String(entry.id).slice(0, 8)} · ${entry.source_type || "Expense"}`, amount: Number(line.debit || 0) - Number(line.credit || 0) })));
+              if (drilldownMetric === "investment") rows = (investmentIncomeRows || []).filter((row: any) => inSelectedDateRange(row.income_date)).map((row: any) => ({ id: row.id, date: row.income_date, name: "Investment income", detail: `Income record #${String(row.id).slice(0, 8)}`, amount: Number(row.amount || 0) }));
+              if (drilldownMetric === "net") rows = [
+                { id: "gross-profit", date: "", name: "Gross Profit", detail: "Sales revenue less cost of goods sold", amount: profit.grossProfit },
+                { id: "expenses", date: "", name: "Operating Expenses", detail: "Posted expense journal lines", amount: -operatingExpenses },
+                { id: "investment-income", date: "", name: "Investment Income", detail: "Recorded investment income", amount: investmentIncome },
+              ];
+              if (drilldownMetric === "revenue") rows = rows.concat(filteredReturns.map((row: any) => ({ id: row.sale_id, date: row.created_at, name: "Completed sales return", detail: `Return against invoice #${String(row.sale_id).slice(0, 8)}`, amount: -Number(row.refund_amount || 0) })));
+              return rows.length ? rows.map((row, index) => (
+                <div key={`${row.id}-${index}`} className="flex flex-col gap-1 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="font-medium">{row.name}</p>
+                    <p className="break-all text-xs text-muted-foreground">{row.detail}</p>
+                    {row.date && <p className="text-xs text-muted-foreground">{new Date(row.date).toLocaleString()}</p>}
+                  </div>
+                  <p className={"shrink-0 font-semibold tabular-nums " + (row.amount < 0 ? "text-destructive" : "")}>{row.amount === null ? "Cost unavailable" : `৳${Number(row.amount).toLocaleString("en-US")}`}</p>
+                </div>
+              )) : <p className="rounded-lg bg-muted/50 p-4 text-sm text-muted-foreground">এই সময়সীমায় প্রদর্শনের মতো উৎস রেকর্ড পাওয়া যায়নি।</p>;
+            })()}
+          </div>
+          {!profit.isCostComplete && (drilldownMetric === "cogs" || drilldownMetric === "gross" || drilldownMetric === "net") && <p className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-700">ঐতিহাসিক ক্রয়মূল্য অনুপস্থিত এমন বিক্রয় লাইন রয়েছে। সংশ্লিষ্ট উৎস ক্রয় রেকর্ড যাচাই না করা পর্যন্ত এই হিসাব অসম্পূর্ণ।</p>}
+        </DialogContent>
+      </Dialog>
 
       {/* Investment Analysis Section */}
       <Card className="min-w-0 overflow-hidden p-4 md:p-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 border-purple-200">

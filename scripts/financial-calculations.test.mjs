@@ -28,7 +28,8 @@ test("archived products do not affect financial totals and missing historical co
     saleCostHistory: [],
   });
   assert.equal(result.grossRevenue, 500);
-  assert.equal(result.grossProfit, 500);
+  assert.equal(result.grossProfit, null);
+  assert.equal(result.knownGrossProfit, 500);
   assert.equal(result.missingCostLines, 1);
   assert.equal(result.isCostComplete, false);
 });
