@@ -46,9 +46,9 @@ export function Reports() {
     queryFn: async () => fetchAll<any>("product_transaction_history", "transaction_id, source_key, unit_cost, quantity, created_at", (q) => q.eq("transaction_type", "sale")),
   });
 
-  const { data: expenseRows = [] } = useQuery({
-    queryKey: ["expenses", "profit-loss"],
-    queryFn: () => fetchAll<any>("expenses", "id, expense_date, amount, voided_at", (q) => q.order("expense_date", { ascending: false })),
+  const { data: expenseJournalRows = [] } = useQuery({
+    queryKey: ["accounting", "expense-journals"],
+    queryFn: () => fetchAll<any>("accounting_journal_entries", "id, entry_date, source_type, accounting_journal_lines(debit, credit, accounting_accounts(account_code))", (q) => q.order("entry_date", { ascending: false })),
   });
 
   const { data: investmentIncomeRows = [] } = useQuery({
@@ -94,7 +94,7 @@ export function Reports() {
   const netRevenue = profit.netRevenue;
   const averageSale = totalSales > 0 ? totalRevenue / totalSales : 0;
   const inSelectedDateRange = (value: string) => (!filterDateFrom || value >= filterDateFrom) && (!filterDateTo || value <= filterDateTo);
-  const operatingExpenses = (expenseRows || []).filter((row: any) => !row.voided_at && inSelectedDateRange(row.expense_date)).reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
+  const operatingExpenses = (expenseJournalRows || []).filter((entry: any) => inSelectedDateRange(entry.entry_date)).flatMap((entry: any) => entry.accounting_journal_lines || []).filter((line: any) => String(line.accounting_accounts?.account_code || "").startsWith("6")).reduce((sum: number, line: any) => sum + Number(line.debit || 0) - Number(line.credit || 0), 0);
   const investmentIncome = (investmentIncomeRows || []).filter((row: any) => inSelectedDateRange(row.income_date)).reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
   const netProfitBeforeOtherAdjustments = profit.grossProfit - operatingExpenses + investmentIncome;
 
