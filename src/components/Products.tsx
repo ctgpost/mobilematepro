@@ -14,7 +14,7 @@ import { ProductDetailModal } from "./ProductDetailModal";
 import { BarcodeScanner } from "./BarcodeScanner";
 import { ProductQuickView } from "./ProductQuickView";
 import { ProductLabelPrint } from "./ProductLabelPrint";
-import { Eye, ScanBarcode, Download, FileSpreadsheet, FileText, Printer, Loader2, Pencil, History, Trash2, ChevronDown, ChevronUp, Copy } from "lucide-react";
+import { Eye, ScanBarcode, Download, FileSpreadsheet, FileText, Printer, Loader2, Pencil, History, Trash2, Copy } from "lucide-react";
 import { ActivityLogger } from "@/hooks/useActivityLog";
 import { CollapsibleSection } from "./CollapsibleSection";
 import { PageHeader } from "./PageHeader";
@@ -63,7 +63,7 @@ export function Products() {
   const [imeiScanError, setImeiScanError] = useState<string | null>(null);
   const [showOutOfStock, setShowOutOfStock] = useState(false);
   const [showArchivedProducts, setShowArchivedProducts] = useState(false);
-  const [expandedProductCards, setExpandedProductCards] = useState<Record<string, number>>({});
+  const [, setExpandedProductCards] = useState<Record<string, number>>({});
   const closeExpandedProductCards = () => setExpandedProductCards({});
   const [formData, setFormData] = useState({
     name: "",
@@ -1219,9 +1219,8 @@ export function Products() {
 
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 lg:gap-4 xl:gap-5 pt-4 pb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2 pt-3 pb-5">
         {filteredProducts?.map((product) => {
-          const cardLevel = expandedProductCards[product.id] ?? 0;
           const supplier = suppliersList?.find((item: any) => item.id === product.supplier_id);
           const supplierName = product.supplier_name || supplier?.name;
           const supplierPhone = product.supplier_mobile || supplier?.mobile || supplier?.phone;
@@ -1233,194 +1232,89 @@ export function Products() {
           ].filter(Boolean);
 
           return (
-            <Card key={product.id} className={`group relative self-start min-w-0 overflow-visible rounded-xl border border-slate-200/90 bg-white text-slate-900 shadow-sm transition-[border-color,box-shadow] duration-150 hover:border-indigo-300 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 p-0 card-hover ${cardLevel > 0 ? "z-[60] shadow-xl ring-1 ring-indigo-300/70 dark:ring-indigo-700/70" : "z-0"}`}>
-              <div className="relative">
-                {/* Level 1: compact product summary */}
-                <button
-                  type="button"
-                  aria-expanded={cardLevel > 0}
-                  aria-label={`বিস্তারিত ${cardLevel === 0 ? "দেখুন" : "পরিবর্তন করুন"}: ${product.name}`}
-                  onClick={() => setExpandedProductCards((previous) => ({
-                    ...previous,
-                    [product.id]: cardLevel === 2 ? 0 : cardLevel + 1,
-                  }))}
-                  className="flex w-full min-w-0 items-center justify-between gap-3 bg-gradient-to-r from-slate-50 via-white to-indigo-50/60 p-3 text-left transition-colors hover:from-indigo-50 hover:to-blue-50/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset dark:from-slate-900 dark:via-slate-900 dark:to-indigo-950/30 dark:hover:from-slate-800 dark:hover:to-indigo-950/40"
-                >
-                  <div className="min-w-0 flex-1 space-y-1">
-                    <div className="flex min-w-0 items-start justify-between gap-2">
-                      <h3 className="min-w-0 break-words font-semibold text-sm lg:text-base leading-snug text-slate-900 dark:text-slate-100">
-                        {product.name}
-                      </h3>
-                      {(product as any).archived_at ? (
-                        <span className="shrink-0 rounded-full bg-slate-200 px-2 py-1 text-[10px] font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-200">ARCHIVED</span>
-                      ) : product.stock_quantity <= (product.low_stock_threshold ?? 0) && (
-                        <span className="shrink-0 text-base" title="Low Stock">⚠️</span>
-                      )}
-                    </div>
-                    <div className="grid min-w-0 grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-slate-700 dark:text-slate-200">
-                      <span className="min-w-0 break-all select-text cursor-text rounded-md bg-blue-50 px-2 py-1 dark:bg-blue-950/40"><span className="font-semibold text-blue-700 dark:text-blue-300">Model</span> <span className="font-mono font-medium select-text text-slate-800 dark:text-slate-100">{product.model || "—"}</span></span>
-                      {product.imei && (
-                        <span className="min-w-0 break-all rounded-md bg-violet-50 px-2 py-1 font-mono select-text cursor-text dark:bg-violet-950/40">
-                          <span className="font-sans font-semibold text-violet-700 dark:text-violet-300">IMEI</span> <span className="select-text">{product.imei}</span>
-                        </span>
-                      )}
-                    </div>
-                    {variations.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {variations.map((variation) => (
-                          <span key={variation} className="rounded-md border border-cyan-200 bg-cyan-50 px-2 py-0.5 text-[10px] font-semibold text-cyan-800 dark:border-cyan-900 dark:bg-cyan-950/50 dark:text-cyan-200">
-                            {variation}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2 text-xs">
-                      <span className="text-slate-600 dark:text-slate-300">Stock</span>
-                      <span className={`rounded-full px-2 py-0.5 font-bold tabular-nums ${product.stock_quantity <= (product.low_stock_threshold ?? 0) ? "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300" : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300"}`}>
-                        {product.stock_quantity ?? 0} {product.unit || "pcs"}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex shrink-0 flex-col items-center gap-1 rounded-lg bg-indigo-100 px-2 py-1 text-indigo-700 transition-colors group-hover:bg-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300 dark:group-hover:bg-indigo-900">
-                    {cardLevel === 2 ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-                    <span className="text-[10px] tabular-nums">{cardLevel + 1}/3</span>
-                  </div>
-                </button>
+            <Card key={product.id} className="group relative min-w-0 self-start overflow-hidden rounded-lg border border-slate-200 bg-white p-2.5 text-slate-900 shadow-sm transition-shadow duration-150 hover:shadow-md dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+              <div className="space-y-2">
+                <div className="flex min-w-0 items-start justify-between gap-2">
+                  <h3 className="min-w-0 break-words text-sm font-semibold leading-snug text-slate-900 dark:text-slate-100">{product.name}</h3>
+                  {(product as any).archived_at ? (
+                    <span className="shrink-0 rounded-full bg-slate-200 px-1.5 py-0.5 text-[9px] font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-200">ARCHIVED</span>
+                  ) : product.stock_quantity <= (product.low_stock_threshold ?? 0) && (
+                    <span className="shrink-0 text-xs" title="Low Stock">⚠️</span>
+                  )}
+                </div>
 
-                {/* Expanded details float over neighboring cards without changing grid layout. */}
-                {cardLevel >= 1 && (
-                  <div className="absolute left-0 top-full z-[70] w-full max-w-full overflow-hidden rounded-b-xl border border-t-0 border-indigo-200 bg-white shadow-2xl dark:border-indigo-900 dark:bg-slate-900">
-                    <div className="space-y-2 border-t border-slate-100 bg-slate-50/95 p-3 dark:border-slate-800 dark:bg-slate-800/95">
-                    <div className="grid min-w-0 grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 text-sm">
-                      <div className="min-w-0">
-                        <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Company</p>
-                        <p className="break-words font-medium text-foreground">{product.brand || "—"}</p>
-                      </div>
-                                            <div className="min-w-0">
-                        <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Condition</p>
-                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${product.condition === "new" ? "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-300" : "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300"}`}>
-                          {product.condition === "new" ? "✨ নতুন" : "♻️ পুরাতন"}
-                        </span>
-                      </div>
-                      <div className="min-w-0">
-                        <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">SKU</p>
-                        <div className="flex min-w-0 items-center gap-1.5">
-                          <p className="min-w-0 break-all font-mono text-xs font-medium text-foreground select-text">{product.sku || "—"}</p>
-                          {product.sku && <button type="button" title="SKU কপি" aria-label="SKU কপি" onClick={() => { void navigator.clipboard.writeText(product.sku).then(() => toast.success("SKU কপি হয়েছে")).catch(() => toast.error("কপি করা যায়নি")); }} className="shrink-0 rounded-md p-1 text-slate-500 hover:bg-slate-200 hover:text-slate-900 dark:hover:bg-slate-700"><Copy className="h-3.5 w-3.5" /></button>}
-                        </div>
-                      </div>
-                      <div className="sm:col-span-2 min-w-0 rounded-lg border border-emerald-100 bg-emerald-50/70 px-3 py-2 dark:border-emerald-900/60 dark:bg-emerald-950/20">
-                        <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Price</p>
-                        <p className="text-lg font-bold tabular-nums text-emerald-700 dark:text-emerald-300">
-                          ৳{Number(product.price || 0).toLocaleString("bn-BD")}
-                        </p>
-                      </div>
+                <div className="grid min-w-0 grid-cols-1 gap-1 text-[11px] text-slate-700 dark:text-slate-200">
+                  <div className="flex min-w-0 items-center gap-1.5 rounded bg-blue-50 px-2 py-1 dark:bg-blue-950/40">
+                    <span className="shrink-0 font-semibold text-blue-700 dark:text-blue-300">Model</span>
+                    <span className="min-w-0 break-all font-mono text-slate-800 dark:text-slate-100">{product.model || "—"}</span>
+                  </div>
+                  {product.imei && (
+                    <div className="flex min-w-0 items-center gap-1.5 rounded bg-violet-50 px-2 py-1 dark:bg-violet-950/40">
+                      <span className="shrink-0 font-semibold text-violet-700 dark:text-violet-300">IMEI</span>
+                      <span className="min-w-0 break-all font-mono text-slate-800 dark:text-slate-100">{product.imei}</span>
                     </div>
-                    {product.description && (
-                      <p className="break-words text-xs text-muted-foreground">{product.description}</p>
-                    )}
-                    </div>
+                  )}
+                </div>
 
-                {/* Level 3: supplier information and existing five actions */}
-                {cardLevel >= 2 && (
-                  <div className="space-y-2 p-2">
-                    <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-900">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-200">Supplier Info</p>
-                      <div className="grid min-w-0 grid-cols-1 gap-2 text-sm sm:grid-cols-2">
-                        <div className="min-w-0">
-                          <p className="text-xs text-muted-foreground">নাম</p>
-                          <p className="break-words font-medium text-foreground">{supplierName || "তথ্য নেই"}</p>
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-xs text-muted-foreground">মোবাইল</p>
-                          <div className="flex min-w-0 items-center gap-1.5">
-                            <p className="min-w-0 break-all font-medium text-foreground select-text">{supplierPhone || "—"}</p>
-                            {supplierPhone && <button type="button" title="মোবাইল কপি" aria-label="সাপ্লায়ার মোবাইল কপি" onClick={() => { void navigator.clipboard.writeText(supplierPhone).then(() => toast.success("মোবাইল নম্বর কপি হয়েছে")).catch(() => toast.error("কপি করা যায়নি")); }} className="shrink-0 rounded-md p-1 text-slate-500 hover:bg-slate-200 hover:text-slate-900 dark:hover:bg-slate-700"><Copy className="h-3.5 w-3.5" /></button>}
-                          </div>
-                        </div>
-                        {supplierNid && (
-                          <div className="min-w-0">
-                            <p className="text-xs text-muted-foreground">NID</p>
-                            <div className="flex min-w-0 items-center gap-1.5">
-                            <p className="min-w-0 break-all font-mono text-xs text-foreground select-text">{supplierNid}</p>
-                            <button type="button" title="NID কপি" aria-label="NID কপি" onClick={() => { void navigator.clipboard.writeText(supplierNid).then(() => toast.success("NID কপি হয়েছে")).catch(() => toast.error("কপি করা যায়নি")); }} className="shrink-0 rounded-md p-1 text-slate-500 hover:bg-slate-200 hover:text-slate-900 dark:hover:bg-slate-700"><Copy className="h-3.5 w-3.5" /></button>
-                          </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        title="দেখুন"
-                        aria-label="প্রোডাক্ট দেখুন"
-                        onClick={() => {
-                          const index = filteredProducts.findIndex((p) => p.id === product.id);
-                          closeExpandedProductCards();
-                          if (window.innerWidth < 1024) {
-                            setQuickViewIndex(index);
-                          } else {
-                            setDetailProduct(product);
-                          }
-                        }}
-                        className="h-8 w-full border-slate-300 text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
-                      >
-                        <Eye className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        title="এডিট করুন"
-                        aria-label="প্রোডাক্ট এডিট করুন"
-                        onClick={() => startEdit(product)}
-                        disabled={updateMutation.isPending || archiveMutation.isPending || restoreMutation.isPending}
-                        className="h-9 w-full rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-sm"
-                      >
-                        <Pencil className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => { closeExpandedProductCards(); setHistoryProduct({ imei: product.imei || "", name: product.name }); }}
-                        className="h-9 w-full rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-sm"
-                        disabled={!product.imei}
-                        title="হিস্ট্রি"
-                        aria-label="প্রোডাক্ট হিস্ট্রি"
-                      >
-                        <History className="h-4 w-4 text-violet-600 dark:text-violet-400" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => { closeExpandedProductCards(); setLabelProduct(product); }}
-                        disabled={archiveMutation.isPending || restoreMutation.isPending}
-                        className="h-9 w-full"
-                        title="বারকোড লেবেল প্রিন্ট"
-                        aria-label="বারকোড লেবেল প্রিন্ট"
-                      >
-                        <Printer className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                      </Button>
-                      {(product as any).archived_at ? (
-                        <Button variant="outline" size="icon" title="Restore" aria-label="প্রোডাক্ট Restore করুন" disabled={restoreMutation.isPending || archiveMutation.isPending} onClick={() => {
-                          closeExpandedProductCards();
-                          if (confirm(`“${product.name}” Restore করবেন? IMEI যুক্ত মোবাইল হলে পুরোনো Stock স্বয়ংক্রিয়ভাবে ০ হবে, যাতে বিক্রি হয়ে যাওয়া বা অন্য রেকর্ডে থাকা মোবাইল ভুল করে আবার স্টকে না আসে।`)) restoreMutation.mutate({ id: product.id });
-                        }} className="h-9 w-full">
-                          {restoreMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <History className="h-4 w-4 text-emerald-600" />}
-                        </Button>
-                      ) : (
-                        <Button variant="destructive" size="icon" title="Archive" aria-label="প্রোডাক্ট Archive করুন" disabled={archiveMutation.isPending || restoreMutation.isPending || updateMutation.isPending} onClick={() => {
-                          closeExpandedProductCards();
-                          if (confirm(`“${product.name}” প্রোডাক্টটি Archive করতে চান? এটি বিক্রির তালিকা থেকে সরবে, তবে IMEI ও বিক্রয়ের ইতিহাস সংরক্ষিত থাকবে।`)) archiveMutation.mutate({ id: product.id, name: product.name });
-                        }} className="h-9 w-full">
-                          {archiveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin text-white" /> : <Trash2 className="h-4 w-4 text-white" strokeWidth={2.5} />}
-                        </Button>
-                      )}
-                    </div>
+                {variations.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {variations.map((variation) => <span key={variation} className="rounded border border-cyan-200 bg-cyan-50 px-1.5 py-0.5 text-[9px] font-semibold text-cyan-800 dark:border-cyan-900 dark:bg-cyan-950/50 dark:text-cyan-200">{variation}</span>)}
                   </div>
                 )}
+
+                <div className="flex items-center justify-between gap-2 rounded-md bg-slate-50 px-2 py-1.5 dark:bg-slate-800/70">
+                  <span className="text-[11px] text-slate-600 dark:text-slate-300">Stock</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums ${product.stock_quantity <= (product.low_stock_threshold ?? 0) ? "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300" : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300"}`}>
+                    {product.stock_quantity ?? 0} {product.unit || "pcs"}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-x-2 gap-y-1 border-t border-slate-100 pt-2 text-[11px] dark:border-slate-800">
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-muted-foreground">Company</p>
+                    <p className="break-words font-medium">{product.brand || "—"}</p>
                   </div>
-                )}
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-muted-foreground">Condition</p>
+                    <span className={`inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-medium ${product.condition === "new" ? "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-300" : "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300"}`}>
+                      {product.condition === "new" ? "✨ নতুন" : "♻️ পুরাতন"}
+                    </span>
+                  </div>
+                  <div className="col-span-2 min-w-0">
+                    <p className="text-[10px] text-muted-foreground">SKU</p>
+                    <div className="flex min-w-0 items-center gap-1">
+                      <p className="min-w-0 break-all font-mono text-[10px] font-medium">{product.sku || "—"}</p>
+                      {product.sku && <button type="button" title="SKU কপি" aria-label="SKU কপি" onClick={() => { void navigator.clipboard.writeText(product.sku).then(() => toast.success("SKU কপি হয়েছে")).catch(() => toast.error("কপি করা যায়নি")); }} className="shrink-0 rounded p-1 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700"><Copy className="h-3 w-3" /></button>}
+                    </div>
+                  </div>
+                  <div className="col-span-2 rounded-md border border-emerald-100 bg-emerald-50/70 px-2 py-1.5 dark:border-emerald-900/60 dark:bg-emerald-950/20">
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Price</p>
+                    <p className="text-sm font-bold tabular-nums text-emerald-700 dark:text-emerald-300">৳{Number(product.price || 0).toLocaleString("bn-BD")}</p>
+                  </div>
+                </div>
+
+                {product.description && <p className="break-words text-[10px] leading-snug text-muted-foreground">{product.description}</p>}
+
+                <div className="border-t border-slate-100 pt-2 dark:border-slate-800">
+                  <p className="mb-1 text-[10px] font-semibold text-slate-600 dark:text-slate-300">Supplier Info</p>
+                  <div className="grid min-w-0 grid-cols-2 gap-x-2 gap-y-1 text-[10px]">
+                    <div className="min-w-0"><p className="text-muted-foreground">নাম</p><p className="break-words font-medium">{supplierName || "তথ্য নেই"}</p></div>
+                    <div className="min-w-0"><p className="text-muted-foreground">মোবাইল</p><div className="flex min-w-0 items-center gap-1"><p className="min-w-0 break-all font-medium">{supplierPhone || "—"}</p>{supplierPhone && <button type="button" title="মোবাইল কপি" aria-label="সাপ্লায়ার মোবাইল কপি" onClick={() => { void navigator.clipboard.writeText(supplierPhone).then(() => toast.success("মোবাইল নম্বর কপি হয়েছে")).catch(() => toast.error("কপি করা যায়নি")); }} className="shrink-0 rounded p-0.5 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700"><Copy className="h-3 w-3" /></button>}</div></div>
+                    {supplierNid && <div className="col-span-2 min-w-0"><p className="text-muted-foreground">NID</p><div className="flex min-w-0 items-center gap-1"><p className="min-w-0 break-all font-mono">{supplierNid}</p><button type="button" title="NID কপি" aria-label="NID কপি" onClick={() => { void navigator.clipboard.writeText(supplierNid).then(() => toast.success("NID কপি হয়েছে")).catch(() => toast.error("কপি করা যায়নি")); }} className="shrink-0 rounded p-0.5 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700"><Copy className="h-3 w-3" /></button></div></div>}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-5 gap-1">
+                  <Button variant="outline" size="icon" title="দেখুন" aria-label="প্রোডাক্ট দেখুন" onClick={() => { const index = filteredProducts.findIndex((p) => p.id === product.id); closeExpandedProductCards(); if (window.innerWidth < 1024) setQuickViewIndex(index); else setDetailProduct(product); }} className="h-7 w-full rounded-md"><Eye className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" /></Button>
+                  <Button variant="outline" size="icon" title="এডিট করুন" aria-label="প্রোডাক্ট এডিট করুন" onClick={() => startEdit(product)} disabled={updateMutation.isPending || archiveMutation.isPending || restoreMutation.isPending} className="h-7 w-full rounded-md"><Pencil className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" /></Button>
+                  <Button variant="outline" size="icon" title="হিস্ট্রি" aria-label="প্রোডাক্ট হিস্ট্রি" onClick={() => { closeExpandedProductCards(); setHistoryProduct({ imei: product.imei || "", name: product.name }); }} disabled={!product.imei} className="h-7 w-full rounded-md"><History className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" /></Button>
+                  <Button variant="outline" size="icon" title="বারকোড লেবেল প্রিন্ট" aria-label="বারকোড লেবেল প্রিন্ট" onClick={() => { closeExpandedProductCards(); setLabelProduct(product); }} disabled={archiveMutation.isPending || restoreMutation.isPending} className="h-7 w-full rounded-md"><Printer className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" /></Button>
+                  {(product as any).archived_at ? (
+                    <Button variant="outline" size="icon" title="Restore" aria-label="প্রোডাক্ট Restore করুন" disabled={restoreMutation.isPending || archiveMutation.isPending} onClick={() => { closeExpandedProductCards(); if (confirm(`“${product.name}” Restore করবেন? IMEI যুক্ত মোবাইল হলে পুরোনো Stock স্বয়ংক্রিয়ভাবে ০ হবে, যাতে বিক্রি হয়ে যাওয়া বা অন্য রেকর্ডে থাকা মোবাইল ভুল করে আবার স্টকে না আসে।`)) restoreMutation.mutate({ id: product.id }); }} className="h-7 w-full rounded-md">{restoreMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <History className="h-3.5 w-3.5 text-emerald-600" />}</Button>
+                  ) : (
+                    <Button variant="destructive" size="icon" title="Archive" aria-label="প্রোডাক্ট Archive করুন" disabled={archiveMutation.isPending || restoreMutation.isPending || updateMutation.isPending} onClick={() => { closeExpandedProductCards(); if (confirm(`“${product.name}” প্রোডাক্টটি Archive করতে চান? এটি বিক্রির তালিকা থেকে সরবে, তবে IMEI ও বিক্রয়ের ইতিহাস সংরক্ষিত থাকবে।`)) archiveMutation.mutate({ id: product.id, name: product.name }); }} className="h-7 w-full rounded-md">{archiveMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin text-white" /> : <Trash2 className="h-3.5 w-3.5 text-white" strokeWidth={2.5} />}</Button>
+                  )}
+                </div>
               </div>
             </Card>
           );
