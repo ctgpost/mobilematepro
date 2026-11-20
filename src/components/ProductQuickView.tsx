@@ -111,8 +111,21 @@ export function ProductQuickView({ products, initialIndex, isOpen, onClose }: Pr
             size="icon"
             onClick={goToNext}
             disabled={currentIndex === products.length - 1}
+            aria-label="পরবর্তী প্রোডাক্ট"
+            title="পরবর্তী প্রোডাক্ট"
           >
             <ChevronRight className="h-5 w-5" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            aria-label="প্রোডাক্টের বিস্তারিত বন্ধ করুন"
+            title="বন্ধ করুন"
+            className="shrink-0 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-5 w-5" />
           </Button>
         </div>
 
