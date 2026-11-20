@@ -1,25 +1,26 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { User } from "@supabase/supabase-js";
-import { Dashboard } from "@/components/Dashboard";
-import { Products } from "@/components/Products";
-import { POS } from "@/components/POS";
-import { Customers } from "@/components/Customers";
-import { Suppliers } from "@/components/Suppliers";
-import { Reports } from "@/components/Reports";
-import { Settings } from "@/components/Settings";
-import { Categories } from "@/components/Categories";
-import { Sales } from "@/components/Sales";
-import { Returns } from "@/components/Returns";
-import { Investments } from "@/components/Investments";
-import { ActivityLog } from "@/components/ActivityLog";
-import { UserManagement } from "@/components/UserManagement";
-import { StaffPerformanceReport } from "@/components/StaffPerformanceReport";
-import { StockSyncCheck } from "@/components/StockSyncCheck";
-import { StockHistory } from "@/components/StockHistory";
-import { DueCollectionPage } from "@/components/DueCollectionPage";
-import { CustomerLedger } from "@/components/CustomerLedger";
-import { Expenses } from "@/components/Expenses";
+
+const Dashboard = lazy(() => import("@/components/Dashboard").then((m) => ({ default: m.Dashboard })));
+const Products = lazy(() => import("@/components/Products").then((m) => ({ default: m.Products })));
+const POS = lazy(() => import("@/components/POS").then((m) => ({ default: m.POS })));
+const Customers = lazy(() => import("@/components/Customers").then((m) => ({ default: m.Customers })));
+const Suppliers = lazy(() => import("@/components/Suppliers").then((m) => ({ default: m.Suppliers })));
+const Reports = lazy(() => import("@/components/Reports").then((m) => ({ default: m.Reports })));
+const Settings = lazy(() => import("@/components/Settings").then((m) => ({ default: m.Settings })));
+const Categories = lazy(() => import("@/components/Categories").then((m) => ({ default: m.Categories })));
+const Sales = lazy(() => import("@/components/Sales").then((m) => ({ default: m.Sales })));
+const Returns = lazy(() => import("@/components/Returns").then((m) => ({ default: m.Returns })));
+const Investments = lazy(() => import("@/components/Investments").then((m) => ({ default: m.Investments })));
+const ActivityLog = lazy(() => import("@/components/ActivityLog").then((m) => ({ default: m.ActivityLog })));
+const UserManagement = lazy(() => import("@/components/UserManagement").then((m) => ({ default: m.UserManagement })));
+const StaffPerformanceReport = lazy(() => import("@/components/StaffPerformanceReport").then((m) => ({ default: m.StaffPerformanceReport })));
+const StockSyncCheck = lazy(() => import("@/components/StockSyncCheck").then((m) => ({ default: m.StockSyncCheck })));
+const StockHistory = lazy(() => import("@/components/StockHistory").then((m) => ({ default: m.StockHistory })));
+const DueCollectionPage = lazy(() => import("@/components/DueCollectionPage").then((m) => ({ default: m.DueCollectionPage })));
+const CustomerLedger = lazy(() => import("@/components/CustomerLedger").then((m) => ({ default: m.CustomerLedger })));
+const Expenses = lazy(() => import("@/components/Expenses").then((m) => ({ default: m.Expenses })));
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -392,7 +393,9 @@ export default function Index({ user }: IndexProps) {
       {/* Main Content */}
       <main className="w-full min-w-0 max-w-full overflow-x-clip lg:pl-64">
         <div className="w-full min-w-0 max-w-full overflow-x-clip px-3 py-4 pb-[calc(5.25rem+env(safe-area-inset-bottom))] sm:px-4 lg:px-6 lg:pt-0 lg:pb-5 pt-[4.25rem]">
-          {renderContent()}
+          <Suspense fallback={<div className="flex min-h-[40vh] items-center justify-center text-sm text-muted-foreground">পেজ লোড হচ্ছে...</div>}>
+            {renderContent()}
+          </Suspense>
         </div>
       </main>
 
