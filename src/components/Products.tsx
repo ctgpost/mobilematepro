@@ -19,7 +19,6 @@ import { ActivityLogger } from "@/hooks/useActivityLog";
 import { CollapsibleSection } from "./CollapsibleSection";
 import { PageHeader } from "./PageHeader";
 import { PhotoUpload } from "./PhotoUpload";
-import * as XLSX from "xlsx";
 import { fetchAll } from "@/lib/fetchAll";
 
 const SUPPLIER_PHOTO_FLAG_KEY = "products:show_instant_supplier_photo";
@@ -487,11 +486,13 @@ export function Products() {
   };
 
   // Download products as Excel
-  const downloadExcel = () => {
+  const downloadExcel = async () => {
     if (exportProducts.length === 0) {
       toast.error("কোনো প্রোডাক্ট নেই ডাউনলোড করার জন্য");
       return;
     }
+
+    const XLSX = await import("xlsx");
 
 
     const excelData = exportProducts.map((product, index) => ({
@@ -1219,7 +1220,7 @@ export function Products() {
 
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2 pt-3 pb-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 pt-3 pb-5">
         {filteredProducts?.map((product) => {
           const variations = [
             product.ram ? `RAM ${product.ram}` : null,
